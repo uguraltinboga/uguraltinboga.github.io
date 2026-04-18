@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Yeme-İçme Bulucu</title>
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#7b2d00">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Yeme-İçme Bulucu">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+
+<!-- Styles -->
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header>
+  <span class="logo">🍽️</span>
+  <div class="htitle">
+    <h1>Yeme-İçme Bulucu</h1>
+    <p>Yakınındaki en beğenilen restoranlar ve kafeler</p>
+  </div>
+</header>
+
+<div class="main">
+<div class="sidebar">
+
+  <div class="tabs">
+    <div class="tab active" id="tab-nearby" onclick="switchTab('nearby')">Yakınımdakiler</div>
+    <div class="tab"        id="tab-route"  onclick="switchTab('route')">Güzergah</div>
+  </div>
+
+  <!-- ═══ NEARBY ═══ -->
+  <div class="panel active" id="panel-nearby">
+    <div class="qbar">
+      <span class="qlbl">Min. Puan:</span>
+      <select id="minRating" onchange="onNearbyQChange()">
+        <option value="4">4.0 yıldız</option>
+        <option value="4.5" selected>4.5 yıldız</option>
+        <option value="5">5.0 yıldız</option>
+      </select>
+      <span class="qlbl">Min. Yorum:</span>
+      <select id="minReviews" onchange="onNearbyQChange()">
+        <option value="100">100+</option>
+        <option value="500">500+</option>
+        <option value="1000" selected>1000+</option>
+      </select>
+    </div>
+    <div class="phead">
+      <h2>Yakındaki Mekanlar</h2>
+      <span class="badge" id="nearbyCount">0</span>
+    </div>
+    <div class="nctrl">
+      <select class="csel" id="radiusSelect" onchange="onRadiusChange()">
+        <option value="1000" selected>1 km çevre</option>
+        <option value="5000">5 km çevre</option>
+        <option value="10000">10 km çevre</option>
+        <option value="25000">25 km çevre</option>
+        <option value="50000">50 km çevre</option>
+      </select>
+      <button class="btn-loc" id="btnLocate" onclick="startNearby()">Konumumu Bul</button>
+    </div>
+    <div class="mlist" id="nearbyList">
+      <div class="smsg"><div class="ico">🍴</div><h3>Hoş Geldiniz</h3><p>Konumumu Bul butonuna tıklayarak yakındaki en beğenilen yeme-içme mekanlarını keşfedin.</p></div>
+    </div>
+  </div>
+
+  <!-- ═══ ROUTE ═══ -->
+  <div class="panel" id="panel-route">
+    <div class="qbar">
+      <span class="qlbl">Min. Puan:</span>
+      <select id="minRatingR" onchange="onRouteQChange()">
+        <option value="4">4.0 yıldız</option>
+        <option value="4.5" selected>4.5 yıldız</option>
+        <option value="5">5.0 yıldız</option>
+      </select>
+      <span class="qlbl">Min. Yorum:</span>
+      <select id="minReviewsR" onchange="onRouteQChange()">
+        <option value="100">100+</option>
+        <option value="500">500+</option>
+        <option value="1000" selected>1000+</option>
+      </select>
+    </div>
+
+    <div class="pick-hint" id="pickHint" onclick="cancelPicking()">Haritaya tıklayın — İptal: buraya tıklayın</div>
+
+    <div class="rform">
+      <!-- Saved routes -->
+      <div class="saved-bar">
+        <select id="savedRoutesSel"><option value="">-- Kayıtlı rota seç --</option></select>
+        <button class="btn-load-route" onclick="loadSavedRoute()">Yükle</button>
+        <button class="btn-del-route"  onclick="deleteSavedRoute()">Sil</button>
+      </div>
+
+      <!-- Start -->
+      <div class="rpoint">
+        <div class="rdot rdot-start"></div>
+        <input type="text" id="originInput" placeholder="Başlangıç (boş: mevcut konum)">
+        <button class="btn-pick" id="pickStartBtn" onclick="startPicking('start')" title="Haritadan seç">📌</button>
+      </div>
+
+      <!-- Swap -->
+      <div style="display:flex;justify-content:center">
+        <button class="btn-swap" onclick="swapStartEnd()" title="Başlangıç ve bitişi değiştir">⇅</button>
+      </div>
+
+      <!-- Dynamic stops -->
+      <div id="stopsContainer"></div>
+
+      <!-- End -->
+      <div class="rpoint">
+        <div class="rdot rdot-end"></div>
+        <input type="text" id="destInput" placeholder="Varış noktası">
+        <button class="btn-pick" id="pickEndBtn" onclick="startPicking('end')" title="Haritadan seç">📌</button>
+      </div>
+
+      <div class="rrow2">
+        <button class="btn-add-stop" onclick="addStop()">+ Durak Ekle</button>
+        <select class="corr-sel" id="corridorWidth">
+          <option value="1000" selected>Güzergaha 1 km</option>
+          <option value="5000">Güzergaha 5 km</option>
+          <option value="10000">Güzergaha 10 km</option>
+          <option value="20000">Güzergaha 20 km</option>
+        </select>
+      </div>
+
+      <div class="rbtns">
+        <button class="btn-route" id="btnRoute" onclick="startRoute()">Güzergahı Göster</button>
+        <button class="btn-save-route" onclick="saveRoute()">Kaydet</button>
+        <button class="btn-clr" onclick="clearAll()">Temizle</button>
+      </div>
+    </div>
+
+    <div class="phead">
+      <h2>Güzergahtaki Mekanlar</h2>
+      <span class="badge" id="routeCount">0</span>
+    </div>
+    <div class="mlist" id="routeList">
+      <div class="smsg"><div class="ico">🗺</div><h3>Güzergah Girin</h3><p>Başlangıç ve varış noktasını girin ya da haritadan seçin.</p></div>
+    </div>
+  </div>
+
+</div><!-- /sidebar -->
+<div id="map"></div>
+</div>
+
+<div id="toast"></div>
+
+<!-- Scripts -->
+<script src="js/main.js"></script>
+
+<!-- Service Worker kaydı -->
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then(reg => console.log('SW registered:', reg.scope))
+      .catch(err => console.warn('SW registration failed:', err));
+  });
+}
+</script>
+</body>
+</html>
