@@ -474,7 +474,7 @@ function finalizeNearby(all, radius, center){
 
   document.getElementById('nearbyCount').textContent=nearbyPlaces.length;
   if(!nearbyPlaces.length){
-    showEmpty('nearbyList',`${minR}+ yildiz ve ${fmt(minRev)}+ yorumlu cami bulunamadi.`);
+    showEmpty('nearbyList',`${minR}+ yildiz ve ${fmt(minRev)}+ yorumlu mekan bulunamadi.`);
     return;
   }
   renderList('nearbyList',nearbyPlaces,'nearby');
