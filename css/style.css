@@ -129,17 +129,15 @@ header{background:linear-gradient(135deg,#0d1f14,#1a3d25);padding:10px 18px;disp
   /* Aktif panel: sidebar'ın kalan tüm yüksekliğini kaplar */
   .panel.active{display:flex;flex:1;min-height:0}
 
-  /* YAKINIMDAKILER: flex kolonunda üst kısım sabit, liste kayar */
-  #panel-nearby{flex-direction:column;overflow:hidden}
-  #panel-nearby .qbar,
-  #panel-nearby .phead,
-  #panel-nearby .nctrl{flex-shrink:0}
+  /* YAKINIMDAKILER: tüm içerik tek scroll alanı (güzergah gibi) */
+  #panel-nearby{flex-direction:column;overflow-y:scroll;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
   #panel-nearby .mlist{
-    flex:1;min-height:0;
-    overflow-y:scroll;
-    -webkit-overflow-scrolling:touch;
-    overscroll-behavior:contain;
+    overflow:visible;
+    flex:none;
+    min-height:120px;
+    padding-bottom:20px;
   }
+  #panel-nearby .smsg{flex:none;min-height:140px}
 
   /* GÜZERGAH: flex kolonunda tüm içerik tek scroll alanı */
   #panel-route{flex-direction:column;overflow-y:scroll;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
