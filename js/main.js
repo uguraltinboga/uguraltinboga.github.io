@@ -816,9 +816,11 @@ function makeMosqueMarker(mosque, index, type){
 // ════════════════════════════════════════════════════
 function openInfo(mosque, marker, index, type){
   const {lat,lng}=getLatLng(mosque);
-  const pid=mosque.place_id;
-  const mapsUrl =`https://www.google.com/maps/place/?q=place_id:${pid}`;
-  const routeUrl=`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&destination_place_id=${pid}&travelmode=driving`;
+  const name=encodeURIComponent(mosque.name);
+  // Koordinat tabanlı URL — hem masaüstü hem mobil Google Maps'te çalışır
+  // place_id: formatı mobil uygulamada "sonuç bulunamadı" hatası veriyor
+  const mapsUrl =`https://www.google.com/maps/search/?api=1&query=${lat},${lng}&query_place_id=${mosque.place_id}`;
+  const routeUrl=`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`;
   infoWindow.setContent(`
     <div class="iw">
       <div class="iw-name">${index+1}. ${mosque.name}</div>
