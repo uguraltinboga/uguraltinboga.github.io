@@ -124,12 +124,13 @@ header{background:linear-gradient(135deg,#0d1f14,#1a3d25);padding:10px 18px;disp
   #map{order:1;flex:none;height:48dvh}
   .tabs{flex-shrink:0}
 
-  /* Her panel tabs altındaki alanı kaplar */
-  .panel{display:none;min-height:0;flex:1}
-  .panel.active{display:flex;flex-direction:column}
+  /* Temel panel kuralları — display:none korunmalı */
+  .panel{display:none;min-height:0}
+  /* Aktif panel: sidebar'ın kalan tüm yüksekliğini kaplar */
+  .panel.active{display:flex;flex:1;min-height:0}
 
-  /* YAKINIMDAKILER: qbar+phead+nctrl sabit, sadece liste kayar */
-  #panel-nearby{overflow:hidden}
+  /* YAKINIMDAKILER: flex kolonunda üst kısım sabit, liste kayar */
+  #panel-nearby{flex-direction:column;overflow:hidden}
   #panel-nearby .qbar,
   #panel-nearby .phead,
   #panel-nearby .nctrl{flex-shrink:0}
@@ -140,26 +141,16 @@ header{background:linear-gradient(135deg,#0d1f14,#1a3d25);padding:10px 18px;disp
     overscroll-behavior:contain;
   }
 
-  /* GÜZERGAH: panelin tamamı (form + başlık + liste) dikey kayar */
-  #panel-route{
-    overflow-y:scroll;
-    -webkit-overflow-scrolling:touch;
-    overscroll-behavior:contain;
-    display:block;  /* flex yerine block → içerik doğal boy boyunca akar */
-  }
-  #panel-route .pick-hint{
-    position:sticky;top:0;z-index:10;
-  }
-  /* liste mobilde akış içinde durur, kendi scroll'u yok */
+  /* GÜZERGAH: flex kolonunda tüm içerik tek scroll alanı */
+  #panel-route{flex-direction:column;overflow-y:scroll;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+  #panel-route .pick-hint{position:sticky;top:0;z-index:10;flex-shrink:0}
+  #panel-route .qbar{flex-shrink:0}
+  /* Route listesi mobilde akış içinde kalır, kendi scroll'u yok */
   #panel-route .mlist{
     overflow:visible;
     flex:none;
-    min-height:0;
+    min-height:120px;
     padding-bottom:20px;
   }
-  /* smsg (boş durum) sabit yükseklik olmadan görünür kalır */
-  #panel-route .smsg{
-    flex:none;
-    min-height:160px;
-  }
+  #panel-route .smsg{flex:none;min-height:140px}
 }
