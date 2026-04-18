@@ -326,7 +326,7 @@ function addCityMarker(pos){
 async function searchNearbyREST(lat, lng, radiusM){
   const url='https://places.googleapis.com/v1/places:searchNearby';
   const body={
-    includedTypes:['tourist_attraction','museum','art_gallery','historical_landmark','monument','cultural_landmark','church','palace','castle','national_park'],
+    includedTypes:['tourist_attraction','museum','art_gallery','historical_landmark','monument','cultural_landmark','church','castle','national_park'],
     maxResultCount:20,
     locationRestriction:{
       circle:{
