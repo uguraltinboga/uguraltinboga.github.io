@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cami Bulucu</title>
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1a472a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Cami Bulucu">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+
+<!-- Styles -->
+<link rel="stylesheet" href="css/style.min.css">
+</head>
+<body>
+
+<header>
+  <span class="logo">🕌</span>
+  <div class="htitle">
+    <h1>Cami Bulucu</h1>
+    <p>Türkiye'nin en beğenilen camileri</p>
+  </div>
+</header>
+
+<div class="main">
+<div class="sidebar">
+
+  <div class="tabs">
+    <div class="tab active" id="tab-nearby" onclick="switchTab('nearby')">Yakinimdakiler</div>
+    <div class="tab"        id="tab-route"  onclick="switchTab('route')">Guzergah</div>
+  </div>
+
+  <!-- ═══ NEARBY ═══ -->
+  <div class="panel active" id="panel-nearby">
+    <div class="qbar">
+      <span class="qlbl">Min. Puan:</span>
+      <select id="minRating" onchange="onNearbyQChange()">
+        <option value="4">4.0 yildiz</option>
+        <option value="4.5" selected>4.5 yildiz</option>
+        <option value="5">5.0 yildiz</option>
+      </select>
+      <span class="qlbl">Min. Yorum:</span>
+      <select id="minReviews" onchange="onNearbyQChange()">
+        <option value="100">100+</option>
+        <option value="500">500+</option>
+        <option value="1000" selected>1000+</option>
+      </select>
+    </div>
+    <div class="phead">
+      <h2>Yakindaki Camiler</h2>
+      <span class="badge" id="nearbyCount">0</span>
+    </div>
+    <div class="nctrl">
+      <select class="csel" id="radiusSelect" onchange="onRadiusChange()">
+        <option value="1000" selected>1 km cevre</option>
+        <option value="5000">5 km cevre</option>
+        <option value="10000">10 km cevre</option>
+        <option value="25000">25 km cevre</option>
+        <option value="50000">50 km cevre</option>
+      </select>
+      <button class="btn-loc" id="btnLocate" onclick="startNearby()">Konumumu Bul</button>
+    </div>
+    <div class="mlist" id="nearbyList">
+      <div class="smsg"><div class="ico">🕌</div><h3>Hos Geldiniz</h3><p>Konumumu Bul butonuna tiklayarak yakindaki en begenilen camileri kesfedin.</p></div>
+    </div>
+  </div>
+
+  <!-- ═══ ROUTE ═══ -->
+  <div class="panel" id="panel-route">
+    <div class="qbar">
+      <span class="qlbl">Min. Puan:</span>
+      <select id="minRatingR" onchange="onRouteQChange()">
+        <option value="4">4.0 yildiz</option>
+        <option value="4.5" selected>4.5 yildiz</option>
+        <option value="5">5.0 yildiz</option>
+      </select>
+      <span class="qlbl">Min. Yorum:</span>
+      <select id="minReviewsR" onchange="onRouteQChange()">
+        <option value="100">100+</option>
+        <option value="500">500+</option>
+        <option value="1000" selected>1000+</option>
+      </select>
+    </div>
+
+    <div class="pick-hint" id="pickHint" onclick="cancelPicking()">Haritaya tiklayin — Iptal: buraya tiklayin</div>
+
+    <div class="rform">
+      <!-- Saved routes -->
+      <div class="saved-bar">
+        <select id="savedRoutesSel"><option value="">-- Kayitli rota sec --</option></select>
+        <button class="btn-load-route" onclick="loadSavedRoute()">Yukle</button>
+        <button class="btn-del-route"  onclick="deleteSavedRoute()">Sil</button>
+      </div>
+
+      <!-- Start -->
+      <div class="rpoint">
+        <div class="rdot rdot-start"></div>
+        <input type="text" id="originInput" placeholder="Baslangic (bos: mevcut konum)">
+        <button class="btn-pick" id="pickStartBtn" onclick="startPicking('start')" title="Haritadan sec">📌</button>
+      </div>
+
+      <!-- Swap -->
+      <div style="display:flex;justify-content:center">
+        <button class="btn-swap" onclick="swapStartEnd()" title="Baslangic ve bitisi degistir">⇅</button>
+      </div>
+
+      <!-- Dynamic stops -->
+      <div id="stopsContainer"></div>
+
+      <!-- End -->
+      <div class="rpoint">
+        <div class="rdot rdot-end"></div>
+        <input type="text" id="destInput" placeholder="Varis noktasi">
+        <button class="btn-pick" id="pickEndBtn" onclick="startPicking('end')" title="Haritadan sec">📌</button>
+      </div>
+
+      <div class="rrow2">
+        <button class="btn-add-stop" onclick="addStop()">+ Durak Ekle</button>
+        <select class="corr-sel" id="corridorWidth">
+          <option value="1000" selected>Guzergaha 1 km</option>
+          <option value="5000">Guzergaha 5 km</option>
+          <option value="10000">Guzergaha 10 km</option>
+          <option value="20000">Guzergaha 20 km</option>
+        </select>
+      </div>
+
+      <div class="rbtns">
+        <button class="btn-route" id="btnRoute" onclick="startRoute()">Guzergahi Goster</button>
+        <button class="btn-save-route" onclick="saveRoute()">Kaydet</button>
+        <button class="btn-clr" onclick="clearAll()">Temizle</button>
+      </div>
+    </div>
+
+    <div class="phead">
+      <h2>Guzergahtaki Camiler</h2>
+      <span class="badge" id="routeCount">0</span>
+    </div>
+    <div class="mlist" id="routeList">
+      <div class="smsg"><div class="ico">🗺</div><h3>Guzergah Girin</h3><p>Baslangic ve varis noktasini girin ya da haritadan secin.</p></div>
+    </div>
+  </div>
+
+</div><!-- /sidebar -->
+<div id="map"></div>
+</div>
+
+<div id="toast"></div>
+
+<!-- Scripts -->
+<script src="js/main.min.js"></script>
+
+<!-- Service Worker kaydı -->
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then(reg => console.log('SW registered:', reg.scope))
+      .catch(err => console.warn('SW registration failed:', err));
+  });
+}
+</script>
+</body>
+</html>
