@@ -104,21 +104,33 @@ const MODES = {
 let currentMode = null;
 
 function selectMode(modeKey) {
+  const prev = currentMode;
   currentMode = MODES[modeKey];
   applyTheme(currentMode);
-  document.getElementById('landing').style.display = 'none';
-  document.getElementById('app').classList.remove('hidden');
-  // Harita henüz yüklü değilse başlat
+
+  // Mod butonlarını güncelle
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById('modeBtn-' + modeKey);
+  if (btn) btn.classList.add('active');
+
+  // Welcome → mainContent geçişi (ilk açılışta)
+  const welcome = document.getElementById('welcomePanel');
+  const main    = document.getElementById('mainContent');
+  if (welcome) welcome.style.display = 'none';
+  if (main)    main.classList.remove('hidden');
+
   if (!mapLoaded) {
     initMap(ANKARA).then(() => {
       addCityMarker(ANKARA);
       loadSavedRoutesUI();
     }).catch(e => console.error(e));
   } else {
-    // Mod değişti, cache ve state temizle
-    hardClearAll();
+    // Mod gerçekten değiştiyse state temizle
+    if (prev && prev.key !== modeKey) {
+      hardClearAll();
+      updateCityMarker();
+    }
     loadSavedRoutesUI();
-    updateCityMarker();
   }
 }
 
@@ -136,11 +148,8 @@ function applyTheme(mode) {
   document.title = mode.title;
 }
 
-function goBack() {
-  hardClearAll();
-  document.getElementById('app').classList.add('hidden');
-  document.getElementById('landing').style.display = '';
-}
+// V4'te goBack yok — boş stub (HTML'de kullanılmıyor)
+function goBack() {}
 
 // ════════════════════════════════════════════════════
 //  STATE
