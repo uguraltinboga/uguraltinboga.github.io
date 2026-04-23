@@ -2,7 +2,7 @@
 //  CONFIG — API Key'i Google Cloud Console'dan alın
 //  HTTP Referrer kısıtlaması: https://KULLANICIADINIZ.github.io/*
 // ════════════════════════════════════════════════════
-const GOOGLE_API_KEY = 'BURAYA_API_ANAHTARINIZI_GIRIN';
+const GOOGLE_API_KEY = 'AIzaSyBX7V7hh7sYh3SiZQAmV0NB7KfQ_y9IwR8';
 const ANKARA = { lat:39.9334, lng:32.8597 };
 const MAX_SAVED = 5;
 
@@ -22,8 +22,8 @@ let pickDotMarkers = {};
 let nearbyRawAll   = [];
 let nearbyFetched  = { radius: 0, center: null };
 let routeRawAll    = [];
-let nearbyMosques  = [];
-let routeMosques   = [];
+let nearbyPlaces  = [];
+let routePlaces   = [];
 
 let lastRoutePath  = null;
 const placeCache   = new Map();
@@ -55,8 +55,8 @@ function passQ(p,minR,minRev){return(p.rating||0)>=minR&&(p.user_ratings_total||
 // ════════════════════════════════════════════════════
 //  SESSION CACHE
 // ════════════════════════════════════════════════════
-const CACHE_KEY_NEARBY  = 'camiNearbyCache';
-const CACHE_KEY_CORRIDOR= 'camiCorridorCache';
+const CACHE_KEY_NEARBY  = 'kulturNearbyCache';
+const CACHE_KEY_CORRIDOR= 'kulturCorridorCache';
 
 function placeToJSON(p){
   return {
@@ -154,7 +154,7 @@ async function initMap(center){
   AdvancedMarkerElement = google.maps.marker.AdvancedMarkerElement;
   map=new google.maps.Map(document.getElementById('map'),{
     center, zoom:12,
-    mapId:'cami-bulucu-v2',
+    mapId:'kultur-bulucu-v1',
     mapTypeControl:false,
     streetViewControl:false,
     fullscreenControl:true,
@@ -317,7 +317,7 @@ window.addEventListener('load',async()=>{
 });
 
 function addCityMarker(pos){
-  new google.maps.Circle({map,center:pos,radius:500,fillColor:'#52b788',fillOpacity:.12,strokeColor:'#52b788',strokeOpacity:.3,strokeWeight:1});
+  new google.maps.Circle({map,center:pos,radius:500,fillColor:'#9b59b6',fillOpacity:.12,strokeColor:'#9b59b6',strokeOpacity:.3,strokeWeight:1});
 }
 
 // ════════════════════════════════════════════════════
@@ -326,7 +326,7 @@ function addCityMarker(pos){
 async function searchNearbyREST(lat, lng, radiusM){
   const url='https://places.googleapis.com/v1/places:searchNearby';
   const body={
-    includedTypes:['mosque'],
+    includedTypes:['tourist_attraction','museum','art_gallery','historical_landmark','monument','cultural_landmark','church','castle','national_park'],
     maxResultCount:20,
     locationRestriction:{
       circle:{
@@ -395,7 +395,7 @@ async function startNearby(){
     if(!mapLoaded)await initMap(ANKARA);
     clearAllMarkers();
     if(routePolyline){routePolyline.setMap(null);routePolyline=null;}
-    routeRawAll=[]; routeMosques=[];
+    routeRawAll=[]; routePlaces=[];
     document.getElementById('routeCount').textContent='0';
     document.getElementById('routeList').innerHTML=`<div class="smsg"><div class="ico">🗺</div><h3>Guzergah Girin</h3><p>Baslangic ve varis noktasini girin ya da haritadan secin.</p></div>`;
 
@@ -460,7 +460,7 @@ function finalizeNearby(all, radius, center){
   clearMarkerArr(nearbyMarkers);
   const {minR,minRev}=getNQ();
   const centerLL = center ? new google.maps.LatLng(center.lat,center.lng) : null;
-  nearbyMosques = all.filter(p=>{
+  nearbyPlaces = all.filter(p=>{
     if(!passQ(p,minR,minRev))return false;
     if(centerLL && p._latLng){
       const pLL = typeof p._latLng.lat==='function'
@@ -472,13 +472,13 @@ function finalizeNearby(all, radius, center){
     return true;
   }).sort((a,b)=>popScore(b)-popScore(a)).slice(0,20);
 
-  document.getElementById('nearbyCount').textContent=nearbyMosques.length;
-  if(!nearbyMosques.length){
-    showEmpty('nearbyList',`${minR}+ yildiz ve ${fmt(minRev)}+ yorumlu cami bulunamadi.`);
+  document.getElementById('nearbyCount').textContent=nearbyPlaces.length;
+  if(!nearbyPlaces.length){
+    showEmpty('nearbyList',`${minR}+ yildiz ve ${fmt(minRev)}+ yorumlu mekan bulunamadi.`);
     return;
   }
-  renderList('nearbyList',nearbyMosques,'nearby');
-  nearbyMosques.forEach((m,i)=>nearbyMarkers.push(makeMosqueMarker(m,i,'nearby')));
+  renderList('nearbyList',nearbyPlaces,'nearby');
+  nearbyPlaces.forEach((m,i)=>nearbyMarkers.push(makeMosqueMarker(m,i,'nearby')));
 }
 
 function onNearbyQChange(){
@@ -539,7 +539,7 @@ function drawRoutePolyline(path){
   if(routePolyline)routePolyline.setMap(null);
   routePolyline=new google.maps.Polyline({
     path, map,
-    strokeColor:'#c9a84c',
+    strokeColor:'#8e44ad',
     strokeWeight:5,
     strokeOpacity:.85,
   });
@@ -671,18 +671,18 @@ async function searchCorridor(path, originLL, destLL){
 function applyRouteFilter(){
   clearMarkerArr(routeMarkers);
   const{minR,minRev}=getRQ();
-  routeMosques=routeRawAll
+  routePlaces=routeRawAll
     .filter(m=>passQ(m,minR,minRev))
     .sort((a,b)=>popScore(b)-popScore(a))
     .slice(0,40);
 
-  document.getElementById('routeCount').textContent=routeMosques.length;
-  if(!routeMosques.length){
+  document.getElementById('routeCount').textContent=routePlaces.length;
+  if(!routePlaces.length){
     showEmpty('routeList',`${minR}+ yildiz ve ${fmt(minRev)}+ yorumlu cami bulunamadi. Filtre veya koridor mesafesini degistirin.`);
     return;
   }
-  renderList('routeList',routeMosques,'route');
-  routeMosques.forEach((m,i)=>routeMarkers.push(makeMosqueMarker(m,i,'route')));
+  renderList('routeList',routePlaces,'route');
+  routePlaces.forEach((m,i)=>routeMarkers.push(makeMosqueMarker(m,i,'route')));
 }
 
 function onRouteQChange(){if(routeRawAll.length)applyRouteFilter()}
@@ -693,7 +693,7 @@ function onRouteQChange(){if(routeRawAll.length)applyRouteFilter()}
 function clearAll(){
   if(routePolyline){routePolyline.setMap(null);routePolyline=null}
   clearAllMarkers();
-  nearbyMosques=[]; routeMosques=[];
+  nearbyPlaces=[]; routePlaces=[];
   nearbyRawAll=[]; routeRawAll=[];
   nearbyFetched={radius:0,center:null};
   lastRoutePath=null;
@@ -717,9 +717,9 @@ function clearAll(){
 //  SAVED ROUTES
 // ════════════════════════════════════════════════════
 function getSavedRoutes(){
-  try{return JSON.parse(localStorage.getItem('camiRoutes')||'[]')}catch{return[]}
+  try{return JSON.parse(localStorage.getItem('kulturRoutes')||'[]')}catch{return[]}
 }
-function setSavedRoutes(arr){localStorage.setItem('camiRoutes',JSON.stringify(arr))}
+function setSavedRoutes(arr){localStorage.setItem('kulturRoutes',JSON.stringify(arr))}
 
 function loadSavedRoutesUI(){
   const sel=document.getElementById('savedRoutesSel');
@@ -800,13 +800,13 @@ function placeUserPin(loc){
   const el=document.createElement('div');
   el.style.cssText=`width:14px;height:14px;border-radius:50%;background:#2d6a4f;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.4)`;
   _userPinMarker=new AdvancedMarkerElement({position:loc,map,content:el,title:'Konumunuz'});
-  _userPinCircle=new google.maps.Circle({map,center:loc,radius:120,fillColor:'#52b788',fillOpacity:.15,strokeColor:'#52b788',strokeOpacity:.4,strokeWeight:1});
+  _userPinCircle=new google.maps.Circle({map,center:loc,radius:120,fillColor:'#9b59b6',fillOpacity:.15,strokeColor:'#9b59b6',strokeOpacity:.4,strokeWeight:1});
 }
 
 function makeMosqueMarker(mosque, index, type){
   const {lat,lng}=getLatLng(mosque);
   if(!lat&&!lng)return null;
-  const m=makeAdvMarker({lat,lng},'#1565c0',1.0,mosque.name);
+  const m=makeAdvMarker({lat,lng},'#6c3483',1.0,mosque.name);
   m.addListener('gmp-click',()=>openInfo(mosque,m,index,type));
   return m;
 }
@@ -859,7 +859,7 @@ function renderList(listId, mosques, type){
 }
 
 function selectMosque(index, type){
-  const list=type==='nearby'?nearbyMosques:routeMosques;
+  const list=type==='nearby'?nearbyPlaces:routePlaces;
   const pins=type==='nearby'?nearbyMarkers:routeMarkers;
   const m=list[index];if(!m)return;
   const {lat,lng}=getLatLng(m);
@@ -876,7 +876,7 @@ function highlightCard(index, type){
 // ════════════════════════════════════════════════════
 //  STATE UI
 // ════════════════════════════════════════════════════
-function showLoading(id){document.getElementById(id).innerHTML=`<div class="smsg">${spin(30)}<h3>Araniyor...</h3><p>Kaliteli camiler filtreleniyor...</p></div>`}
+function showLoading(id){document.getElementById(id).innerHTML=`<div class="smsg">${spin(30)}<h3>Araniyor...</h3><p>Kültürel mekanlar aranıyor...</p></div>`}
 function showEmpty(id,msg){document.getElementById(id).innerHTML=`<div class="smsg"><div class="ico">&#128269;</div><h3>Sonuc Bulunamadi</h3><p>${msg}</p></div>`}
 
 // ════════════════════════════════════════════════════

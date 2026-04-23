@@ -2,7 +2,7 @@
 //  CONFIG — API Key'i Google Cloud Console'dan alın
 //  HTTP Referrer kısıtlaması: https://KULLANICIADINIZ.github.io/*
 // ════════════════════════════════════════════════════
-const GOOGLE_API_KEY = 'BURAYA_API_ANAHTARINIZI_GIRIN';
+const GOOGLE_API_KEY = 'AIzaSyBX7V7hh7sYh3SiZQAmV0NB7KfQ_y9IwR8';
 const ANKARA = { lat:39.9334, lng:32.8597 };
 const MAX_SAVED = 5;
 
@@ -55,8 +55,8 @@ function passQ(p,minR,minRev){return(p.rating||0)>=minR&&(p.user_ratings_total||
 // ════════════════════════════════════════════════════
 //  SESSION CACHE
 // ════════════════════════════════════════════════════
-const CACHE_KEY_NEARBY  = 'camiNearbyCache';
-const CACHE_KEY_CORRIDOR= 'camiCorridorCache';
+const CACHE_KEY_NEARBY  = 'yemeIcmeNearbyCache';
+const CACHE_KEY_CORRIDOR= 'yemeIcmeCorridorCache';
 
 function placeToJSON(p){
   return {
@@ -154,7 +154,7 @@ async function initMap(center){
   AdvancedMarkerElement = google.maps.marker.AdvancedMarkerElement;
   map=new google.maps.Map(document.getElementById('map'),{
     center, zoom:12,
-    mapId:'cami-bulucu-v2',
+    mapId:'yeme-ice-bulucu-v1',
     mapTypeControl:false,
     streetViewControl:false,
     fullscreenControl:true,
@@ -317,7 +317,7 @@ window.addEventListener('load',async()=>{
 });
 
 function addCityMarker(pos){
-  new google.maps.Circle({map,center:pos,radius:500,fillColor:'#52b788',fillOpacity:.12,strokeColor:'#52b788',strokeOpacity:.3,strokeWeight:1});
+  new google.maps.Circle({map,center:pos,radius:500,fillColor:'#e67e22',fillOpacity:.12,strokeColor:'#e67e22',strokeOpacity:.3,strokeWeight:1});
 }
 
 // ════════════════════════════════════════════════════
@@ -326,7 +326,7 @@ function addCityMarker(pos){
 async function searchNearbyREST(lat, lng, radiusM){
   const url='https://places.googleapis.com/v1/places:searchNearby';
   const body={
-    includedTypes:['mosque'],
+    includedTypes:['restaurant','cafe','bar','fast_food_restaurant','bakery'],
     maxResultCount:20,
     locationRestriction:{
       circle:{
@@ -474,7 +474,7 @@ function finalizeNearby(all, radius, center){
 
   document.getElementById('nearbyCount').textContent=nearbyMosques.length;
   if(!nearbyMosques.length){
-    showEmpty('nearbyList',`${minR}+ yildiz ve ${fmt(minRev)}+ yorumlu cami bulunamadi.`);
+    showEmpty('nearbyList',`${minR}+ yildiz ve ${fmt(minRev)}+ yorumlu mekan bulunamadi.`);
     return;
   }
   renderList('nearbyList',nearbyMosques,'nearby');
@@ -539,7 +539,7 @@ function drawRoutePolyline(path){
   if(routePolyline)routePolyline.setMap(null);
   routePolyline=new google.maps.Polyline({
     path, map,
-    strokeColor:'#c9a84c',
+    strokeColor:'#e67e22',
     strokeWeight:5,
     strokeOpacity:.85,
   });
@@ -627,7 +627,7 @@ async function searchCorridor(path, originLL, destLL){
   if(cached){
     routeRawAll = cached;
     applyRouteFilter();
-    toast('Guzergah camileri onceki aramadan yuklendi (cache).');
+    toast('Guzergah mekanlari onceki aramadan yuklendi (cache).');
     return;
   }
 
@@ -678,7 +678,7 @@ function applyRouteFilter(){
 
   document.getElementById('routeCount').textContent=routeMosques.length;
   if(!routeMosques.length){
-    showEmpty('routeList',`${minR}+ yildiz ve ${fmt(minRev)}+ yorumlu cami bulunamadi. Filtre veya koridor mesafesini degistirin.`);
+    showEmpty('routeList',`${minR}+ yildiz ve ${fmt(minRev)}+ yorumlu mekan bulunamadi. Filtre veya koridor mesafesini degistirin.`);
     return;
   }
   renderList('routeList',routeMosques,'route');
@@ -717,9 +717,9 @@ function clearAll(){
 //  SAVED ROUTES
 // ════════════════════════════════════════════════════
 function getSavedRoutes(){
-  try{return JSON.parse(localStorage.getItem('camiRoutes')||'[]')}catch{return[]}
+  try{return JSON.parse(localStorage.getItem('yemeIcmeRoutes')||'[]')}catch{return[]}
 }
-function setSavedRoutes(arr){localStorage.setItem('camiRoutes',JSON.stringify(arr))}
+function setSavedRoutes(arr){localStorage.setItem('yemeIcmeRoutes',JSON.stringify(arr))}
 
 function loadSavedRoutesUI(){
   const sel=document.getElementById('savedRoutesSel');
@@ -800,13 +800,13 @@ function placeUserPin(loc){
   const el=document.createElement('div');
   el.style.cssText=`width:14px;height:14px;border-radius:50%;background:#2d6a4f;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.4)`;
   _userPinMarker=new AdvancedMarkerElement({position:loc,map,content:el,title:'Konumunuz'});
-  _userPinCircle=new google.maps.Circle({map,center:loc,radius:120,fillColor:'#52b788',fillOpacity:.15,strokeColor:'#52b788',strokeOpacity:.4,strokeWeight:1});
+  _userPinCircle=new google.maps.Circle({map,center:loc,radius:120,fillColor:'#e67e22',fillOpacity:.15,strokeColor:'#e67e22',strokeOpacity:.4,strokeWeight:1});
 }
 
 function makeMosqueMarker(mosque, index, type){
   const {lat,lng}=getLatLng(mosque);
   if(!lat&&!lng)return null;
-  const m=makeAdvMarker({lat,lng},'#1565c0',1.0,mosque.name);
+  const m=makeAdvMarker({lat,lng},'#e53935',1.0,mosque.name);
   m.addListener('gmp-click',()=>openInfo(mosque,m,index,type));
   return m;
 }
@@ -876,7 +876,7 @@ function highlightCard(index, type){
 // ════════════════════════════════════════════════════
 //  STATE UI
 // ════════════════════════════════════════════════════
-function showLoading(id){document.getElementById(id).innerHTML=`<div class="smsg">${spin(30)}<h3>Araniyor...</h3><p>Kaliteli camiler filtreleniyor...</p></div>`}
+function showLoading(id){document.getElementById(id).innerHTML=`<div class="smsg">${spin(30)}<h3>Araniyor...</h3><p>Kaliteli mekanlar filtreleniyor...</p></div>`}
 function showEmpty(id,msg){document.getElementById(id).innerHTML=`<div class="smsg"><div class="ico">&#128269;</div><h3>Sonuc Bulunamadi</h3><p>${msg}</p></div>`}
 
 // ════════════════════════════════════════════════════
