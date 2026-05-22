@@ -1,0 +1,1785 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AMİRAL BATTI — Deniz Savaşı</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+<style>
+:root {
+  --navy-deepest: #020b18;
+  --navy-deep: #041428;
+  --navy-mid: #062040;
+  --navy-light: #0a3060;
+  --ocean-blue: #0d4f8c;
+  --sea-bright: #1a7fd4;
+  --foam: #4db8e8;
+  --gold: #c9a84c;
+  --gold-bright: #f0c060;
+  --gold-glow: #ffe08a;
+  --red-hit: #e63946;
+  --red-glow: #ff6b7a;
+  --miss-color: #4a7a9b;
+  --ship-color: #2a5f8f;
+  --ship-border: #4db8e8;
+  --green-ready: #2ecc71;
+  --text-bright: #e8f4fd;
+  --text-dim: #7aadcc;
+  --grid-line: rgba(77,184,232,0.15);
+  --grid-hover: rgba(77,184,232,0.3);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: var(--navy-deepest);
+  color: var(--text-bright);
+  font-family: 'Cinzel', serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* ── OCEAN BACKGROUND ── */
+.ocean-bg {
+  position: fixed; inset: 0; z-index: 0; overflow: hidden;
+  background: radial-gradient(ellipse at 50% 0%, #0a2a4a 0%, #020b18 70%);
+}
+.wave-layer {
+  position: absolute; bottom: 0; left: -50%; width: 200%; height: 300px;
+  border-radius: 43%;
+  animation: waveRoll linear infinite;
+  opacity: 0.04;
+}
+.wave-layer:nth-child(1) { background: var(--sea-bright); animation-duration: 18s; height:280px; }
+.wave-layer:nth-child(2) { background: var(--foam); animation-duration: 24s; animation-delay:-8s; height:220px; opacity:0.03; }
+.wave-layer:nth-child(3) { background: var(--ocean-blue); animation-duration: 30s; animation-delay:-15s; height:320px; opacity:0.05; }
+@keyframes waveRoll { 0%{transform:rotate(0deg) translateY(0)} 100%{transform:rotate(360deg) translateY(-20px)} }
+
+.star-field {
+  position: absolute; inset: 0;
+  background-image:
+    radial-gradient(1px 1px at 10% 15%, rgba(255,255,255,0.4) 0%, transparent 100%),
+    radial-gradient(1px 1px at 30% 8%, rgba(255,255,255,0.3) 0%, transparent 100%),
+    radial-gradient(1px 1px at 55% 20%, rgba(255,255,255,0.5) 0%, transparent 100%),
+    radial-gradient(1px 1px at 75% 5%, rgba(255,255,255,0.3) 0%, transparent 100%),
+    radial-gradient(1px 1px at 90% 18%, rgba(255,255,255,0.4) 0%, transparent 100%),
+    radial-gradient(1px 1px at 20% 35%, rgba(200,220,255,0.2) 0%, transparent 100%),
+    radial-gradient(1px 1px at 65% 12%, rgba(200,220,255,0.3) 0%, transparent 100%),
+    radial-gradient(2px 2px at 45% 3%, rgba(255,255,255,0.6) 0%, transparent 100%);
+}
+
+/* ── LAYOUT ── */
+#app { position: relative; z-index: 1; min-height: 100vh; }
+
+/* ── SCREENS ── */
+.screen { display:none; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; padding:20px; }
+.screen.active { display:flex; }
+
+/* ── LOBBY SCREEN ── */
+#screen-lobby { gap: 40px; }
+
+.title-block { text-align:center; }
+.title-anchor {
+  font-family: 'Cinzel Decorative', cursive;
+  font-size: clamp(2rem, 6vw, 4.5rem);
+  font-weight: 900;
+  color: var(--gold-bright);
+  text-shadow: 0 0 40px rgba(201,168,76,0.8), 0 0 80px rgba(201,168,76,0.4), 0 4px 20px #000;
+  letter-spacing: 4px;
+  line-height: 1.1;
+  animation: titlePulse 4s ease-in-out infinite;
+}
+@keyframes titlePulse {
+  0%,100% { text-shadow: 0 0 40px rgba(201,168,76,0.8), 0 0 80px rgba(201,168,76,0.4), 0 4px 20px #000; }
+  50% { text-shadow: 0 0 60px rgba(201,168,76,1), 0 0 120px rgba(201,168,76,0.6), 0 4px 20px #000; }
+}
+.title-sub {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: clamp(0.7rem, 2vw, 1rem);
+  color: var(--foam);
+  letter-spacing: 8px;
+  margin-top: 10px;
+  opacity: 0.7;
+}
+
+.divider {
+  width: 300px; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  margin: 0 auto;
+}
+
+/* Cards */
+.lobby-cards {
+  display: flex; gap: 24px; flex-wrap: wrap; justify-content: center; width: 100%; max-width: 800px;
+}
+.lobby-card {
+  background: linear-gradient(135deg, rgba(10,48,96,0.8), rgba(4,20,40,0.9));
+  border: 1px solid rgba(77,184,232,0.25);
+  border-radius: 16px;
+  padding: 32px 28px;
+  flex: 1; min-width: 280px; max-width: 340px;
+  text-align: center;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(77,184,232,0.1);
+  transition: transform 0.3s, box-shadow 0.3s;
+  position: relative; overflow: hidden;
+}
+.lobby-card::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:2px;
+  background: linear-gradient(90deg, transparent, var(--foam), transparent);
+  opacity: 0.5;
+}
+.lobby-card:hover { transform: translateY(-4px); box-shadow: 0 16px 60px rgba(0,0,0,0.7), 0 0 30px rgba(77,184,232,0.1); }
+.card-icon { font-size: 3rem; margin-bottom: 12px; }
+.card-title { font-family:'Cinzel',serif; font-size:1.1rem; font-weight:700; color:var(--gold-bright); margin-bottom:8px; letter-spacing:2px; }
+.card-desc { font-family:'Share Tech Mono',monospace; font-size:0.78rem; color:var(--text-dim); margin-bottom:20px; line-height:1.6; }
+
+/* Buttons */
+.btn {
+  display: inline-flex; align-items:center; justify-content:center; gap:8px;
+  padding: 12px 28px; border:none; border-radius: 8px; cursor: pointer;
+  font-family: 'Cinzel', serif; font-weight: 700; font-size: 0.9rem;
+  letter-spacing: 2px; text-transform: uppercase;
+  transition: all 0.2s; position: relative; overflow: hidden;
+}
+.btn::after { content:''; position:absolute; inset:0; background:white; opacity:0; transition:opacity 0.2s; }
+.btn:hover::after { opacity:0.05; }
+.btn:active { transform:scale(0.97); }
+.btn-primary {
+  background: linear-gradient(135deg, var(--gold), #a07830);
+  color: var(--navy-deepest);
+  box-shadow: 0 4px 20px rgba(201,168,76,0.4), 0 0 40px rgba(201,168,76,0.1);
+}
+.btn-primary:hover { box-shadow: 0 6px 30px rgba(201,168,76,0.6), 0 0 60px rgba(201,168,76,0.2); }
+.btn-secondary {
+  background: rgba(10,48,96,0.8);
+  color: var(--foam);
+  border: 1px solid rgba(77,184,232,0.4);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+.btn-secondary:hover { border-color: var(--foam); background: rgba(26,127,212,0.2); }
+.btn-danger {
+  background: linear-gradient(135deg, #8b1a1a, #5c0f0f);
+  color: #ffaaaa;
+  border: 1px solid rgba(230,57,70,0.4);
+}
+.btn-sm { padding: 8px 16px; font-size: 0.78rem; }
+.btn-full { width: 100%; }
+.btn-icon { font-size:1.1rem; }
+
+/* Input */
+.input-group { display:flex; flex-direction:column; gap:6px; width:100%; }
+.input-label { font-family:'Share Tech Mono',monospace; font-size:0.72rem; color:var(--text-dim); letter-spacing:3px; text-transform:uppercase; }
+.input-field {
+  background: rgba(2,11,24,0.8);
+  border: 1px solid rgba(77,184,232,0.3);
+  border-radius: 8px;
+  padding: 12px 16px;
+  color: var(--foam);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  width: 100%;
+}
+.input-field:focus { border-color: var(--foam); box-shadow: 0 0 20px rgba(77,184,232,0.2); }
+.input-field::placeholder { color: rgba(77,184,232,0.3); }
+
+/* Peer ID display */
+.peer-id-box {
+  background: rgba(2,11,24,0.9);
+  border: 1px solid rgba(201,168,76,0.4);
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.85rem;
+  color: var(--gold-bright);
+  word-break: break-all;
+  cursor: pointer;
+  transition: border-color 0.2s;
+  text-align:center;
+}
+.peer-id-box:hover { border-color: var(--gold-bright); }
+.peer-id-hint { font-family:'Share Tech Mono',monospace; font-size:0.7rem; color:var(--text-dim); margin-top:6px; text-align:center; }
+
+/* ── PLACEMENT SCREEN ── */
+#screen-place { gap: 24px; }
+.place-header { text-align:center; }
+.place-title { font-family:'Cinzel Decorative',cursive; font-size:clamp(1.2rem,3vw,2rem); color:var(--gold-bright); letter-spacing:3px; }
+.place-sub { font-family:'Share Tech Mono',monospace; font-size:0.8rem; color:var(--foam); margin-top:6px; letter-spacing:2px; }
+
+.place-layout { display:flex; gap:32px; align-items:flex-start; flex-wrap:wrap; justify-content:center; width:100%; max-width:900px; }
+
+.ship-list { display:flex; flex-direction:column; gap:8px; min-width:220px; }
+.ship-list-title { font-family:'Share Tech Mono',monospace; font-size:0.72rem; color:var(--text-dim); letter-spacing:3px; margin-bottom:4px; }
+.ship-item {
+  display:flex; align-items:center; gap:10px;
+  background: rgba(10,48,96,0.5); border:1px solid rgba(77,184,232,0.2);
+  border-radius:8px; padding:10px 14px; cursor:pointer;
+  transition: all 0.2s; position:relative;
+}
+.ship-item:hover:not(.placed):not(.selected) { border-color:rgba(77,184,232,0.5); background:rgba(26,127,212,0.2); }
+.ship-item.selected { border-color:var(--gold-bright); background:rgba(201,168,76,0.15); box-shadow:0 0 15px rgba(201,168,76,0.2); }
+.ship-item.placed { opacity:0.4; cursor:default; }
+.ship-item.placed::after { content:'✓'; position:absolute; right:12px; color:var(--green-ready); font-size:1rem; }
+.ship-cells { display:flex; gap:3px; }
+.ship-cell-prev {
+  width:16px; height:16px; border-radius:3px;
+  background: linear-gradient(135deg, var(--ship-color), #1a4f7a);
+  border:1px solid var(--ship-border);
+}
+.ship-name { font-family:'Cinzel',serif; font-size:0.82rem; color:var(--text-bright); font-weight:600; }
+.ship-size { font-family:'Share Tech Mono',monospace; font-size:0.7rem; color:var(--text-dim); }
+
+.place-controls { display:flex; gap:10px; flex-direction:column; }
+.rotate-btn-wrapper { display:flex; gap:8px; }
+
+/* ── GRID ── */
+.grid-wrap { display:flex; flex-direction:column; align-items:center; gap:10px; }
+.grid-label { font-family:'Share Tech Mono',monospace; font-size:0.72rem; color:var(--text-dim); letter-spacing:3px; }
+
+.grid-container { position:relative; }
+.grid-letters { display:flex; gap:0; margin-left:28px; margin-bottom:2px; }
+.grid-letter { width:40px; height:16px; text-align:center; font-family:'Share Tech Mono',monospace; font-size:0.65rem; color:var(--text-dim); }
+.grid-rows { display:flex; flex-direction:column; gap:0; }
+.grid-row { display:flex; align-items:center; gap:0; }
+.grid-row-num { width:28px; text-align:right; padding-right:6px; font-family:'Share Tech Mono',monospace; font-size:0.65rem; color:var(--text-dim); }
+
+.cell {
+  width:40px; height:40px;
+  border:1px solid var(--grid-line);
+  cursor:pointer; position:relative; overflow:hidden;
+  transition: background 0.15s, border-color 0.15s;
+  display:flex; align-items:center; justify-content:center;
+}
+.cell::before {
+  content:''; position:absolute; inset:0;
+  background: rgba(77,184,232,0.04);
+  background-image: linear-gradient(rgba(77,184,232,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(77,184,232,0.03) 1px, transparent 1px);
+}
+.cell:hover { border-color:rgba(77,184,232,0.5); background:var(--grid-hover); }
+.cell.ship { background:linear-gradient(135deg,rgba(42,95,143,0.8),rgba(26,79,122,0.9)); border-color:rgba(77,184,232,0.5); }
+.cell.ship-preview { background:rgba(201,168,76,0.25); border-color:rgba(201,168,76,0.6); }
+.cell.ship-preview-invalid { background:rgba(230,57,70,0.25); border-color:rgba(230,57,70,0.6); }
+.cell.hit {
+  background:radial-gradient(circle, rgba(230,57,70,0.9) 0%, rgba(140,20,20,0.8) 100%);
+  border-color: var(--red-hit);
+  animation: hitFlash 0.4s ease-out;
+}
+.cell.hit::after { content:'✕'; color:#ffaaaa; font-size:1.2rem; font-weight:700; position:absolute; }
+.cell.miss {
+  background:rgba(74,122,155,0.3);
+  border-color:rgba(77,184,232,0.3);
+}
+.cell.miss::after { content:'·'; color:var(--foam); font-size:1.8rem; position:absolute; line-height:1; }
+.cell.sunk { background:radial-gradient(circle,rgba(180,30,30,0.9),rgba(80,10,10,0.9)); border-color:#8b0000; }
+.cell.sunk::after { content:'💥'; font-size:1rem; position:absolute; }
+@keyframes hitFlash { 0%{box-shadow:0 0 30px rgba(230,57,70,1)} 100%{box-shadow:none} }
+
+/* ── GAME SCREEN ── */
+#screen-game { gap:20px; padding:16px; }
+.game-header { display:flex; align-items:center; justify-content:space-between; width:100%; max-width:1100px; flex-wrap:wrap; gap:12px; }
+.game-title-sm { font-family:'Cinzel Decorative',cursive; font-size:1.1rem; color:var(--gold); letter-spacing:2px; }
+
+.status-bar {
+  display:flex; align-items:center; gap:12px;
+  background:rgba(4,20,40,0.8); border:1px solid rgba(77,184,232,0.2);
+  border-radius:10px; padding:10px 20px;
+  font-family:'Share Tech Mono',monospace; font-size:0.82rem;
+  backdrop-filter:blur(8px);
+}
+.status-dot { width:10px; height:10px; border-radius:50%; animation: pulse 1.5s ease-in-out infinite; }
+.status-dot.my-turn { background:var(--green-ready); box-shadow:0 0 10px var(--green-ready); }
+.status-dot.wait { background:var(--gold); box-shadow:0 0 10px var(--gold); }
+.status-dot.idle { background:var(--text-dim); animation:none; }
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.8)} }
+.status-text { color:var(--text-bright); }
+
+.boards-layout { display:flex; gap:32px; flex-wrap:wrap; justify-content:center; width:100%; max-width:1100px; }
+.board-section { display:flex; flex-direction:column; gap:10px; align-items:center; }
+.board-label-row { display:flex; align-items:center; gap:12px; }
+.board-name { font-family:'Cinzel',serif; font-size:0.9rem; font-weight:700; letter-spacing:2px; }
+.board-name.mine { color:var(--foam); }
+.board-name.enemy { color:var(--gold-bright); }
+.ships-remaining {
+  font-family:'Share Tech Mono',monospace; font-size:0.72rem; color:var(--text-dim);
+  background:rgba(4,20,40,0.6); border:1px solid rgba(77,184,232,0.15); border-radius:6px;
+  padding:3px 10px;
+}
+
+/* Attack overlay */
+.attack-grid .cell:hover {
+  background: rgba(230,57,70,0.2);
+  border-color: rgba(230,57,70,0.6);
+  cursor: crosshair;
+}
+.attack-grid.disabled .cell { cursor:not-allowed; pointer-events:none; }
+
+/* ── LOG PANEL ── */
+.log-panel {
+  width:100%; max-width:400px;
+  background:rgba(4,20,40,0.85); border:1px solid rgba(77,184,232,0.15);
+  border-radius:12px; overflow:hidden; backdrop-filter:blur(8px);
+}
+.log-header { padding:10px 16px; border-bottom:1px solid rgba(77,184,232,0.1); font-family:'Share Tech Mono',monospace; font-size:0.7rem; color:var(--text-dim); letter-spacing:3px; }
+.log-entries { height:200px; overflow-y:auto; padding:10px 16px; display:flex; flex-direction:column; gap:4px; }
+.log-entries::-webkit-scrollbar { width:4px; }
+.log-entries::-webkit-scrollbar-thumb { background:rgba(77,184,232,0.3); border-radius:2px; }
+.log-entry { font-family:'Share Tech Mono',monospace; font-size:0.75rem; line-height:1.4; }
+.log-entry.hit { color:var(--red-glow); }
+.log-entry.miss { color:var(--text-dim); }
+.log-entry.sunk { color:var(--gold-bright); font-weight:700; }
+.log-entry.system { color:var(--foam); opacity:0.7; }
+.log-entry.my-hit { color:#7aff9e; }
+
+/* ── SCOREBOARD ── */
+.score-strip {
+  display:flex; gap:16px; width:100%; max-width:1100px; flex-wrap:wrap; justify-content:center;
+}
+.score-card {
+  flex:1; min-width:160px; max-width:220px;
+  background:rgba(4,20,40,0.7); border:1px solid rgba(77,184,232,0.15);
+  border-radius:10px; padding:12px 16px; text-align:center;
+  backdrop-filter:blur(8px);
+}
+.score-card-label { font-family:'Share Tech Mono',monospace; font-size:0.65rem; color:var(--text-dim); letter-spacing:3px; margin-bottom:4px; }
+.score-card-val { font-family:'Cinzel Decorative',cursive; font-size:1.4rem; color:var(--gold-bright); }
+.score-card-val.secondary { color:var(--foam); font-size:1.1rem; }
+
+/* ── RESULT SCREEN ── */
+#screen-result { gap:32px; }
+.result-title { font-family:'Cinzel Decorative',cursive; font-size:clamp(2rem,5vw,3.5rem); letter-spacing:4px; animation:resultGlow 2s ease-in-out infinite; }
+.result-title.win { color:var(--gold-bright); text-shadow:0 0 40px rgba(201,168,76,0.8), 0 0 80px rgba(201,168,76,0.4); }
+.result-title.lose { color:var(--red-glow); text-shadow:0 0 40px rgba(230,57,70,0.8), 0 0 80px rgba(230,57,70,0.4); }
+@keyframes resultGlow { 0%,100%{filter:brightness(1)} 50%{filter:brightness(1.3)} }
+
+.result-stats {
+  display:flex; gap:20px; flex-wrap:wrap; justify-content:center;
+}
+.stat-box {
+  background:rgba(10,48,96,0.5); border:1px solid rgba(77,184,232,0.2);
+  border-radius:12px; padding:20px 28px; text-align:center; min-width:140px;
+}
+.stat-val { font-family:'Cinzel Decorative',cursive; font-size:2rem; color:var(--foam); }
+.stat-label { font-family:'Share Tech Mono',monospace; font-size:0.7rem; color:var(--text-dim); letter-spacing:2px; margin-top:4px; }
+
+/* ── TOURNAMENT TABLE ── */
+.tournament-panel {
+  width:100%; max-width:600px;
+  background:rgba(4,20,40,0.85); border:1px solid rgba(201,168,76,0.2);
+  border-radius:12px; overflow:hidden; backdrop-filter:blur(8px);
+}
+.tournament-header { padding:12px 20px; border-bottom:1px solid rgba(201,168,76,0.15); display:flex; align-items:center; gap:10px; }
+.tournament-header-title { font-family:'Cinzel',serif; font-size:0.9rem; font-weight:700; color:var(--gold-bright); letter-spacing:2px; }
+.tournament-table { width:100%; border-collapse:collapse; }
+.tournament-table th { padding:8px 16px; font-family:'Share Tech Mono',monospace; font-size:0.65rem; color:var(--text-dim); letter-spacing:2px; text-align:left; border-bottom:1px solid rgba(77,184,232,0.1); }
+.tournament-table td { padding:10px 16px; font-family:'Share Tech Mono',monospace; font-size:0.8rem; color:var(--text-bright); border-bottom:1px solid rgba(77,184,232,0.06); }
+.tournament-table tr:last-child td { border-bottom:none; }
+.rank-badge { display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; border-radius:50%; font-weight:700; font-size:0.75rem; }
+.rank-1 { background:linear-gradient(135deg,#c9a84c,#8b6914); color:#000; }
+.rank-2 { background:linear-gradient(135deg,#aaa,#666); color:#000; }
+.rank-3 { background:linear-gradient(135deg,#cd7f32,#8b4513); color:#fff; }
+.rank-other { background:rgba(77,184,232,0.1); color:var(--text-dim); }
+.win-badge { color:var(--green-ready); }
+.loss-badge { color:var(--red-hit); }
+
+/* ── NOTIFICATION TOAST ── */
+#toast {
+  position:fixed; bottom:30px; left:50%; transform:translateX(-50%) translateY(100px);
+  background:rgba(4,20,40,0.95); border:1px solid rgba(77,184,232,0.3);
+  border-radius:12px; padding:14px 24px;
+  font-family:'Share Tech Mono',monospace; font-size:0.85rem; color:var(--foam);
+  backdrop-filter:blur(12px); z-index:1000;
+  transition:transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  max-width:90vw; text-align:center;
+  box-shadow:0 8px 40px rgba(0,0,0,0.6);
+}
+#toast.show { transform:translateX(-50%) translateY(0); }
+#toast.toast-hit { border-color:rgba(230,57,70,0.5); color:var(--red-glow); }
+#toast.toast-sunk { border-color:rgba(201,168,76,0.5); color:var(--gold-bright); }
+#toast.toast-win { border-color:rgba(46,204,113,0.5); color:#7aff9e; }
+
+/* ── CONNECTION STATUS ── */
+.conn-indicator {
+  display:flex; align-items:center; gap:8px;
+  font-family:'Share Tech Mono',monospace; font-size:0.72rem; color:var(--text-dim);
+}
+.conn-dot { width:8px; height:8px; border-radius:50%; background:var(--text-dim); }
+.conn-dot.connected { background:var(--green-ready); box-shadow:0 0 8px var(--green-ready); animation:pulse 2s infinite; }
+.conn-dot.connecting { background:var(--gold); animation:pulse 1s infinite; }
+
+/* ── MISC ── */
+.flex-row { display:flex; gap:10px; align-items:center; }
+.text-center { text-align:center; }
+.mt-8 { margin-top:8px; }
+.mt-16 { margin-top:16px; }
+.text-dim { color:var(--text-dim); font-family:'Share Tech Mono',monospace; font-size:0.78rem; }
+.text-gold { color:var(--gold-bright); }
+.spinner {
+  width:24px; height:24px; border:2px solid rgba(77,184,232,0.2);
+  border-top-color:var(--foam); border-radius:50%;
+  animation:spin 0.8s linear infinite; display:inline-block;
+}
+@keyframes spin { to{transform:rotate(360deg)} }
+
+/* ── ANIMATIONS ── */
+
+/* ATEŞ - top fırlatma */
+@keyframes shotLaunch {
+  0%  { box-shadow: 0 0 0px rgba(255,200,50,0); }
+  30% { box-shadow: 0 0 30px rgba(255,200,50,0.9), 0 0 60px rgba(255,100,0,0.6); }
+  100%{ box-shadow: 0 0 0px rgba(255,200,50,0); }
+}
+.cell.firing {
+  animation: shotLaunch 0.4s ease-out forwards;
+}
+
+/* İSABET - alev patlaması */
+@keyframes hitExplode {
+  0%  { transform:scale(0) rotate(0deg);   opacity:1; }
+  40% { transform:scale(1.6) rotate(15deg); opacity:1; }
+  100%{ transform:scale(2.2) rotate(-5deg); opacity:0; }
+}
+@keyframes hitShockwave {
+  0%  { transform:scale(0.5); opacity:0.8; border-width:4px; }
+  100%{ transform:scale(3);   opacity:0;   border-width:1px; }
+}
+@keyframes hitFlicker {
+  0%,100%{ opacity:1; } 25%{ opacity:0.6; } 50%{ opacity:1; } 75%{ opacity:0.7; }
+}
+.fx-hit-explosion {
+  position:absolute; inset:-4px; border-radius:4px; pointer-events:none; z-index:10; overflow:visible;
+}
+.fx-hit-core {
+  position:absolute; inset:0;
+  background: radial-gradient(circle at 50% 60%, #fff9c4 0%, #ff8c00 30%, #e63946 60%, transparent 80%);
+  border-radius:4px;
+  animation: hitExplode 0.55s cubic-bezier(0.25,0.46,0.45,0.94) forwards;
+}
+.fx-hit-wave {
+  position:absolute; inset:-8px;
+  border: 3px solid rgba(255,160,30,0.8);
+  border-radius:50%;
+  animation: hitShockwave 0.5s ease-out forwards;
+}
+.fx-flame {
+  position:absolute; bottom:0; left:50%; transform:translateX(-50%);
+  width:8px; height:14px; pointer-events:none;
+  animation: flameRise 1.8s ease-in-out infinite;
+  z-index:9;
+}
+@keyframes flameRise {
+  0%  { transform:translateX(-50%) scaleY(1)   translateY(0)    rotate(-3deg); opacity:0.9; }
+  25% { transform:translateX(-50%) scaleY(1.3) translateY(-4px) rotate(3deg);  opacity:1;   }
+  50% { transform:translateX(-50%) scaleY(0.9) translateY(-2px) rotate(-2deg); opacity:0.8; }
+  75% { transform:translateX(-50%) scaleY(1.2) translateY(-5px) rotate(2deg);  opacity:1;   }
+  100%{ transform:translateX(-50%) scaleY(1)   translateY(0)    rotate(-3deg); opacity:0.9; }
+}
+.fx-flame-inner {
+  width:100%; height:100%;
+  background: radial-gradient(ellipse at 50% 80%, #fff176 0%, #ff8c00 50%, #e63946 80%, transparent 100%);
+  border-radius: 50% 50% 20% 20% / 60% 60% 40% 40%;
+  filter: blur(1px);
+}
+.cell.hit { animation: hitFlicker 0.3s ease-out; }
+
+/* KARAVANA - su sıçraması */
+@keyframes splashRise {
+  0%  { transform: scaleY(0) translateY(0);   opacity:1; }
+  50% { transform: scaleY(1) translateY(-8px); opacity:0.9; }
+  100%{ transform: scaleY(0) translateY(-14px);opacity:0; }
+}
+@keyframes splashDrop {
+  0%  { transform: translate(var(--dx), var(--dy)) scale(1); opacity:0.8; }
+  100%{ transform: translate(calc(var(--dx)*2), calc(var(--dy)*2 + 10px)) scale(0.3); opacity:0; }
+}
+@keyframes splashRipple {
+  0%  { transform:scale(0.2); opacity:0.7; }
+  100%{ transform:scale(2.5); opacity:0; }
+}
+.fx-splash { position:absolute; inset:0; pointer-events:none; z-index:10; overflow:visible; }
+.fx-splash-col {
+  position:absolute; bottom:50%; left:50%; transform-origin:bottom center;
+  width:3px; border-radius:2px;
+  background: linear-gradient(to top, rgba(100,200,255,0.9), rgba(200,240,255,0.6), transparent);
+  animation: splashRise var(--dur,0.5s) ease-out var(--delay,0s) forwards;
+}
+.fx-splash-drop {
+  position:absolute; top:40%; left:50%;
+  width:4px; height:4px; border-radius:50%;
+  background: rgba(150,220,255,0.9);
+  animation: splashDrop var(--dur,0.6s) ease-in var(--delay,0.1s) forwards;
+}
+.fx-splash-ripple {
+  position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+  width:20px; height:8px; border-radius:50%;
+  border: 2px solid rgba(100,200,255,0.6);
+  animation: splashRipple 0.8s ease-out var(--delay,0.2s) forwards;
+}
+.cell.miss::after { display:none; }
+.cell.miss {
+  position:relative;
+}
+.fx-miss-dot {
+  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  font-size:1.6rem; color:var(--foam); opacity:0.7; z-index:1;
+  animation: missAppear 0.3s ease-out 0.6s both;
+}
+@keyframes missAppear { from{opacity:0;transform:scale(0.5)} to{opacity:0.7;transform:scale(1)} }
+
+/* BATMA - yanma + batış */
+@keyframes sinkDown {
+  0%  { transform:translateY(0)   rotate(0deg);   opacity:1; filter:brightness(1); }
+  30% { transform:translateY(3px) rotate(-3deg);  opacity:1; filter:brightness(1.5) saturate(2); }
+  70% { transform:translateY(6px) rotate(5deg);   opacity:0.7; filter:brightness(0.8) sepia(0.5); }
+  100%{ transform:translateY(10px) rotate(-2deg); opacity:0; filter:brightness(0.3) sepia(1); }
+}
+@keyframes burnGlow {
+  0%,100%{ box-shadow: inset 0 0 8px rgba(255,100,0,0.6), 0 0 12px rgba(230,57,70,0.4); }
+  50%     { box-shadow: inset 0 0 16px rgba(255,200,0,0.9), 0 0 24px rgba(255,100,0,0.8); }
+}
+.cell.sunk {
+  animation: burnGlow 0.6s ease-in-out infinite !important;
+}
+.cell.sunk::after { display:none; }
+.fx-sunk-fire {
+  position:absolute; inset:0; pointer-events:none; z-index:8;
+  background: radial-gradient(circle at 50% 70%, rgba(255,200,0,0.4) 0%, rgba(230,57,70,0.3) 50%, transparent 70%);
+  animation: hitFlicker 0.4s ease-in-out infinite;
+}
+.fx-big-explosion {
+  position:fixed; pointer-events:none; z-index:999;
+  transform:translate(-50%,-50%);
+}
+.fx-big-exp-ring {
+  position:absolute; border-radius:50%; border:3px solid;
+  transform:translate(-50%,-50%); top:50%; left:50%;
+  animation: bigRing var(--dur,0.8s) ease-out var(--delay,0s) forwards;
+}
+@keyframes bigRing {
+  0%  { width:0;    height:0;    opacity:1; }
+  100%{ width:var(--size,200px); height:var(--size,200px); opacity:0; }
+}
+.fx-big-exp-core {
+  position:absolute; border-radius:50%; top:50%; left:50%;
+  transform:translate(-50%,-50%);
+  background: radial-gradient(circle, #fff9c4, #ff8c00 40%, #e63946 70%, transparent);
+  animation: bigCore 0.6s ease-out forwards;
+}
+@keyframes bigCore {
+  0%  { width:10px;  height:10px;  opacity:1; }
+  50% { width:80px;  height:80px;  opacity:0.9; }
+  100%{ width:120px; height:120px; opacity:0; }
+}
+.fx-particle {
+  position:absolute; top:50%; left:50%; border-radius:50%;
+  background: var(--col, #ff8c00);
+  width: var(--sz,6px); height: var(--sz,6px);
+  animation: particle var(--dur,0.8s) ease-out var(--delay,0s) forwards;
+}
+@keyframes particle {
+  0%  { transform:translate(-50%,-50%); opacity:1; }
+  100%{ transform:translate(calc(-50% + var(--tx,20px)), calc(-50% + var(--ty,20px))); opacity:0; }
+}
+
+/* ZAFER / YENİLGİ ekran animasyonu */
+@keyframes victoryRays {
+  0%  { transform:rotate(0deg); }
+  100%{ transform:rotate(360deg); }
+}
+.victory-rays {
+  position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden;
+}
+.victory-ray {
+  position:absolute; top:50%; left:50%;
+  width:4px; height:60vh; transform-origin:bottom center;
+  background: linear-gradient(to top, transparent, rgba(201,168,76,0.15), transparent);
+  animation: victoryRays 20s linear infinite;
+}
+
+/* Ses butonu */
+.sound-toggle {
+  position:fixed; top:16px; right:16px; z-index:100;
+  background:rgba(4,20,40,0.8); border:1px solid rgba(77,184,232,0.3);
+  border-radius:8px; padding:8px 12px; cursor:pointer;
+  font-size:1.2rem; backdrop-filter:blur(8px);
+  transition:border-color 0.2s;
+}
+.sound-toggle:hover { border-color:var(--foam); }
+
+/* Screen shake */
+@keyframes screenShake {
+  0%,100%{ transform:translate(0,0) rotate(0); }
+  10%{ transform:translate(-4px,2px) rotate(-0.5deg); }
+  20%{ transform:translate(4px,-2px) rotate(0.5deg); }
+  30%{ transform:translate(-3px,3px) rotate(-0.3deg); }
+  40%{ transform:translate(3px,-1px) rotate(0.3deg); }
+  50%{ transform:translate(-2px,2px) rotate(-0.2deg); }
+  60%{ transform:translate(2px,-2px) rotate(0.2deg); }
+  70%{ transform:translate(-1px,1px); }
+  80%{ transform:translate(1px,-1px); }
+}
+#app.shake { animation: screenShake 0.5s ease-out; }
+
+/* Responsive */
+@media(max-width:640px) {
+  .cell { width:32px; height:32px; }
+  .grid-letter { width:32px; }
+  .grid-row-num { width:22px; }
+  .lobby-cards { gap:16px; }
+  .boards-layout { gap:16px; }
+}
+</style>
+</head>
+<body>
+
+<button class="sound-toggle" id="sound-toggle" onclick="toggleSound()" title="Ses Aç/Kapat">🔊</button>
+
+<div class="ocean-bg">
+  <div class="star-field"></div>
+  <div class="wave-layer"></div>
+  <div class="wave-layer"></div>
+  <div class="wave-layer"></div>
+</div>
+
+<div id="app">
+
+<!-- ═══ LOBBY ═══ -->
+<div id="screen-lobby" class="screen active">
+  <div class="title-block">
+    <div class="title-anchor">AMİRAL BATTI</div>
+    <div class="title-sub">⚓ DENİZ SAVAŞI ⚓</div>
+  </div>
+  <div class="divider"></div>
+
+  <div class="lobby-cards">
+    <!-- Oda Oluştur -->
+    <div class="lobby-card">
+      <div class="card-icon">⚓</div>
+      <div class="card-title">ODA OLUŞTUR</div>
+      <div class="card-desc">Yeni bir savaş odası aç ve rakibini davet et. Oda kodunu rakibinle paylaş.</div>
+      <div class="input-group" style="margin-bottom:14px">
+        <div class="input-label">Komutan Adı</div>
+        <input class="input-field" id="create-name" placeholder="Adınızı girin..." maxlength="20">
+      </div>
+      <button class="btn btn-primary btn-full" onclick="createRoom()">
+        <span>⚓</span> ODA OLUŞTUR
+      </button>
+      <div id="room-code-section" style="display:none; margin-top:16px">
+        <div class="input-label" style="text-align:center;margin-bottom:6px">ODA KODUNUZ</div>
+        <div class="peer-id-box" id="room-code-display" onclick="copyCode()" title="Kopyalamak için tıkla">…</div>
+        <div class="peer-id-hint">Rakibinize bu kodu verin · Tıkla kopyala</div>
+        <div style="margin-top:12px;text-align:center">
+          <div class="conn-indicator" style="justify-content:center">
+            <div class="conn-dot connecting" id="host-conn-dot"></div>
+            <span id="host-conn-text">Rakip bekleniyor…</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Odaya Katıl -->
+    <div class="lobby-card">
+      <div class="card-icon">🚢</div>
+      <div class="card-title">ODAYA KATIL</div>
+      <div class="card-desc">Rakibinin oda kodunu gir ve savaşa katıl. Komutanın seni bekliyor!</div>
+      <div class="input-group" style="margin-bottom:10px">
+        <div class="input-label">Komutan Adı</div>
+        <input class="input-field" id="join-name" placeholder="Adınızı girin..." maxlength="20">
+      </div>
+      <div class="input-group" style="margin-bottom:14px">
+        <div class="input-label">Oda Kodu</div>
+        <input class="input-field" id="join-code" placeholder="Oda kodunu girin..." maxlength="40">
+      </div>
+      <button class="btn btn-secondary btn-full" onclick="joinRoom()">
+        <span>⚡</span> ODAYA KATIL
+      </button>
+      <div id="join-status" style="margin-top:12px;text-align:center;display:none">
+        <div class="conn-indicator" style="justify-content:center">
+          <div class="conn-dot connecting"></div>
+          <span id="join-status-text">Bağlanılıyor…</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Turnuva Tablosu -->
+  <div class="tournament-panel" style="max-width:500px">
+    <div class="tournament-header">
+      <span style="font-size:1.1rem">🏆</span>
+      <div class="tournament-header-title">TURNUVA TABLOSU</div>
+    </div>
+    <table class="tournament-table" id="lobby-leaderboard">
+      <thead>
+        <tr>
+          <th>#</th><th>Komutan</th><th>Kazanma</th><th>Oyun</th><th>Oran</th>
+        </tr>
+      </thead>
+      <tbody id="leaderboard-body">
+        <tr><td colspan="5" style="text-align:center;color:var(--text-dim);padding:16px;font-size:0.75rem">Henüz kayıt yok</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══ GEMİ YERLEŞTİRME ═══ -->
+<div id="screen-place" class="screen">
+  <div class="place-header">
+    <div class="place-title">GEMİ YERLEŞTİRME</div>
+    <div class="place-sub" id="place-waiting-text">Gemileri konuşlandır, savaşa hazırlan</div>
+  </div>
+
+  <div class="place-layout">
+    <!-- Gemi listesi -->
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div class="ship-list">
+        <div class="ship-list-title">⚓ GEMİ FİLOSU</div>
+        <div id="ship-list-items"></div>
+      </div>
+      <div class="place-controls">
+        <button class="btn btn-secondary" onclick="rotateShip()" id="rotate-btn">
+          🔄 DÖNDÜR (<span id="rot-label">Yatay</span>)
+        </button>
+        <button class="btn btn-secondary btn-sm" onclick="autoPlace()">
+          ⚡ Otomatik Yerleştir
+        </button>
+        <button class="btn btn-danger btn-sm" onclick="clearBoard()">
+          🗑 Temizle
+        </button>
+      </div>
+      <div id="place-ready-section" style="display:none">
+        <button class="btn btn-primary btn-full" onclick="readyUp()" id="ready-btn">
+          ⚔️ SAVAŞA HAZIR!
+        </button>
+      </div>
+      <div id="waiting-opponent" style="display:none;text-align:center">
+        <div class="spinner" style="margin:0 auto 8px"></div>
+        <div class="text-dim">Rakip hazırlanıyor…</div>
+      </div>
+    </div>
+
+    <!-- Grid -->
+    <div class="grid-wrap">
+      <div class="grid-label">KENDİ TABLONUZ</div>
+      <div class="grid-container">
+        <div class="grid-letters" id="place-col-labels"></div>
+        <div class="grid-rows" id="place-grid-rows"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ OYUN ═══ -->
+<div id="screen-game" class="screen">
+  <div class="game-header">
+    <div class="game-title-sm">⚓ AMİRAL BATTI</div>
+    <div class="status-bar">
+      <div class="status-dot idle" id="turn-dot"></div>
+      <div class="status-text" id="turn-text">Başlatılıyor…</div>
+    </div>
+    <div class="conn-indicator">
+      <div class="conn-dot connected" id="game-conn-dot"></div>
+      <span id="game-conn-text">Bağlı</span>
+    </div>
+  </div>
+
+  <div class="score-strip">
+    <div class="score-card">
+      <div class="score-card-label">KOMUTAN</div>
+      <div class="score-card-val secondary" id="my-name-display">—</div>
+    </div>
+    <div class="score-card">
+      <div class="score-card-label">BATAN GEMİLER</div>
+      <div class="score-card-val" id="my-sunk-count">0</div>
+    </div>
+    <div class="score-card">
+      <div class="score-card-label">ATILAN TOP</div>
+      <div class="score-card-val secondary" id="my-shots">0</div>
+    </div>
+    <div class="score-card">
+      <div class="score-card-label">RAKİP</div>
+      <div class="score-card-val secondary" id="enemy-name-display">—</div>
+    </div>
+    <div class="score-card">
+      <div class="score-card-label">RAKİP BATAN</div>
+      <div class="score-card-val" id="enemy-sunk-count">0</div>
+    </div>
+  </div>
+
+  <div class="boards-layout">
+    <!-- Benim tablom -->
+    <div class="board-section">
+      <div class="board-label-row">
+        <div class="board-name mine">SİZİN SULARIINIZ</div>
+        <div class="ships-remaining" id="my-ships-left">Gemi: 5</div>
+      </div>
+      <div class="grid-container">
+        <div class="grid-letters" id="my-col-labels"></div>
+        <div class="grid-rows" id="my-grid-rows"></div>
+      </div>
+    </div>
+
+    <!-- Rakip tablosu -->
+    <div class="board-section">
+      <div class="board-label-row">
+        <div class="board-name enemy">RAKİP SULARI</div>
+        <div class="ships-remaining" id="enemy-ships-left">Gemi: 5</div>
+      </div>
+      <div class="grid-container">
+        <div class="grid-letters" id="enemy-col-labels"></div>
+        <div class="grid-rows attack-grid" id="enemy-grid-rows"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Savaş logu -->
+  <div class="log-panel" style="max-width:860px;width:100%">
+    <div class="log-header">📡 SAVAŞ LOGU</div>
+    <div class="log-entries" id="battle-log"></div>
+  </div>
+</div>
+
+<!-- ═══ SONUÇ ═══ -->
+<div id="screen-result" class="screen">
+  <div class="result-title" id="result-title">—</div>
+  <div class="result-stats" id="result-stats"></div>
+  <div class="tournament-panel">
+    <div class="tournament-header">
+      <span style="font-size:1.1rem">🏆</span>
+      <div class="tournament-header-title">TURNUVA TABLOSU</div>
+    </div>
+    <table class="tournament-table">
+      <thead><tr><th>#</th><th>Komutan</th><th>Kazanma</th><th>Oyun</th><th>Oran</th></tr></thead>
+      <tbody id="result-leaderboard-body"></tbody>
+    </table>
+  </div>
+  <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
+    <button class="btn btn-primary" onclick="rematch()">⚔️ TEKRAR OYNA</button>
+    <button class="btn btn-secondary" onclick="goLobby()">🏠 LOBBYE DÖN</button>
+  </div>
+</div>
+
+</div><!-- #app -->
+
+<div id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════
+// WEB AUDIO ENGINE — Procedural Ses (dış dosya yok)
+// ═══════════════════════════════════════════════════
+let audioCtx = null;
+let soundEnabled = true;
+
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+function toggleSound() {
+  soundEnabled = !soundEnabled;
+  document.getElementById('sound-toggle').textContent = soundEnabled ? '🔊' : '🔇';
+}
+
+// Top atış sesi — top gümbürtüsü (boom)
+function playShot() {
+  if (!soundEnabled) return;
+  const ctx = getAudioCtx();
+  const t = ctx.currentTime;
+
+  // Boom — düşük frekanslı patlama
+  const buf = ctx.createBuffer(1, ctx.sampleRate * 0.6, ctx.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < data.length; i++) {
+    data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / data.length, 2);
+  }
+  const src = ctx.createBufferSource(); src.buffer = buf;
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(1.2, t);
+  gain.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
+  const low = ctx.createBiquadFilter(); low.type = 'lowpass'; low.frequency.value = 180;
+  src.connect(low); low.connect(gain); gain.connect(ctx.destination);
+  src.start(t);
+
+  // Tiz çıkış — füze ıslığı
+  const osc = ctx.createOscillator(); osc.type = 'sawtooth';
+  osc.frequency.setValueAtTime(800, t);
+  osc.frequency.exponentialRampToValueAtTime(200, t + 0.3);
+  const g2 = ctx.createGain(); g2.gain.setValueAtTime(0.15, t); g2.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+  osc.connect(g2); g2.connect(ctx.destination);
+  osc.start(t); osc.stop(t + 0.3);
+}
+
+// İsabet sesi — metal çarpma + ateş crackle
+function playHit() {
+  if (!soundEnabled) return;
+  const ctx = getAudioCtx();
+  const t = ctx.currentTime;
+
+  // Metal çarpma
+  const osc = ctx.createOscillator(); osc.type = 'square';
+  osc.frequency.setValueAtTime(300, t);
+  osc.frequency.exponentialRampToValueAtTime(80, t + 0.15);
+  const g1 = ctx.createGain(); g1.gain.setValueAtTime(0.5, t); g1.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+  const dist = ctx.createWaveShaper();
+  const curve = new Float32Array(256);
+  for (let i = 0; i < 256; i++) { const x = (i * 2) / 256 - 1; curve[i] = (Math.PI + 400) * x / (Math.PI + 400 * Math.abs(x)); }
+  dist.curve = curve;
+  osc.connect(dist); dist.connect(g1); g1.connect(ctx.destination);
+  osc.start(t); osc.stop(t + 0.2);
+
+  // Ateş crackle — noise burst
+  const buf = ctx.createBuffer(1, ctx.sampleRate * 0.4, ctx.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / data.length, 1.5);
+  const src = ctx.createBufferSource(); src.buffer = buf;
+  const g2 = ctx.createGain(); g2.gain.setValueAtTime(0.6, t + 0.05); g2.gain.exponentialRampToValueAtTime(0.001, t + 0.45);
+  const band = ctx.createBiquadFilter(); band.type = 'bandpass'; band.frequency.value = 1200; band.Q.value = 0.8;
+  src.connect(band); band.connect(g2); g2.connect(ctx.destination);
+  src.start(t + 0.05);
+}
+
+// Karavana sesi — suya düşme şapırtısı
+function playMiss() {
+  if (!soundEnabled) return;
+  const ctx = getAudioCtx();
+  const t = ctx.currentTime;
+
+  // Suya çarpma — "sploosh"
+  const buf = ctx.createBuffer(1, ctx.sampleRate * 0.5, ctx.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < data.length; i++) {
+    const env = i < 2000 ? i / 2000 : Math.pow(1 - (i - 2000) / (data.length - 2000), 1.2);
+    data[i] = (Math.random() * 2 - 1) * env;
+  }
+  const src = ctx.createBufferSource(); src.buffer = buf;
+  const g1 = ctx.createGain(); g1.gain.setValueAtTime(0.4, t); g1.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+  const low = ctx.createBiquadFilter(); low.type = 'bandpass'; low.frequency.value = 600; low.Q.value = 0.5;
+  src.connect(low); low.connect(g1); g1.connect(ctx.destination);
+  src.start(t);
+
+  // Su damlası tonu
+  const osc = ctx.createOscillator(); osc.type = 'sine';
+  osc.frequency.setValueAtTime(900, t + 0.05);
+  osc.frequency.exponentialRampToValueAtTime(300, t + 0.4);
+  const g2 = ctx.createGain(); g2.gain.setValueAtTime(0.2, t + 0.05); g2.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+  osc.connect(g2); g2.connect(ctx.destination);
+  osc.start(t + 0.05); osc.stop(t + 0.4);
+}
+
+// Gemi batma sesi — metal gıcırtısı + su + patlama
+function playSink() {
+  if (!soundEnabled) return;
+  const ctx = getAudioCtx();
+  const t = ctx.currentTime;
+
+  // Büyük patlama
+  const buf = ctx.createBuffer(1, ctx.sampleRate * 1.5, ctx.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < data.length; i++) {
+    data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / data.length, 0.8);
+  }
+  const src = ctx.createBufferSource(); src.buffer = buf;
+  const g1 = ctx.createGain(); g1.gain.setValueAtTime(1.5, t); g1.gain.exponentialRampToValueAtTime(0.001, t + 1.5);
+  const low = ctx.createBiquadFilter(); low.type = 'lowpass'; low.frequency.value = 200;
+  src.connect(low); low.connect(g1); g1.connect(ctx.destination);
+  src.start(t);
+
+  // Metal gıcırtısı
+  const osc = ctx.createOscillator(); osc.type = 'sawtooth';
+  osc.frequency.setValueAtTime(150, t);
+  osc.frequency.setValueAtTime(80, t + 0.3);
+  osc.frequency.linearRampToValueAtTime(40, t + 1.2);
+  const g2 = ctx.createGain(); g2.gain.setValueAtTime(0.3, t); g2.gain.exponentialRampToValueAtTime(0.001, t + 1.2);
+  const dist2 = ctx.createWaveShaper();
+  const c2 = new Float32Array(256);
+  for (let i = 0; i < 256; i++) { const x = (i * 2) / 256 - 1; c2[i] = Math.tanh(x * 8); }
+  dist2.curve = c2;
+  osc.connect(dist2); dist2.connect(g2); g2.connect(ctx.destination);
+  osc.start(t); osc.stop(t + 1.2);
+
+  // Su gürültüsü
+  const buf2 = ctx.createBuffer(1, ctx.sampleRate * 1.0, ctx.sampleRate);
+  const d2 = buf2.getChannelData(0);
+  for (let i = 0; i < d2.length; i++) d2[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d2.length, 0.5);
+  const src2 = ctx.createBufferSource(); src2.buffer = buf2;
+  const g3 = ctx.createGain(); g3.gain.setValueAtTime(0.3, t + 0.2); g3.gain.exponentialRampToValueAtTime(0.001, t + 1.2);
+  const band = ctx.createBiquadFilter(); band.type = 'bandpass'; band.frequency.value = 800; band.Q.value = 0.3;
+  src2.connect(band); band.connect(g3); g3.connect(ctx.destination);
+  src2.start(t + 0.2);
+}
+
+// Zafer fanfarı
+function playVictory() {
+  if (!soundEnabled) return;
+  const ctx = getAudioCtx();
+  const notes = [523, 659, 784, 1047]; // C5 E5 G5 C6
+  notes.forEach((freq, i) => {
+    const osc = ctx.createOscillator(); osc.type = 'triangle';
+    osc.frequency.value = freq;
+    const g = ctx.createGain();
+    const start = ctx.currentTime + i * 0.15;
+    g.gain.setValueAtTime(0, start);
+    g.gain.linearRampToValueAtTime(0.3, start + 0.05);
+    g.gain.exponentialRampToValueAtTime(0.001, start + 0.4);
+    osc.connect(g); g.connect(ctx.destination);
+    osc.start(start); osc.stop(start + 0.5);
+  });
+}
+
+// Yenilgi tonu
+function playDefeat() {
+  if (!soundEnabled) return;
+  const ctx = getAudioCtx();
+  const notes = [392, 349, 311, 261]; // G4 F4 Eb4 C4
+  notes.forEach((freq, i) => {
+    const osc = ctx.createOscillator(); osc.type = 'sine';
+    osc.frequency.value = freq;
+    const g = ctx.createGain();
+    const start = ctx.currentTime + i * 0.2;
+    g.gain.setValueAtTime(0.25, start);
+    g.gain.exponentialRampToValueAtTime(0.001, start + 0.5);
+    osc.connect(g); g.connect(ctx.destination);
+    osc.start(start); osc.stop(start + 0.6);
+  });
+}
+
+// ═══════════════════════════════════════════════════
+// ANİMASYON FONKSİYONLARI
+// ═══════════════════════════════════════════════════
+
+// Ekran sarsıntısı
+function shakeScreen(intensity='normal') {
+  const app = document.getElementById('app');
+  app.classList.remove('shake');
+  void app.offsetWidth;
+  app.classList.add('shake');
+  setTimeout(() => app.classList.remove('shake'), 500);
+}
+
+// İSABET animasyonu — alev patlaması
+function animateHit(cellEl) {
+  cellEl.style.position = 'relative';
+  // Ana patlama
+  const fx = document.createElement('div'); fx.className = 'fx-hit-explosion';
+  const core = document.createElement('div'); core.className = 'fx-hit-core';
+  const wave = document.createElement('div'); wave.className = 'fx-hit-wave';
+  fx.appendChild(core); fx.appendChild(wave); cellEl.appendChild(fx);
+  setTimeout(() => fx.remove(), 600);
+
+  // Kalıcı alev
+  setTimeout(() => {
+    if (!cellEl.classList.contains('sunk')) {
+      const flame = document.createElement('div'); flame.className = 'fx-flame';
+      flame.innerHTML = '<div class="fx-flame-inner"></div>';
+      cellEl.appendChild(flame);
+    }
+  }, 300);
+}
+
+// KARAVANA animasyonu — su sıçraması
+function animateMiss(cellEl) {
+  cellEl.style.position = 'relative';
+  const fx = document.createElement('div'); fx.className = 'fx-splash';
+
+  // Ortadaki ana sütun
+  const col = document.createElement('div'); col.className = 'fx-splash-col';
+  col.style.cssText = '--dur:0.5s;--delay:0s; height:22px; margin-left:-1.5px;';
+  fx.appendChild(col);
+
+  // Yan sütunlar
+  [[-6,-0.15,'0.35s','0.05s',14],
+   [ 6,-0.15,'0.35s','0.05s',14],
+   [-10,-0.3,'0.25s','0.08s',9],
+   [ 10,-0.3,'0.25s','0.08s',9]].forEach(([dx,,dur,del,h]) => {
+    const c = document.createElement('div'); c.className = 'fx-splash-col';
+    c.style.cssText = `--dur:${dur};--delay:${del}; height:${h}px; margin-left:${dx-1.5}px; transform-origin:bottom center; transform:translateX(${dx}px) rotate(${dx < 0 ? -15 : 15}deg) scaleY(0);`;
+    fx.appendChild(c);
+  });
+
+  // Su damlaları
+  for (let i = 0; i < 8; i++) {
+    const drop = document.createElement('div'); drop.className = 'fx-splash-drop';
+    const angle = (i / 8) * Math.PI * 2;
+    const dist = 10 + Math.random() * 12;
+    drop.style.cssText = `--dx:${Math.cos(angle)*dist}px;--dy:${Math.sin(angle)*dist - 15}px;--dur:${0.5+Math.random()*0.3}s;--delay:${0.1+Math.random()*0.1}s;`;
+    fx.appendChild(drop);
+  }
+
+  // Dalgalanma
+  const ripple = document.createElement('div'); ripple.className = 'fx-splash-ripple';
+  ripple.style.cssText = '--delay:0.2s;';
+  fx.appendChild(ripple);
+  const ripple2 = document.createElement('div'); ripple2.className = 'fx-splash-ripple';
+  ripple2.style.cssText = '--delay:0.35s; width:30px; height:12px;';
+  fx.appendChild(ripple2);
+
+  // Nokta işareti
+  const dot = document.createElement('div'); dot.className = 'fx-miss-dot'; dot.textContent = '·';
+  cellEl.appendChild(dot);
+  cellEl.appendChild(fx);
+  setTimeout(() => fx.remove(), 1000);
+}
+
+// BATMA animasyonu — büyük patlama + sinkDown
+function animateSink(cells, gridId) {
+  // Önce hücrelere ateş efekti
+  cells.forEach(({r, c}) => {
+    const el = getCellEl(gridId, r, c);
+    if (!el) return;
+    el.style.position = 'relative';
+    // Eski alev varsa kaldır
+    el.querySelectorAll('.fx-flame').forEach(f => f.remove());
+    const sunkFire = document.createElement('div'); sunkFire.className = 'fx-sunk-fire';
+    el.appendChild(sunkFire);
+  });
+
+  // Orta hücrenin koordinatını al — büyük patlama için
+  const midCell = cells[Math.floor(cells.length / 2)];
+  const midEl = getCellEl(gridId, midCell.r, midCell.c);
+  if (midEl) {
+    const rect = midEl.getBoundingClientRect();
+    spawnBigExplosion(rect.left + rect.width / 2, rect.top + rect.height / 2);
+  }
+}
+
+// Büyük ekran patlaması
+function spawnBigExplosion(x, y) {
+  const fx = document.createElement('div');
+  fx.className = 'fx-big-explosion';
+  fx.style.cssText = `left:${x}px; top:${y}px;`;
+
+  // Şok dalgaları
+  [['rgba(255,150,30,0.8)', '180px', '0s'],
+   ['rgba(255,60,30,0.6)',  '260px', '0.1s'],
+   ['rgba(200,100,255,0.3)','340px', '0.2s']].forEach(([col, size, delay]) => {
+    const ring = document.createElement('div'); ring.className = 'fx-big-exp-ring';
+    ring.style.cssText = `--size:${size};--delay:${delay};--dur:0.7s; border-color:${col};`;
+    fx.appendChild(ring);
+  });
+
+  // Merkez ateş topu
+  const core = document.createElement('div'); core.className = 'fx-big-exp-core';
+  fx.appendChild(core);
+
+  // Parçacıklar
+  const colors = ['#ff8c00','#ff4500','#ffd700','#ff6b7a','#fff176'];
+  for (let i = 0; i < 20; i++) {
+    const p = document.createElement('div'); p.className = 'fx-particle';
+    const angle = (i / 20) * Math.PI * 2;
+    const dist = 40 + Math.random() * 80;
+    p.style.cssText = `--tx:${Math.cos(angle)*dist}px;--ty:${Math.sin(angle)*dist}px;--dur:${0.6+Math.random()*0.4}s;--delay:${Math.random()*0.1}s;--col:${colors[i%colors.length]};--sz:${4+Math.random()*8}px;`;
+    fx.appendChild(p);
+  }
+
+  document.body.appendChild(fx);
+  setTimeout(() => fx.remove(), 1200);
+}
+
+// Zafer ışınları
+function showVictoryRays() {
+  const rays = document.createElement('div'); rays.className = 'victory-rays';
+  for (let i = 0; i < 12; i++) {
+    const ray = document.createElement('div'); ray.className = 'victory-ray';
+    ray.style.cssText = `transform:rotate(${i * 30}deg); animation-delay:${i * 0.1}s;`;
+    rays.appendChild(ray);
+  }
+  document.getElementById('screen-result').appendChild(rays);
+}
+
+
+const COLS = 10, ROWS = 10;
+const COL_LABELS = ['A','B','C','D','E','F','G','H','I','J'];
+const SHIPS_CONFIG = [
+  {id:'carrier',   name:'Uçak Gemisi', size:5, icon:'✈️'},
+  {id:'battleship',name:'Savaş Gemisi', size:4, icon:'⚓'},
+  {id:'cruiser',   name:'Kruvazör',     size:3, icon:'🚢'},
+  {id:'submarine', name:'Denizaltı',    size:3, icon:'🌊'},
+  {id:'destroyer', name:'Muhrip',       size:2, icon:'⚡'},
+];
+
+// ═══════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════
+let peer = null, conn = null;
+let isHost = false;
+let myName = '', enemyName = '';
+let myBoard = [], enemyBoard = [];      // 0=empty,1=ship,2=hit,3=miss,4=sunk
+let shipsPlaced = {};                    // {shipId: [{r,c},...]}
+let selectedShip = null, isHorizontal = true;
+let myReady = false, enemyReady = false;
+let myTurn = false;
+let gameActive = false;
+let myShotsFired = 0, myHits = 0;
+let enemySunkCount = 0, mySunkCount = 0;
+let myShipsRemaining = SHIPS_CONFIG.length;
+let enemyShipsRemaining = SHIPS_CONFIG.length;
+let shipsCells = {};   // shipId -> [{r,c}] — enemy ships revealed on sink
+
+// localStorage for leaderboard
+function getLeaderboard() {
+  try { return JSON.parse(localStorage.getItem('ab_leaderboard') || '[]'); } catch{ return []; }
+}
+function saveLeaderboard(lb) { localStorage.setItem('ab_leaderboard', JSON.stringify(lb)); }
+function updateLeaderboard(name, won) {
+  let lb = getLeaderboard();
+  let entry = lb.find(e => e.name === name);
+  if (!entry) { entry = {name, wins:0, games:0}; lb.push(entry); }
+  entry.games++; if (won) entry.wins++;
+  lb.sort((a,b) => b.wins - a.wins || a.games - b.games);
+  saveLeaderboard(lb);
+  return lb;
+}
+function renderLeaderboard(tbodyId) {
+  const lb = getLeaderboard();
+  const tbody = document.getElementById(tbodyId);
+  if (!lb.length) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-dim);padding:16px;font-size:0.75rem">Henüz kayıt yok</td></tr>'; return; }
+  tbody.innerHTML = lb.slice(0,10).map((e,i) => {
+    const rank = i+1;
+    const cls = rank===1?'rank-1':rank===2?'rank-2':rank===3?'rank-3':'rank-other';
+    const ratio = e.games ? Math.round(e.wins/e.games*100) : 0;
+    return `<tr>
+      <td><span class="rank-badge ${cls}">${rank}</span></td>
+      <td>${escHtml(e.name)}</td>
+      <td class="win-badge">${e.wins}</td>
+      <td>${e.games}</td>
+      <td>${ratio}%</td>
+    </tr>`;
+  }).join('');
+}
+function escHtml(s) { return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+// ═══════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════
+let toastTimer;
+function showToast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show' + (type?' toast-'+type:'');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>{ t.className=''; }, 3000);
+}
+
+// ═══════════════════════════════════════════════════
+// SCREEN
+// ═══════════════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+id).classList.add('active');
+  if (id==='lobby') { renderLeaderboard('leaderboard-body'); }
+}
+
+// ═══════════════════════════════════════════════════
+// BOARD INIT
+// ═══════════════════════════════════════════════════
+function emptyBoard() { return Array.from({length:ROWS},()=>Array(COLS).fill(0)); }
+
+function buildGrid(rowsId, colsId, clickCb, hoverCb, leaveCb) {
+  const colsEl = document.getElementById(colsId);
+  colsEl.innerHTML = COL_LABELS.map(l=>`<div class="grid-letter">${l}</div>`).join('');
+  const rowsEl = document.getElementById(rowsId);
+  rowsEl.innerHTML = '';
+  for (let r=0;r<ROWS;r++) {
+    const rowDiv = document.createElement('div'); rowDiv.className='grid-row';
+    const num = document.createElement('div'); num.className='grid-row-num'; num.textContent=r+1;
+    rowDiv.appendChild(num);
+    for (let c=0;c<COLS;c++) {
+      const cell = document.createElement('div');
+      cell.className='cell'; cell.dataset.r=r; cell.dataset.c=c;
+      if (clickCb) cell.addEventListener('click',()=>clickCb(r,c));
+      if (hoverCb) cell.addEventListener('mouseenter',()=>hoverCb(r,c));
+      if (leaveCb) cell.addEventListener('mouseleave',leaveCb);
+      rowDiv.appendChild(cell);
+    }
+    rowsEl.appendChild(rowDiv);
+  }
+}
+
+function getCellEl(rowsId, r, c) {
+  return document.querySelector(`#${rowsId} .grid-row:nth-child(${r+1}) .cell[data-c="${c}"]`);
+}
+
+// ═══════════════════════════════════════════════════
+// PEER CONNECTION
+// ═══════════════════════════════════════════════════
+function createRoom() {
+  const name = document.getElementById('create-name').value.trim();
+  if (!name) { showToast('Komutan adı girin!'); return; }
+  myName = name; isHost = true;
+
+  peer = new Peer(undefined, {debug:0});
+  peer.on('open', id => {
+    document.getElementById('room-code-section').style.display='block';
+    document.getElementById('room-code-display').textContent = id;
+  });
+  peer.on('connection', c => {
+    conn = c; setupConn();
+    document.getElementById('host-conn-dot').className='conn-dot connected';
+    document.getElementById('host-conn-text').textContent='Rakip bağlandı!';
+    showToast('Rakip bağlandı! 🎉','');
+    // Send names
+    sendMsg({type:'hello', name:myName});
+  });
+  peer.on('error', e => showToast('Bağlantı hatası: '+e.type));
+}
+
+function joinRoom() {
+  const name = document.getElementById('join-name').value.trim();
+  const code = document.getElementById('join-code').value.trim();
+  if (!name) { showToast('Komutan adı girin!'); return; }
+  if (!code) { showToast('Oda kodu girin!'); return; }
+  myName = name; isHost = false;
+
+  document.getElementById('join-status').style.display='block';
+  document.getElementById('join-status-text').textContent='Bağlanılıyor…';
+
+  peer = new Peer(undefined, {debug:0});
+  peer.on('open', () => {
+    conn = peer.connect(code);
+    setupConn();
+    conn.on('open', () => {
+      document.getElementById('join-status-text').textContent='Bağlandı!';
+      sendMsg({type:'hello', name:myName});
+    });
+  });
+  peer.on('error', e => {
+    document.getElementById('join-status-text').textContent='Hata: '+e.type;
+    showToast('Bağlantı hatası: '+e.type);
+  });
+}
+
+function setupConn() {
+  conn.on('data', handleMessage);
+  conn.on('close', () => {
+    if (gameActive) {
+      showToast('Rakip bağlantıyı kesti!');
+      document.getElementById('game-conn-dot').className='conn-dot';
+      document.getElementById('game-conn-text').textContent='Bağlantı kesildi';
+    }
+  });
+}
+
+function sendMsg(obj) {
+  if (conn && conn.open) conn.send(JSON.stringify(obj));
+}
+
+function copyCode() {
+  const code = document.getElementById('room-code-display').textContent;
+  navigator.clipboard.writeText(code).then(()=>showToast('Kod kopyalandı! 📋'));
+}
+
+// ═══════════════════════════════════════════════════
+// MESSAGE HANDLER
+// ═══════════════════════════════════════════════════
+function handleMessage(raw) {
+  const msg = JSON.parse(raw);
+  switch(msg.type) {
+    case 'hello':
+      enemyName = msg.name;
+      showToast(`${enemyName} bağlandı! ⚓`);
+      startPlacement();
+      break;
+    case 'ready':
+      enemyReady = true;
+      addLog(`${enemyName} hazır!`, 'system');
+      checkBothReady();
+      break;
+    case 'shot':
+      handleIncomingShot(msg.r, msg.c);
+      break;
+    case 'shot_result':
+      handleShotResult(msg);
+      break;
+    case 'start_game':
+      myTurn = !isHost; // host goes first
+      startGame();
+      break;
+    case 'rematch':
+      handleRematch();
+      break;
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// PLACEMENT
+// ═══════════════════════════════════════════════════
+function startPlacement() {
+  myBoard = emptyBoard();
+  shipsPlaced = {};
+  selectedShip = null;
+  isHorizontal = true;
+  myReady = false; enemyReady = false;
+  gameActive = false;
+
+  document.getElementById('place-waiting-text').textContent = `${enemyName} rakibin! Gemileri konuşlandır`;
+  buildGrid('place-grid-rows','place-col-labels', placeClick, placeHover, placeLeave);
+  buildShipList();
+  document.getElementById('place-ready-section').style.display='none';
+  document.getElementById('waiting-opponent').style.display='none';
+  showScreen('place');
+}
+
+function buildShipList() {
+  const cont = document.getElementById('ship-list-items');
+  cont.innerHTML = SHIPS_CONFIG.map(s=>`
+    <div class="ship-item" id="ship-item-${s.id}" onclick="selectShip('${s.id}')">
+      <div class="ship-cells">${Array(s.size).fill('<div class="ship-cell-prev"></div>').join('')}</div>
+      <div>
+        <div class="ship-name">${s.icon} ${s.name}</div>
+        <div class="ship-size">${s.size} hücre</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function selectShip(id) {
+  if (shipsPlaced[id]) return;
+  selectedShip = SHIPS_CONFIG.find(s=>s.id===id);
+  document.querySelectorAll('.ship-item').forEach(el=>el.classList.remove('selected'));
+  document.getElementById('ship-item-'+id).classList.add('selected');
+}
+
+function rotateShip() {
+  isHorizontal = !isHorizontal;
+  document.getElementById('rot-label').textContent = isHorizontal?'Yatay':'Dikey';
+}
+
+function getPreviewCells(r,c) {
+  if (!selectedShip) return null;
+  const cells = [];
+  for (let i=0;i<selectedShip.size;i++) {
+    const nr = r + (isHorizontal?0:i);
+    const nc = c + (isHorizontal?i:0);
+    cells.push({r:nr, c:nc});
+  }
+  return cells;
+}
+
+function isValidPlacement(cells) {
+  for (const {r,c} of cells) {
+    if (r<0||r>=ROWS||c<0||c>=COLS) return false;
+    if (myBoard[r][c]!==0) return false;
+    // adjacency check
+    for (let dr=-1;dr<=1;dr++) for (let dc=-1;dc<=1;dc++) {
+      const nr=r+dr, nc=c+dc;
+      if (nr>=0&&nr<ROWS&&nc>=0&&nc<COLS&&myBoard[nr][nc]===1) return false;
+    }
+  }
+  return true;
+}
+
+function placeHover(r,c) {
+  clearPreview();
+  const cells = getPreviewCells(r,c);
+  if (!cells) return;
+  const valid = isValidPlacement(cells);
+  cells.forEach(({r,c})=>{
+    const el = getCellEl('place-grid-rows',r,c);
+    if (el) el.classList.add(valid?'ship-preview':'ship-preview-invalid');
+  });
+}
+function placeLeave() { clearPreview(); }
+function clearPreview() {
+  document.querySelectorAll('#place-grid-rows .ship-preview, #place-grid-rows .ship-preview-invalid')
+    .forEach(el=>el.classList.remove('ship-preview','ship-preview-invalid'));
+}
+
+function placeClick(r,c) {
+  if (!selectedShip) { showToast('Önce bir gemi seçin!'); return; }
+  const cells = getPreviewCells(r,c);
+  if (!isValidPlacement(cells)) { showToast('Geçersiz konum!'); return; }
+  cells.forEach(({r,c})=>{
+    myBoard[r][c]=1;
+    const el=getCellEl('place-grid-rows',r,c);
+    if(el) el.classList.add('ship');
+  });
+  shipsPlaced[selectedShip.id] = cells;
+  document.getElementById('ship-item-'+selectedShip.id).classList.add('placed');
+  selectedShip = null;
+  checkAllPlaced();
+}
+
+function checkAllPlaced() {
+  if (Object.keys(shipsPlaced).length === SHIPS_CONFIG.length) {
+    document.getElementById('place-ready-section').style.display='block';
+  }
+}
+
+function autoPlace() {
+  clearBoard();
+  for (const ship of SHIPS_CONFIG) {
+    let placed = false;
+    let tries = 0;
+    while (!placed && tries < 500) {
+      tries++;
+      const h = Math.random()>0.5;
+      const r = Math.floor(Math.random()*(h?ROWS:ROWS-ship.size+1));
+      const c = Math.floor(Math.random()*(h?COLS-ship.size+1:COLS));
+      const cells = [];
+      for (let i=0;i<ship.size;i++) cells.push({r:r+(h?0:i), c:c+(h?i:0)});
+      if (isValidPlacement(cells)) {
+        cells.forEach(({r,c})=>{ myBoard[r][c]=1; const el=getCellEl('place-grid-rows',r,c); if(el)el.classList.add('ship'); });
+        shipsPlaced[ship.id]=cells;
+        document.getElementById('ship-item-'+ship.id).classList.add('placed');
+        placed=true;
+      }
+    }
+  }
+  checkAllPlaced();
+}
+
+function clearBoard() {
+  myBoard = emptyBoard();
+  shipsPlaced = {};
+  document.querySelectorAll('#place-grid-rows .cell').forEach(el=>el.classList.remove('ship'));
+  document.querySelectorAll('.ship-item').forEach(el=>el.classList.remove('placed','selected'));
+  document.getElementById('place-ready-section').style.display='none';
+  selectedShip = null;
+}
+
+function readyUp() {
+  myReady = true;
+  document.getElementById('place-ready-section').style.display='none';
+  document.getElementById('waiting-opponent').style.display='block';
+  sendMsg({type:'ready'});
+  checkBothReady();
+}
+
+function checkBothReady() {
+  if (myReady && enemyReady) {
+    if (isHost) {
+      myTurn = true;
+      sendMsg({type:'start_game'});
+      startGame();
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// GAME
+// ═══════════════════════════════════════════════════
+function startGame() {
+  gameActive = true;
+  enemyBoard = emptyBoard();
+  myShotsFired = 0; myHits = 0;
+  enemySunkCount = 0; mySunkCount = 0;
+  myShipsRemaining = SHIPS_CONFIG.length;
+  enemyShipsRemaining = SHIPS_CONFIG.length;
+
+  document.getElementById('my-name-display').textContent = myName;
+  document.getElementById('enemy-name-display').textContent = enemyName;
+  document.getElementById('my-sunk-count').textContent = '0';
+  document.getElementById('enemy-sunk-count').textContent = '0';
+  document.getElementById('my-shots').textContent = '0';
+  document.getElementById('my-ships-left').textContent = `Gemi: ${myShipsRemaining}`;
+  document.getElementById('enemy-ships-left').textContent = `Gemi: ${enemyShipsRemaining}`;
+  document.getElementById('battle-log').innerHTML = '';
+
+  buildGrid('my-grid-rows','my-col-labels', null, null, null);
+  buildGrid('enemy-grid-rows','enemy-col-labels', attackCell, null, null);
+
+  // Render my ships
+  for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) {
+    if (myBoard[r][c]===1) { const el=getCellEl('my-grid-rows',r,c); if(el)el.classList.add('ship'); }
+  }
+
+  showScreen('game');
+  updateTurnUI();
+  addLog(`Savaş başladı! ${myTurn?'İlk hamle sizin!':'İlk hamle rakibin!'}`, 'system');
+}
+
+function updateTurnUI() {
+  const dot = document.getElementById('turn-dot');
+  const txt = document.getElementById('turn-text');
+  const enemyGrid = document.getElementById('enemy-grid-rows');
+  if (myTurn) {
+    dot.className='status-dot my-turn';
+    txt.textContent='SİZİN SIRA — Ateş edin!';
+    enemyGrid.classList.remove('disabled');
+  } else {
+    dot.className='status-dot wait';
+    txt.textContent=`${enemyName} ateş ediyor…`;
+    enemyGrid.classList.add('disabled');
+  }
+}
+
+function attackCell(r,c) {
+  if (!myTurn || !gameActive) return;
+  if (enemyBoard[r][c]!==0) { showToast('Bu hücreye zaten ateş ettiniz!'); return; }
+  myTurn = false;
+  updateTurnUI();
+  myShotsFired++;
+  document.getElementById('my-shots').textContent = myShotsFired;
+  // Atış animasyonu + sesi
+  playShot();
+  const el = getCellEl('enemy-grid-rows', r, c);
+  if (el) { el.classList.add('firing'); setTimeout(()=>el.classList.remove('firing'),400); }
+  sendMsg({type:'shot', r, c});
+}
+
+function handleIncomingShot(r,c) {
+  const hit = myBoard[r][c]===1;
+  let sunkShipId = null;
+  let sunkCells = null;
+
+  if (hit) {
+    myBoard[r][c] = 2;
+    const el = getCellEl('my-grid-rows',r,c);
+    if (el) {
+      el.classList.remove('ship');
+      el.classList.add('hit');
+      animateHit(el);
+      playHit();
+      shakeScreen();
+    }
+    // Check if ship is sunk
+    for (const [sid, cells] of Object.entries(shipsPlaced)) {
+      if (cells.every(({r:sr,c:sc})=>myBoard[sr][sc]===2)) {
+        sunkShipId = sid;
+        sunkCells = cells;
+        cells.forEach(({r:sr,c:sc})=>{
+          myBoard[sr][sc]=4;
+          const el=getCellEl('my-grid-rows',sr,sc);
+          if(el){el.classList.remove('hit');el.classList.add('sunk');}
+        });
+        animateSink(sunkCells, 'my-grid-rows');
+        playSink();
+        mySunkCount++;
+        document.getElementById('my-ships-left').textContent=`Gemi: ${SHIPS_CONFIG.length-mySunkCount}`;
+        break;
+      }
+    }
+  } else {
+    myBoard[r][c]=3;
+    const el=getCellEl('my-grid-rows',r,c);
+    if(el) { el.classList.add('miss'); animateMiss(el); }
+    playMiss();
+  }
+
+  sendMsg({type:'shot_result', r, c, hit, sunkShipId, sunkCells});
+
+  if (mySunkCount===SHIPS_CONFIG.length) {
+    gameActive=false;
+    setTimeout(()=>endGame(false),800);
+    return;
+  }
+  myTurn=true; updateTurnUI();
+  addLog(`${enemyName}: ${COL_LABELS[c]}${r+1} — ${hit?(sunkShipId?'BATTI! 💥':'İSABET! 🎯'):'ISKALADIM!'}`, hit?(sunkShipId?'sunk':'hit'):'miss');
+}
+
+function handleShotResult(msg) {
+  const {r,c,hit,sunkShipId,sunkCells} = msg;
+  const el = getCellEl('enemy-grid-rows',r,c);
+
+  if (hit) {
+    myHits++;
+    enemyBoard[r][c]=2;
+    if(el){
+      el.classList.add('hit');
+      animateHit(el);
+      if (!sunkShipId) { playHit(); shakeScreen(); }
+    }
+    if (sunkShipId) {
+      if (sunkCells) sunkCells.forEach(({r:sr,c:sc})=>{
+        enemyBoard[sr][sc]=4;
+        const sel=getCellEl('enemy-grid-rows',sr,sc);
+        if(sel){sel.classList.remove('hit');sel.classList.add('sunk');}
+      });
+      animateSink(sunkCells || [{r,c}], 'enemy-grid-rows');
+      playSink();
+      shakeScreen();
+      enemySunkCount++;
+      document.getElementById('enemy-sunk-count').textContent=enemySunkCount;
+      const ship=SHIPS_CONFIG.find(s=>s.id===sunkShipId);
+      document.getElementById('enemy-ships-left').textContent=`Gemi: ${SHIPS_CONFIG.length-enemySunkCount}`;
+      showToast(`${ship?ship.name+' ':''}BATTI! 💥💥`, 'sunk');
+      addLog(`Siz: ${COL_LABELS[c]}${r+1} — ${ship?ship.name:''} BATTI! 💥`, 'sunk');
+    } else {
+      showToast('İSABET! 🎯', 'hit');
+      addLog(`Siz: ${COL_LABELS[c]}${r+1} — İSABET! 🎯`, 'my-hit');
+    }
+  } else {
+    enemyBoard[r][c]=3;
+    if(el) { el.classList.add('miss'); animateMiss(el); }
+    playMiss();
+    addLog(`Siz: ${COL_LABELS[c]}${r+1} — Iskalladı`, 'miss');
+  }
+
+  document.getElementById('my-sunk-count').textContent=enemySunkCount;
+
+  if (enemySunkCount===SHIPS_CONFIG.length) {
+    gameActive=false;
+    setTimeout(()=>endGame(true),800);
+    return;
+  }
+  myTurn=false; updateTurnUI();
+}
+
+function addLog(text, type='') {
+  const log = document.getElementById('battle-log');
+  const entry = document.createElement('div');
+  entry.className='log-entry'+(type?' '+type:'');
+  entry.textContent=text;
+  log.appendChild(entry);
+  log.scrollTop=log.scrollHeight;
+}
+
+// ═══════════════════════════════════════════════════
+// END GAME
+// ═══════════════════════════════════════════════════
+function endGame(won) {
+  const title=document.getElementById('result-title');
+  title.textContent = won ? '🏆 ZAFERSİNİZ!' : '⚓ BATTI…';
+  title.className = 'result-title '+(won?'win':'lose');
+
+  const accuracy = myShotsFired>0?Math.round(myHits/myShotsFired*100):0;
+  document.getElementById('result-stats').innerHTML=`
+    <div class="stat-box"><div class="stat-val">${myShotsFired}</div><div class="stat-label">ATILAN TOP</div></div>
+    <div class="stat-box"><div class="stat-val">${myHits}</div><div class="stat-label">İSABET</div></div>
+    <div class="stat-box"><div class="stat-val">${accuracy}%</div><div class="stat-label">İSABET ORANI</div></div>
+    <div class="stat-box"><div class="stat-val">${enemySunkCount}</div><div class="stat-label">BATAN GEMİ</div></div>
+  `;
+
+  updateLeaderboard(myName, won);
+  renderLeaderboard('result-leaderboard-body');
+  showScreen('result');
+
+  // Ses & görsel
+  setTimeout(() => {
+    if (won) { playVictory(); showVictoryRays(); }
+    else { playDefeat(); }
+  }, 300);
+}
+
+function rematch() {
+  sendMsg({type:'rematch'});
+  startPlacement();
+}
+function handleRematch() {
+  startPlacement();
+}
+function goLobby() {
+  if (peer) { peer.destroy(); peer=null; conn=null; }
+  document.getElementById('room-code-section').style.display='none';
+  document.getElementById('join-status').style.display='none';
+  document.getElementById('create-name').value='';
+  document.getElementById('join-name').value='';
+  document.getElementById('join-code').value='';
+  // Zafer ışınlarını temizle
+  document.querySelectorAll('.victory-rays').forEach(e=>e.remove());
+  renderLeaderboard('leaderboard-body');
+  showScreen('lobby');
+}
+
+// ═══════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════
+renderLeaderboard('leaderboard-body');
+</script>
+</body>
+</html>
