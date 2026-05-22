@@ -1318,12 +1318,17 @@ function createRoom() {
     document.getElementById('room-code-display').textContent = id;
   });
   peer.on('connection', c => {
-    conn = c; setupConn();
-    document.getElementById('host-conn-dot').className='conn-dot connected';
-    document.getElementById('host-conn-text').textContent='Rakip bağlandı!';
-    showToast('Rakip bağlandı! 🎉','');
-    // Send names
-    sendMsg({type:'hello', name:myName});
+    conn = c;
+    // Önce data listener'ı kur, sonra open bekle
+    conn.on('data', handleMessage);
+    conn.on('close', onConnClose);
+    conn.on('open', () => {
+      document.getElementById('host-conn-dot').className='conn-dot connected';
+      document.getElementById('host-conn-text').textContent='Rakip bağlandı!';
+      showToast('Rakip bağlandı! 🎉');
+      // Bağlantı tamamen açıkken hello gönder
+      sendMsg({type:'hello', name:myName});
+    });
   });
   peer.on('error', e => showToast('Bağlantı hatası: '+e.type));
 }
@@ -1340,8 +1345,10 @@ function joinRoom() {
 
   peer = new Peer(undefined, {debug:0});
   peer.on('open', () => {
-    conn = peer.connect(code);
-    setupConn();
+    conn = peer.connect(code, {reliable:true});
+    // Önce data listener'ı kur
+    conn.on('data', handleMessage);
+    conn.on('close', onConnClose);
     conn.on('open', () => {
       document.getElementById('join-status-text').textContent='Bağlandı!';
       sendMsg({type:'hello', name:myName});
@@ -1353,15 +1360,12 @@ function joinRoom() {
   });
 }
 
-function setupConn() {
-  conn.on('data', handleMessage);
-  conn.on('close', () => {
-    if (gameActive) {
-      showToast('Rakip bağlantıyı kesti!');
-      document.getElementById('game-conn-dot').className='conn-dot';
-      document.getElementById('game-conn-text').textContent='Bağlantı kesildi';
-    }
-  });
+function onConnClose() {
+  if (gameActive) {
+    showToast('Rakip bağlantıyı kesti!');
+    document.getElementById('game-conn-dot').className='conn-dot';
+    document.getElementById('game-conn-text').textContent='Bağlantı kesildi';
+  }
 }
 
 function sendMsg(obj) {
@@ -1381,7 +1385,7 @@ function handleMessage(raw) {
   switch(msg.type) {
     case 'hello':
       enemyName = msg.name;
-      showToast(`${enemyName} bağlandı! ⚓`);
+      showToast(`${enemyName} savaşa katıldı! ⚓`);
       startPlacement();
       break;
     case 'ready':
