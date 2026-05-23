@@ -9,6 +9,7 @@
 <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 <style>
 :root {
+  /* ── KOYU MOD (varsayılan) ── */
   --navy-deepest: #020b18;
   --navy-deep: #041428;
   --navy-mid: #062040;
@@ -29,6 +30,49 @@
   --text-dim: #7aadcc;
   --grid-line: rgba(77,184,232,0.15);
   --grid-hover: rgba(77,184,232,0.3);
+  /* Kart & panel */
+  --card-bg: linear-gradient(135deg, rgba(10,48,96,0.8), rgba(4,20,40,0.9));
+  --card-border: rgba(77,184,232,0.25);
+  --panel-bg: rgba(4,20,40,0.85);
+  --panel-border: rgba(77,184,232,0.15);
+  --input-bg: rgba(2,11,24,0.8);
+  --btn-sec-bg: rgba(10,48,96,0.8);
+  --score-card-bg: rgba(4,20,40,0.7);
+  --log-bg: rgba(4,20,40,0.85);
+  --toast-bg: rgba(4,20,40,0.95);
+}
+
+/* ── AÇIK MOD ── */
+body.light {
+  --navy-deepest: #e8f4fd;
+  --navy-deep: #d0e8f7;
+  --navy-mid: #b8d8f0;
+  --navy-light: #8bbfe0;
+  --ocean-blue: #5a9fd4;
+  --sea-bright: #2980b9;
+  --foam: #1a6fa8;
+  --gold: #a07830;
+  --gold-bright: #8b6010;
+  --gold-glow: #c9940a;
+  --red-hit: #c0392b;
+  --red-glow: #e74c3c;
+  --miss-color: #5a8fa8;
+  --ship-color: #2a6f9f;
+  --ship-border: #1a5f8f;
+  --green-ready: #27ae60;
+  --text-bright: #0a2040;
+  --text-dim: #2a5f8f;
+  --grid-line: rgba(26,111,168,0.2);
+  --grid-hover: rgba(26,111,168,0.15);
+  --card-bg: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(230,244,253,0.95));
+  --card-border: rgba(26,111,168,0.3);
+  --panel-bg: rgba(255,255,255,0.9);
+  --panel-border: rgba(26,111,168,0.2);
+  --input-bg: rgba(255,255,255,0.8);
+  --btn-sec-bg: rgba(184,216,240,0.8);
+  --score-card-bg: rgba(208,232,247,0.8);
+  --log-bg: rgba(255,255,255,0.9);
+  --toast-bg: rgba(230,244,253,0.97);
 }
 
 * { margin:0; padding:0; box-sizing:border-box; }
@@ -40,13 +84,20 @@ body {
   min-height: 100vh;
   overflow-x: hidden;
   position: relative;
+  transition: background 0.4s, color 0.4s;
 }
 
 /* ── OCEAN BACKGROUND ── */
 .ocean-bg {
   position: fixed; inset: 0; z-index: 0; overflow: hidden;
   background: radial-gradient(ellipse at 50% 0%, #0a2a4a 0%, #020b18 70%);
+  transition: background 0.4s;
 }
+body.light .ocean-bg {
+  background: radial-gradient(ellipse at 50% 0%, #b8d8f0 0%, #e8f4fd 70%);
+}
+body.light .star-field { opacity: 0.05; }
+body.light .wave-layer { opacity: 0.08; }
 .wave-layer {
   position: absolute; bottom: 0; left: -50%; width: 200%; height: 300px;
   border-radius: 43%;
@@ -116,15 +167,15 @@ body {
   display: flex; gap: 24px; flex-wrap: wrap; justify-content: center; width: 100%; max-width: 800px;
 }
 .lobby-card {
-  background: linear-gradient(135deg, rgba(10,48,96,0.8), rgba(4,20,40,0.9));
-  border: 1px solid rgba(77,184,232,0.25);
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
   border-radius: 16px;
   padding: 32px 28px;
   flex: 1; min-width: 280px; max-width: 340px;
   text-align: center;
   backdrop-filter: blur(10px);
-  box-shadow: 0 8px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(77,184,232,0.1);
-  transition: transform 0.3s, box-shadow 0.3s;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.3), inset 0 1px 0 rgba(77,184,232,0.1);
+  transition: transform 0.3s, box-shadow 0.3s, background 0.4s;
   position: relative; overflow: hidden;
 }
 .lobby-card::before {
@@ -155,10 +206,10 @@ body {
 }
 .btn-primary:hover { box-shadow: 0 6px 30px rgba(201,168,76,0.6), 0 0 60px rgba(201,168,76,0.2); }
 .btn-secondary {
-  background: rgba(10,48,96,0.8);
+  background: var(--btn-sec-bg);
   color: var(--foam);
-  border: 1px solid rgba(77,184,232,0.4);
-  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  border: 1px solid var(--card-border);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
 }
 .btn-secondary:hover { border-color: var(--foam); background: rgba(26,127,212,0.2); }
 .btn-danger {
@@ -174,8 +225,8 @@ body {
 .input-group { display:flex; flex-direction:column; gap:6px; width:100%; }
 .input-label { font-family:'Share Tech Mono',monospace; font-size:0.72rem; color:var(--text-dim); letter-spacing:3px; text-transform:uppercase; }
 .input-field {
-  background: rgba(2,11,24,0.8);
-  border: 1px solid rgba(77,184,232,0.3);
+  background: var(--input-bg);
+  border: 1px solid var(--card-border);
   border-radius: 8px;
   padding: 12px 16px;
   color: var(--foam);
@@ -273,9 +324,26 @@ body {
   z-index: 2;
   filter: drop-shadow(0 2px 6px rgba(0,0,0,0.7));
   transition: opacity 0.2s;
+  overflow: hidden;
+  display: block;
 }
 .ship-svg-overlay.preview { opacity: 0.85; filter: drop-shadow(0 0 8px rgba(201,168,76,0.8)); }
 .ship-svg-overlay.invalid { filter: drop-shadow(0 0 8px rgba(230,57,70,0.8)); opacity: 0.7; }
+.ship-svg-overlay.placed  { pointer-events: all; cursor: grab; transition: filter 0.15s, transform 0.15s; }
+.ship-svg-overlay.placed:hover { filter: drop-shadow(0 0 10px rgba(77,184,232,0.9)); transform: scale(1.03); }
+.ship-svg-overlay.placed.dragging { cursor: grabbing; opacity: 0.5; z-index: 20; transform: scale(1.06); }
+.ship-svg-overlay.placed.selected-ship { filter: drop-shadow(0 0 12px rgba(201,168,76,1)); }
+
+/* Döndür hint tooltip */
+.rotate-hint {
+  position: absolute; z-index: 30; pointer-events: none;
+  background: rgba(4,20,40,0.9); border: 1px solid var(--gold);
+  color: var(--gold-bright); font-family: 'Share Tech Mono', monospace;
+  font-size: 0.65rem; letter-spacing: 1px; padding: 4px 8px; border-radius: 6px;
+  white-space: nowrap; opacity: 0;
+  transition: opacity 0.2s;
+}
+.rotate-hint.show { opacity: 1; }
 .cell.hit {
   background:radial-gradient(circle, rgba(230,57,70,0.9) 0%, rgba(140,20,20,0.8) 100%);
   border-color: var(--red-hit);
@@ -298,7 +366,7 @@ body {
 
 .status-bar {
   display:flex; align-items:center; gap:12px;
-  background:rgba(4,20,40,0.8); border:1px solid rgba(77,184,232,0.2);
+  background:var(--panel-bg); border:1px solid var(--panel-border);
   border-radius:10px; padding:10px 20px;
   font-family:'Share Tech Mono',monospace; font-size:0.82rem;
   backdrop-filter:blur(8px);
@@ -333,7 +401,7 @@ body {
 /* ── LOG PANEL ── */
 .log-panel {
   width:100%; max-width:400px;
-  background:rgba(4,20,40,0.85); border:1px solid rgba(77,184,232,0.15);
+  background:var(--log-bg); border:1px solid var(--panel-border);
   border-radius:12px; overflow:hidden; backdrop-filter:blur(8px);
 }
 .log-header { padding:10px 16px; border-bottom:1px solid rgba(77,184,232,0.1); font-family:'Share Tech Mono',monospace; font-size:0.7rem; color:var(--text-dim); letter-spacing:3px; }
@@ -353,7 +421,7 @@ body {
 }
 .score-card {
   flex:1; min-width:160px; max-width:220px;
-  background:rgba(4,20,40,0.7); border:1px solid rgba(77,184,232,0.15);
+  background:var(--score-card-bg); border:1px solid var(--panel-border);
   border-radius:10px; padding:12px 16px; text-align:center;
   backdrop-filter:blur(8px);
 }
@@ -381,7 +449,7 @@ body {
 /* ── TOURNAMENT TABLE ── */
 .tournament-panel {
   width:100%; max-width:600px;
-  background:rgba(4,20,40,0.85); border:1px solid rgba(201,168,76,0.2);
+  background:var(--panel-bg); border:1px solid rgba(201,168,76,0.2);
   border-radius:12px; overflow:hidden; backdrop-filter:blur(8px);
 }
 .tournament-header { padding:12px 20px; border-bottom:1px solid rgba(201,168,76,0.15); display:flex; align-items:center; gap:10px; }
@@ -401,7 +469,7 @@ body {
 /* ── NOTIFICATION TOAST ── */
 #toast {
   position:fixed; bottom:30px; left:50%; transform:translateX(-50%) translateY(100px);
-  background:rgba(4,20,40,0.95); border:1px solid rgba(77,184,232,0.3);
+  background:var(--toast-bg); border:1px solid var(--card-border);
   border-radius:12px; padding:14px 24px;
   font-family:'Share Tech Mono',monospace; font-size:0.85rem; color:var(--foam);
   backdrop-filter:blur(12px); z-index:1000;
@@ -652,15 +720,19 @@ body {
 .confirm-desc strong { color: var(--gold-bright); }
 .confirm-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
 
-/* Ses butonu */
-.sound-toggle {
+/* Üst kontroller */
+.top-controls {
   position:fixed; top:16px; right:16px; z-index:100;
-  background:rgba(4,20,40,0.8); border:1px solid rgba(77,184,232,0.3);
+  display:flex; gap:8px;
+}
+.top-btn {
+  background:var(--panel-bg); border:1px solid var(--panel-border);
   border-radius:8px; padding:8px 12px; cursor:pointer;
   font-size:1.2rem; backdrop-filter:blur(8px);
-  transition:border-color 0.2s;
+  transition:border-color 0.2s, background 0.4s;
+  line-height:1;
 }
-.sound-toggle:hover { border-color:var(--foam); }
+.top-btn:hover { border-color:var(--foam); }
 
 /* Screen shake */
 @keyframes screenShake {
@@ -688,7 +760,10 @@ body {
 </head>
 <body>
 
-<button class="sound-toggle" id="sound-toggle" onclick="toggleSound()" title="Ses Aç/Kapat">🔊</button>
+<div class="top-controls">
+  <button class="top-btn" id="theme-toggle" onclick="toggleTheme()" title="Açık/Koyu Mod">🌙</button>
+  <button class="top-btn" id="sound-toggle" onclick="toggleSound()" title="Ses Aç/Kapat">🔊</button>
+</div>
 
 <div class="ocean-bg">
   <div class="star-field"></div>
@@ -723,7 +798,16 @@ body {
       <div id="room-code-section" style="display:none; margin-top:16px">
         <div class="input-label" style="text-align:center;margin-bottom:6px">ODA KODUNUZ</div>
         <div class="peer-id-box" id="room-code-display" onclick="copyCode()" title="Kopyalamak için tıkla">…</div>
-        <div class="peer-id-hint">Rakibinize bu kodu verin · Tıkla kopyala</div>
+        <div class="peer-id-hint">Tıkla kopyala</div>
+        <div style="margin-top:10px">
+          <div class="input-label" style="text-align:center;margin-bottom:6px">DAVET LİNKİ</div>
+          <div class="peer-id-box" id="invite-link-display" onclick="copyInviteLink()" title="Linki kopyala" style="font-size:0.72rem;word-break:break-all">…</div>
+          <div class="peer-id-hint">Rakibinize bu linki gönderin · Tıkla kopyala</div>
+        </div>
+        <div style="margin-top:10px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+          <button class="btn btn-secondary btn-sm" onclick="copyInviteLink()">🔗 Linki Kopyala</button>
+          <button class="btn btn-secondary btn-sm" onclick="shareInvite()">📤 Paylaş</button>
+        </div>
         <div style="margin-top:12px;text-align:center">
           <div class="conn-indicator" style="justify-content:center">
             <div class="conn-dot connecting" id="host-conn-dot"></div>
@@ -737,14 +821,17 @@ body {
     <div class="lobby-card">
       <div class="card-icon">🚢</div>
       <div class="card-title">ODAYA KATIL</div>
-      <div class="card-desc">Rakibinin oda kodunu gir ve savaşa katıl. Komutanın seni bekliyor!</div>
+      <div class="card-desc">Rakibinin oda kodunu gir ya da davet linkine tıkla. Komutan seni bekliyor!</div>
       <div class="input-group" style="margin-bottom:10px">
         <div class="input-label">Komutan Adı</div>
         <input class="input-field" id="join-name" placeholder="Adınızı girin..." maxlength="20">
       </div>
       <div class="input-group" style="margin-bottom:14px">
         <div class="input-label">Oda Kodu</div>
-        <input class="input-field" id="join-code" placeholder="Oda kodunu girin..." maxlength="40">
+        <div style="position:relative">
+          <input class="input-field" id="join-code" placeholder="Oda kodunu girin..." maxlength="40">
+          <div id="join-code-auto-badge" style="display:none;position:absolute;right:10px;top:50%;transform:translateY(-50%);background:var(--green-ready);color:#000;font-size:0.6rem;font-family:'Share Tech Mono',monospace;padding:2px 6px;border-radius:4px;letter-spacing:1px">OTOMATİK</div>
+        </div>
       </div>
       <button class="btn btn-secondary btn-full" onclick="joinRoom()">
         <span>⚡</span> ODAYA KATIL
@@ -980,6 +1067,24 @@ function getAudioCtx() {
 function toggleSound() {
   soundEnabled = !soundEnabled;
   document.getElementById('sound-toggle').textContent = soundEnabled ? '🔊' : '🔇';
+}
+
+// ── TEMA SİSTEMİ ──
+function toggleTheme() {
+  const isLight = document.body.classList.toggle('light');
+  document.getElementById('theme-toggle').textContent = isLight ? '☀️' : '🌙';
+  localStorage.setItem('ab_theme', isLight ? 'light' : 'dark');
+}
+
+function initTheme() {
+  const saved = localStorage.getItem('ab_theme');
+  // Sistem tercihine de bak
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const useLight = saved === 'light' || (!saved && !prefersDark);
+  if (useLight) {
+    document.body.classList.add('light');
+    document.getElementById('theme-toggle').textContent = '☀️';
+  }
 }
 
 // Top atış sesi — top gümbürtüsü (boom)
@@ -1298,7 +1403,14 @@ const SHIPS_CONFIG = [
   {id:'submarine', name:'Denizaltı',    size:3, icon:'🌊'},
   {id:'destroyer', name:'Muhrip',       size:2, icon:'⚡'},
 ];
-const CELL_SIZE = 40;
+const CELL_SIZE_DEFAULT = 40;
+
+function getCellSize() {
+  // Gerçek hücre boyutunu DOM'dan ölç
+  const cell = document.querySelector('.cell');
+  if (cell) return cell.getBoundingClientRect().width;
+  return CELL_SIZE_DEFAULT;
+}
 
 // ═══════════════════════════════════════════════════
 // SVG GEMİ ÇİZİMLERİ
@@ -1325,11 +1437,19 @@ function getShipSVG(shipId, cellCount, horizontal, cellPx, tint) {
   const dW = cellCount * cellPx, dH = cellPx;
   const body = buildShipPath(shipId, dW, dH, tint);
   if (horizontal) {
-    return `<svg xmlns="http://www.w3.org/2000/svg" width="${dW}" height="${dH}" viewBox="0 0 ${dW} ${dH}">${body}</svg>`;
+    // overflow:hidden + clipPath ile taşmayı kesin kes
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${dW}" height="${dH}"
+      viewBox="0 0 ${dW} ${dH}" overflow="hidden">
+      <defs><clipPath id="ship_clip_h"><rect x="0" y="0" width="${dW}" height="${dH}"/></clipPath></defs>
+      <g clip-path="url(#ship_clip_h)">${body}</g>
+    </svg>`;
   } else {
     const rW = cellPx, rH = cellCount * cellPx;
-    return `<svg xmlns="http://www.w3.org/2000/svg" width="${rW}" height="${rH}" viewBox="0 0 ${rW} ${rH}">
-      <g transform="translate(${rW},0) rotate(90) scale(${rW/dH},${rH/dW})">${buildShipPath(shipId, dW, dH, tint)}</g>
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${rW}" height="${rH}"
+      viewBox="0 0 ${rW} ${rH}" overflow="hidden">
+      <defs><clipPath id="ship_clip_v"><rect x="0" y="0" width="${rW}" height="${rH}"/></clipPath></defs>
+      <g clip-path="url(#ship_clip_v)"
+        transform="translate(${rW},0) rotate(90) scale(${rW/dH},${rH/dW})">${buildShipPath(shipId, dW, dH, tint)}</g>
     </svg>`;
   }
 }
@@ -1443,15 +1563,18 @@ function renderShipOverlay(gridRowsId, shipId, cells, horizontal, tint, extraCla
   const firstCell = getCellEl(gridRowsId, r0, c0);
   if (!firstCell) return null;
 
+  // Gerçek hücre boyutunu DOM'dan ölç — mobil/tablet/masaüstü fark etmez
+  const cellPx = firstCell.getBoundingClientRect().width;
+
   const contRect = container.getBoundingClientRect();
   const cellRect = firstCell.getBoundingClientRect();
   const offsetX = cellRect.left - contRect.left;
   const offsetY = cellRect.top  - contRect.top;
 
-  const W = horizontal ? size * CELL_SIZE : CELL_SIZE;
-  const H = horizontal ? CELL_SIZE : size * CELL_SIZE;
+  const W = horizontal ? size * cellPx : cellPx;
+  const H = horizontal ? cellPx : size * cellPx;
 
-  const svgStr = getShipSVG(shipId, size, horizontal, CELL_SIZE, tint || 'normal');
+  const svgStr = getShipSVG(shipId, size, horizontal, cellPx, tint || 'normal');
   const blob = new Blob([svgStr], {type:'image/svg+xml'});
   const url = URL.createObjectURL(blob);
 
@@ -1486,6 +1609,10 @@ function showPreviewOverlay(gridRowsId, shipId, cells, horizontal, valid) {
   clearPreviewOverlay();
   if (!cells || !cells.length) return;
   for (const {r,c} of cells) if (r<0||r>=ROWS||c<0||c>=COLS) return;
+  // cells içindeki tüm koordinatlar grid sınırları içinde mi?
+  const maxR = Math.max(...cells.map(c=>c.r));
+  const maxC = Math.max(...cells.map(c=>c.c));
+  if (maxR >= ROWS || maxC >= COLS) return;
   previewOverlayEl = renderShipOverlay(gridRowsId, shipId, cells, horizontal,
     valid ? 'gold' : 'red', valid ? 'preview' : 'invalid');
 }
@@ -1651,31 +1778,53 @@ function clearSession() {
   if (sessionCode) localStorage.removeItem('ab_session_' + sessionCode);
 }
 
-function startReconnectMode(reason) {
+function startReconnectMode(reason, wasInGame) {
   clearTimeout(reconnectTimer);
   saveSession();
+  stopHeartbeat();
 
   document.getElementById('reconnect-reason').textContent = reason || 'Rakiple bağlantı koptu.';
   document.getElementById('reconnect-session-code').textContent = sessionCode;
   document.getElementById('reconnect-dot').className = 'conn-dot connecting';
   document.getElementById('reconnect-status-text').textContent = 'Yeniden bağlanmak için dinleniyor…';
+
+  // Geri sayım metnini güncelle
+  const countWrap = document.getElementById('reconnect-countdown-wrap');
+  countWrap.innerHTML = wasInGame
+    ? `Rakip <span id="reconnect-countdown">${REJOIN_TIMEOUT}</span>s içinde dönmezse <strong style="color:var(--gold-bright)">kazanırsınız!</strong>`
+    : `Rakip bekleniyor… <span id="reconnect-countdown">${REJOIN_TIMEOUT}</span>s`;
+
   showScreen('reconnect');
 
-  // Yeni Peer aç — rakip eski session code'u kullanarak bağlanmayı dener
-  reconnectCountdown = RECONNECT_TIMEOUT;
-  updateReconnectCountdown();
+  reconnectCountdown = REJOIN_TIMEOUT;
+  updateReconnectCountdown(wasInGame);
   beginListeningForReconnect();
 }
 
-function updateReconnectCountdown() {
-  document.getElementById('reconnect-countdown').textContent = reconnectCountdown;
+function updateReconnectCountdown(wasInGame) {
+  const el = document.getElementById('reconnect-countdown');
+  if (el) el.textContent = reconnectCountdown;
+
   if (reconnectCountdown <= 0) {
-    document.getElementById('reconnect-countdown-wrap').textContent = 'Süre doldu. Yeni oyun başlatın.';
-    document.getElementById('reconnect-dot').className = 'conn-dot';
+    stopHeartbeat();
+    if (wasInGame) {
+      // Süre doldu — orada kalan kazanır
+      document.getElementById('reconnect-countdown-wrap').textContent = 'Süre doldu. Hükmen galipsiniz!';
+      document.getElementById('reconnect-dot').className = 'conn-dot connected';
+      setTimeout(() => {
+        gameActive = false;
+        clearSession();
+        updateLeaderboard(myName, true);
+        showForfeitResult(true, enemyName + ' (bağlantı koptu)');
+      }, 1200);
+    } else {
+      document.getElementById('reconnect-countdown-wrap').textContent = 'Süre doldu. Yeni oyun başlatın.';
+      document.getElementById('reconnect-dot').className = 'conn-dot';
+    }
     return;
   }
   reconnectCountdown--;
-  reconnectTimer = setTimeout(updateReconnectCountdown, 1000);
+  reconnectTimer = setTimeout(() => updateReconnectCountdown(wasInGame), 1000);
 }
 
 // Kopan taraf yeni Peer açar ve rakibinin kendisine bağlanmasını bekler
@@ -1701,13 +1850,13 @@ function beginListeningForReconnect() {
     conn.on('data', handleMessage);
     conn.on('close', onConnClose);
     conn.on('open', () => {
+      if (reconnectCountdown <= 0) return; // Süre dolmuş, kazanma ekranı gösterildi
       clearTimeout(reconnectTimer);
       onReconnected();
       sendMsg({type:'reconnect_hello', name:myName, sessionCode});
     });
   });
   peer.on('error', e => {
-    // ID çakışması olabilir, rastgele ID ile tekrar dene
     if (e.type === 'unavailable-id') {
       if (peer) { try{peer.destroy();}catch{} peer=null; }
       peer = new Peer(undefined, {debug:0});
@@ -1716,7 +1865,12 @@ function beginListeningForReconnect() {
         conn = c;
         conn.on('data', handleMessage);
         conn.on('close', onConnClose);
-        conn.on('open', () => { clearTimeout(reconnectTimer); onReconnected(); sendMsg({type:'reconnect_hello',name:myName,sessionCode}); });
+        conn.on('open', () => {
+          if (reconnectCountdown <= 0) return;
+          clearTimeout(reconnectTimer);
+          onReconnected();
+          sendMsg({type:'reconnect_hello',name:myName,sessionCode});
+        });
       });
     }
   });
@@ -1750,9 +1904,14 @@ function tryReconnectManual() {
 }
 
 function onReconnected() {
+  clearTimeout(reconnectTimer);
+  stopHeartbeat();
   document.getElementById('reconnect-dot').className='conn-dot connected';
   document.getElementById('reconnect-status-text').textContent='Bağlantı kuruldu!';
   showToast('Bağlantı yeniden kuruldu! 🎉');
+  // Heartbeat'i yeniden başlat
+  setTimeout(() => startHeartbeat(), 500);
+  updateConnIndicator(true);
 }
 
 function copySessionCode() {
@@ -1775,7 +1934,10 @@ function createRoom() {
   peer.on('open', id => {
     myPeerId = id;
     document.getElementById('room-code-section').style.display='block';
-    document.getElementById('room-code-display').textContent = shortCode; // Sadece kısa kod göster
+    document.getElementById('room-code-display').textContent = shortCode;
+    // Davet linki oluştur
+    const inviteUrl = buildInviteLink(shortCode);
+    document.getElementById('invite-link-display').textContent = inviteUrl;
   });
   peer.on('connection', c => {
     conn = c;
@@ -1826,22 +1988,139 @@ function joinRoom() {
   });
 }
 
-function onConnClose() {
-  // Kasıtlı teslim olduysa zaten endGame çağrıldı, tekrar işleme
+// ═══════════════════════════════════════════════════
+// HEARTBEAT SİSTEMİ
+// ═══════════════════════════════════════════════════
+const HB_INTERVAL    = 3000;  // Her 3 sn ping gönder
+const HB_TIMEOUT     = 9000;  // 9 sn cevap gelmezse kopuk say
+const REJOIN_TIMEOUT = 30;    // Kopunca 30 sn bekleme süresi
+
+let hbSendTimer   = null;  // ping gönderme zamanlayıcısı
+let hbWatchTimer  = null;  // son pong'dan bu yana geçen süre
+let lastPongTime  = 0;     // en son pong/ping alınan zaman
+let hbActive      = false; // heartbeat çalışıyor mu
+
+function startHeartbeat() {
+  stopHeartbeat();
+  hbActive     = true;
+  lastPongTime = Date.now();
+  schedulePing();
+  scheduleWatch();
+}
+
+function stopHeartbeat() {
+  hbActive = false;
+  clearTimeout(hbSendTimer);
+  clearTimeout(hbWatchTimer);
+}
+
+function schedulePing() {
+  hbSendTimer = setTimeout(() => {
+    if (!hbActive) return;
+    if (conn && conn.open) {
+      sendMsg({ type: 'ping', ts: Date.now() });
+    }
+    schedulePing();
+  }, HB_INTERVAL);
+}
+
+function scheduleWatch() {
+  hbWatchTimer = setTimeout(() => {
+    if (!hbActive) return;
+    const elapsed = Date.now() - lastPongTime;
+    if (elapsed > HB_TIMEOUT) {
+      // Bağlantı koptu — conn.close event'i gelmemiş olabilir
+      handleConnectionLost('Rakiple bağlantı koptu (zaman aşımı).');
+    } else {
+      scheduleWatch();
+    }
+  }, HB_TIMEOUT);
+}
+
+function handleConnectionLost(reason) {
   if (forfeitInProgress) return;
-  if (gameActive || document.getElementById('screen-place').classList.contains('active')) {
-    const reason = 'Rakiple bağlantı koptu. Yeniden bağlanmak için bekleyin.';
-    startReconnectMode(reason);
+  stopHeartbeat();
+  const inGame  = gameActive;
+  const inPlace = document.getElementById('screen-place').classList.contains('active');
+  if (inGame || inPlace) {
+    // Bağlantı göstergesini güncelle
+    updateConnIndicator(false);
+    startReconnectMode(reason, inGame);
   }
 }
 
+function updateConnIndicator(connected) {
+  const dot  = document.getElementById('game-conn-dot');
+  const text = document.getElementById('game-conn-text');
+  if (!dot) return;
+  dot.className  = 'conn-dot ' + (connected ? 'connected' : 'connecting');
+  text.textContent = connected ? 'Bağlı' : 'Bağlantı kesildi…';
+}
+
+function onConnClose() {
+  if (forfeitInProgress) return;
+  handleConnectionLost('Rakiple bağlantı koptu.');
+}
+
 function sendMsg(obj) {
-  if (conn && conn.open) conn.send(JSON.stringify(obj));
+  if (conn && conn.open) {
+    try { conn.send(JSON.stringify(obj)); } catch(e) {}
+  }
+}
+
+// ── DAVET LİNKİ SİSTEMİ ──
+function buildInviteLink(code) {
+  const base = window.location.href.split('?')[0].split('#')[0];
+  return `${base}?join=${code}`;
 }
 
 function copyCode() {
   const code = document.getElementById('room-code-display').textContent;
   navigator.clipboard.writeText(code).then(()=>showToast('Kod kopyalandı! 📋'));
+}
+
+function copyInviteLink() {
+  const link = document.getElementById('invite-link-display').textContent;
+  navigator.clipboard.writeText(link).then(()=>showToast('Davet linki kopyalandı! 🔗'));
+}
+
+function shareInvite() {
+  const link = document.getElementById('invite-link-display').textContent;
+  const code = document.getElementById('room-code-display').textContent;
+  if (navigator.share) {
+    navigator.share({
+      title: 'Amiral Battı — Savaşa Davet',
+      text: `Seninle Amiral Battı oynamak istiyorum! Oda kodu: ${code}`,
+      url: link
+    }).catch(()=>{});
+  } else {
+    copyInviteLink();
+  }
+}
+
+// URL'de ?join=KOD varsa otomatik doldur
+function checkInviteParam() {
+  const params = new URLSearchParams(window.location.search);
+  const joinCode = params.get('join');
+  if (joinCode) {
+    const codeField = document.getElementById('join-code');
+    if (codeField) {
+      codeField.value = joinCode.toUpperCase();
+      codeField.readOnly = true;
+      const badge = document.getElementById('join-code-auto-badge');
+      if (badge) badge.style.display = 'block';
+      // "Odaya Katıl" kartını öne çıkar
+      showToast('Davet linki algılandı! Adınızı girin ve katılın 🚢');
+      // Join kartını hafifçe vurgula
+      const joinCard = codeField.closest('.lobby-card');
+      if (joinCard) {
+        joinCard.style.borderColor = 'var(--gold-bright)';
+        joinCard.style.boxShadow = '0 0 30px rgba(201,168,76,0.3)';
+      }
+    }
+    // URL'yi temizle (sayfa yenilenince tekrar katılmasın)
+    window.history.replaceState({}, '', window.location.pathname);
+  }
 }
 
 // ═══════════════════════════════════════════════════
@@ -1869,7 +2148,8 @@ function handleMessage(raw) {
       handleShotResult(msg);
       break;
     case 'start_game':
-      myTurn = !isHost;
+      // Host başlıyorsa guest bekler, guest değilse (isHost=false) ise guest başlar
+      myTurn = msg.hostStarts ? false : true; // guest için: host başlıyorsa sıra onda değil
       startGame();
       break;
     case 'rematch':
@@ -1888,8 +2168,17 @@ function handleMessage(raw) {
       showToast(`${enemyName} geri döndü! Oyun devam ediyor ⚓`);
       break;
     case 'state_sync':
-      // Rakip bize son oyun durumunu gönderiyor
       applyStateSync(msg);
+      break;
+    case 'ping':
+      // Karşı tarafın ping'ine pong dön
+      lastPongTime = Date.now();
+      sendMsg({ type: 'pong', ts: msg.ts });
+      break;
+    case 'pong':
+      // Kendi ping'imize pong geldi — bağlantı sağlıklı
+      lastPongTime = Date.now();
+      updateConnIndicator(true);
       break;
   }
 }
@@ -1957,7 +2246,22 @@ function startPlacement() {
   document.getElementById('place-ready-section').style.display='none';
   document.getElementById('waiting-opponent').style.display='none';
   showScreen('place');
+  // Yerleştirme sırasında da heartbeat çalışsın
+  if (conn && conn.open) { startHeartbeat(); updateConnIndicator(true); }
 }
+
+// ═══════════════════════════════════════════════════
+// YERLEŞTİRME SİSTEMİ — Sürükle-Bırak + Tıkla-Döndür
+// ═══════════════════════════════════════════════════
+
+// Sürükleme state
+let dragState = null;
+// {
+//   shipId, shipSize, origCells, origHoriz,
+//   dragOffsetCell: kaçıncı hücreden tutuldu (0-based),
+//   ghostEl, active
+// }
+let isDraggingPlaced = false; // yerleşik gemi mi sürükleniyor
 
 function buildShipList() {
   const cont = document.getElementById('ship-list-items');
@@ -1977,6 +2281,7 @@ function selectShip(id) {
   selectedShip = SHIPS_CONFIG.find(s=>s.id===id);
   document.querySelectorAll('.ship-item').forEach(el=>el.classList.remove('selected'));
   document.getElementById('ship-item-'+id).classList.add('selected');
+  isDraggingPlaced = false;
 }
 
 function rotateShip() {
@@ -1984,66 +2289,336 @@ function rotateShip() {
   document.getElementById('rot-label').textContent = isHorizontal?'Yatay':'Dikey';
 }
 
-function getPreviewCells(r,c) {
-  if (!selectedShip) return null;
+function getPreviewCells(r, c, horiz, size) {
+  // Yeni imza: horiz ve size opsiyonel — yoksa selectedShip kullan
+  const h   = horiz   !== undefined ? horiz : isHorizontal;
+  const sz  = size    !== undefined ? size  : (selectedShip ? selectedShip.size : 0);
+  if (!sz) return null;
   const cells = [];
-  for (let i=0;i<selectedShip.size;i++) {
-    const nr = r + (isHorizontal?0:i);
-    const nc = c + (isHorizontal?i:0);
-    cells.push({r:nr, c:nc});
+  for (let i = 0; i < sz; i++) {
+    cells.push({ r: r + (h ? 0 : i), c: c + (h ? i : 0) });
   }
   return cells;
 }
 
-function isValidPlacement(cells) {
-  for (const {r,c} of cells) {
-    if (r<0||r>=ROWS||c<0||c>=COLS) return false;
-    if (myBoard[r][c]!==0) return false;
-    // adjacency check
-    for (let dr=-1;dr<=1;dr++) for (let dc=-1;dc<=1;dc++) {
-      const nr=r+dr, nc=c+dc;
-      if (nr>=0&&nr<ROWS&&nc>=0&&nc<COLS&&myBoard[nr][nc]===1) return false;
+// Belirtilen gemi hariç tutarak geçerlilik kontrolü
+function isValidPlacement(cells, excludeShipId) {
+  // excludeShipId: sürükleme sırasında kendi eski konumunu yoksay
+  const excluded = excludeShipId && shipsPlaced[excludeShipId]
+    ? new Set(shipsPlaced[excludeShipId].map(({r,c})=>`${r},${c}`))
+    : new Set();
+
+  for (const {r, c} of cells) {
+    if (r < 0 || r >= ROWS || c < 0 || c >= COLS) return false;
+    // Kendi eski hücreleri hariç tut
+    if (excluded.has(`${r},${c}`)) continue;
+    if (myBoard[r][c] !== 0) return false;
+    // Komşuluk kontrolü
+    for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+      const nr = r + dr, nc = c + dc;
+      if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS) {
+        if (myBoard[nr][nc] === 1 && !excluded.has(`${nr},${nc}`)) return false;
+      }
     }
   }
   return true;
 }
 
-function placeHover(r,c) {
+// ── HOVER / PREVIEW ──
+function placeHover(r, c) {
+  if (isDraggingPlaced || dragState) return; // sürüklemede kendi handler
   clearPreview();
-  const cells = getPreviewCells(r,c);
+  const cells = getPreviewCells(r, c);
   if (!cells || !selectedShip) return;
   const valid = isValidPlacement(cells);
-  // Hücre rengini koru, SVG preview overlay göster
-  cells.forEach(({r,c})=>{
-    const el = getCellEl('place-grid-rows',r,c);
-    if (el) el.classList.add(valid?'ship-preview':'ship-preview-invalid');
+  cells.forEach(({r, c}) => {
+    const el = getCellEl('place-grid-rows', r, c);
+    if (el) el.classList.add(valid ? 'ship-preview' : 'ship-preview-invalid');
   });
   showPreviewOverlay('place-grid-rows', selectedShip.id, cells, isHorizontal, valid);
 }
-function placeLeave() { clearPreview(); }
+function placeLeave() {
+  if (!isDraggingPlaced) clearPreview();
+}
 function clearPreview() {
   document.querySelectorAll('#place-grid-rows .ship-preview, #place-grid-rows .ship-preview-invalid')
-    .forEach(el=>el.classList.remove('ship-preview','ship-preview-invalid'));
+    .forEach(el => el.classList.remove('ship-preview', 'ship-preview-invalid'));
   clearPreviewOverlay();
 }
 
-function placeClick(r,c) {
-  if (!selectedShip) { showToast('Önce bir gemi seçin!'); return; }
-  const cells = getPreviewCells(r,c);
+// ── YENİ GEMİ YERLEŞTIR ──
+function placeClick(r, c) {
+  if (isDraggingPlaced) return;
+  if (!selectedShip) {
+    // Boş alana tıklandı ve seçili gemi yok — hiç
+    return;
+  }
+  const cells = getPreviewCells(r, c);
   if (!isValidPlacement(cells)) { showToast('Geçersiz konum!'); return; }
   clearPreviewOverlay();
-  const sid = selectedShip.id;
+  const sid   = selectedShip.id;
   const horiz = isHorizontal;
-  cells.forEach(({r,c})=>{
-    myBoard[r][c]=1;
-    const el=getCellEl('place-grid-rows',r,c);
-    if(el) el.classList.add('ship');
+  cells.forEach(({r, c}) => {
+    myBoard[r][c] = 1;
+    const el = getCellEl('place-grid-rows', r, c);
+    if (el) el.classList.add('ship');
   });
   shipsPlaced[sid] = cells;
-  // SVG gemi overlay çiz
-  renderShipOverlay('place-grid-rows', sid, cells, horiz, 'normal', '');
-  document.getElementById('ship-item-'+sid).classList.add('placed');
+  const overlayEl = renderShipOverlay('place-grid-rows', sid, cells, horiz, 'normal', 'placed');
+  if (overlayEl) attachShipOverlayEvents(overlayEl, sid);
+  document.getElementById('ship-item-' + sid).classList.add('placed');
   selectedShip = null;
+  document.querySelectorAll('.ship-item').forEach(el => el.classList.remove('selected'));
+  checkAllPlaced();
+}
+
+// ── YERLEŞİK GEMİ OVERLAY'İNE EVENT BAĞLA ──
+function attachShipOverlayEvents(overlayEl, shipId) {
+  let clickTimer = null;
+  let dragStarted = false;
+  let pointerDownPos = null;
+
+  overlayEl.addEventListener('pointerdown', e => {
+    if (selectedShip) return; // yeni gemi seçiliyse overlaya müdahale etme
+    e.preventDefault();
+    dragStarted = false;
+    pointerDownPos = { x: e.clientX, y: e.clientY };
+
+    // Sürüklemeyi başlatmak için threshold (5px)
+    const onMove = ev => {
+      const dx = ev.clientX - pointerDownPos.x;
+      const dy = ev.clientY - pointerDownPos.y;
+      if (!dragStarted && Math.sqrt(dx*dx + dy*dy) > 5) {
+        dragStarted = true;
+        clearTimeout(clickTimer);
+        beginDragPlaced(shipId, e);
+      }
+    };
+    const onUp = ev => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      if (!dragStarted) {
+        // Tıklama → döndür
+        rotatePlacedShip(shipId);
+      }
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+  });
+
+  // Tooltip hint
+  overlayEl.title = 'Sürükle: taşı  |  Tıkla: döndür';
+}
+
+// ── YERLEŞİK GEMİYİ DÖNDÜR ──
+function rotatePlacedShip(shipId) {
+  const cells = shipsPlaced[shipId];
+  if (!cells) return;
+  const ship   = SHIPS_CONFIG.find(s => s.id === shipId);
+  const curHoriz = cells[0].r === cells[cells.length-1].r;
+  const newHoriz = !curHoriz;
+
+  // Eski konumu tahtadan geçici kaldır
+  cells.forEach(({r, c}) => { myBoard[r][c] = 0; });
+
+  // Geminin orta noktasını merkez al
+  const midR = Math.round(cells.reduce((s,c)=>s+c.r,0)/cells.length);
+  const midC = Math.round(cells.reduce((s,c)=>s+c.c,0)/cells.length);
+
+  // En yakın geçerli pozisyonu spiral arama ile bul
+  const bestCells = findNearestValid(midR, midC, newHoriz, ship.size, shipId);
+
+  if (!bestCells) {
+    // Hiç yer bulunamadı — eski konuma geri yaz
+    cells.forEach(({r, c}) => { myBoard[r][c] = 1; });
+    showToast('Döndürmek için uygun alan bulunamadı!');
+    return;
+  }
+
+  // Eski hücre sınıflarını temizle
+  cells.forEach(({r, c}) => {
+    const el = getCellEl('place-grid-rows', r, c);
+    if (el) el.classList.remove('ship');
+  });
+
+  // Yeni konuma yerleştir
+  bestCells.forEach(({r, c}) => {
+    myBoard[r][c] = 1;
+    const el = getCellEl('place-grid-rows', r, c);
+    if (el) el.classList.add('ship');
+  });
+  shipsPlaced[shipId] = bestCells;
+
+  // Overlay yenile
+  removeShipOverlay('place-grid-rows', shipId);
+  const overlayEl = renderShipOverlay('place-grid-rows', shipId, bestCells, newHoriz, 'normal', 'placed');
+  if (overlayEl) attachShipOverlayEvents(overlayEl, shipId);
+
+  showToast(newHoriz ? '↔ Yatay konumlandırıldı' : '↕ Dikey konumlandırıldı');
+}
+
+// Merkez noktasına (midR, midC) en yakın geçerli pozisyonu bul
+// Spiral genişleyen arama: önce aynı hücre, sonra çevre hücreler
+function findNearestValid(midR, midC, horiz, size, excludeShipId) {
+  // Aday anchor noktaları — gemi merkezini midR,midC'ye hizalar
+  const half = Math.floor(size / 2);
+
+  // Arama sırasını mesafeye göre sırala
+  const candidates = [];
+  for (let dr = -ROWS; dr <= ROWS; dr++) {
+    for (let dc = -COLS; dc <= COLS; dc++) {
+      // Anchor = gemi başlangıç noktası
+      const anchorR = horiz ? midR + dr         : midR + dr - half;
+      const anchorC = horiz ? midC + dc - half  : midC + dc;
+      // Grid sınırları içinde mi?
+      if (anchorR < 0 || anchorC < 0) continue;
+      if (horiz && anchorC + size > COLS) continue;
+      if (!horiz && anchorR + size > ROWS) continue;
+      if (!horiz && anchorR >= ROWS) continue;
+      if (horiz && anchorR >= ROWS) continue;
+      const dist = dr * dr + dc * dc;
+      candidates.push({ anchorR, anchorC, dist });
+    }
+  }
+  candidates.sort((a, b) => a.dist - b.dist);
+
+  for (const { anchorR, anchorC } of candidates) {
+    const cells = getPreviewCells(anchorR, anchorC, horiz, size);
+    if (!cells) continue;
+    if (cells.some(({r,c}) => r<0||r>=ROWS||c<0||c>=COLS)) continue;
+    if (isValidPlacement(cells, excludeShipId)) return cells;
+  }
+  return null;
+}
+
+// ── SÜRÜKLE-BIRAK ──
+function beginDragPlaced(shipId, originalEvent) {
+  isDraggingPlaced = true;
+  clearPreview();
+  selectedShip = null;
+
+  const cells    = shipsPlaced[shipId];
+  const ship     = SHIPS_CONFIG.find(s => s.id === shipId);
+  const curHoriz = cells[0].r === cells[cells.length-1].r;
+
+  // Hangi hücreden tutuldu bul
+  const gridRows = document.getElementById('place-grid-rows');
+  const container = gridRows.closest('.grid-container');
+  const contRect  = container.getBoundingClientRect();
+  const cellPx    = getCellEl('place-grid-rows', 0, 0).getBoundingClientRect().width;
+  const mx = originalEvent.clientX - contRect.left;
+  const my = originalEvent.clientY - contRect.top;
+  // Grid başlangıç offset'ini bul (label'lar var)
+  const firstCellRect = getCellEl('place-grid-rows', 0, 0).getBoundingClientRect();
+  const gridOffX = firstCellRect.left - contRect.left;
+  const gridOffY = firstCellRect.top  - contRect.top;
+  const hitCol = Math.floor((mx - gridOffX) / cellPx);
+  const hitRow = Math.floor((my - gridOffY) / cellPx);
+  // Offset: geminin başından kaç hücre içinde tutuldu
+  const offsetCell = curHoriz
+    ? Math.max(0, Math.min(ship.size-1, hitCol - cells[0].c))
+    : Math.max(0, Math.min(ship.size-1, hitRow - cells[0].r));
+
+  // Eski konumu tahtadan kaldır
+  cells.forEach(({r, c}) => {
+    myBoard[r][c] = 0;
+    const el = getCellEl('place-grid-rows', r, c);
+    if (el) el.classList.remove('ship');
+  });
+  removeShipOverlay('place-grid-rows', shipId);
+  delete shipsPlaced[shipId];
+
+  dragState = { shipId, ship, origCells: cells, origHoriz: curHoriz, offsetCell, horiz: curHoriz, cellPx, gridOffX, gridOffY, contRect: null };
+
+  // Pointer move/up
+  const onMove = ev => handleDragMove(ev);
+  const onUp   = ev => { handleDragEnd(ev); window.removeEventListener('pointermove', onMove); window.removeEventListener('pointerup', onUp); };
+  window.addEventListener('pointermove', onMove);
+  window.addEventListener('pointerup', onUp);
+}
+
+function getGridCellFromPointer(clientX, clientY) {
+  const gridRows  = document.getElementById('place-grid-rows');
+  const container = gridRows.closest('.grid-container');
+  const contRect  = container.getBoundingClientRect();
+  const cellPx    = dragState.cellPx;
+  const firstCell = getCellEl('place-grid-rows', 0, 0).getBoundingClientRect();
+  const gridOffX  = firstCell.left - contRect.left;
+  const gridOffY  = firstCell.top  - contRect.top;
+  const mx = clientX - contRect.left;
+  const my = clientY - contRect.top;
+  const col = Math.floor((mx - gridOffX) / cellPx);
+  const row = Math.floor((my - gridOffY) / cellPx);
+  return { row, col };
+}
+
+function handleDragMove(ev) {
+  if (!dragState) return;
+  clearPreview();
+  clearPreviewOverlay();
+
+  const { row, col } = getGridCellFromPointer(ev.clientX, ev.clientY);
+  const { ship, offsetCell, horiz } = dragState;
+
+  // Anchor: geminin sol/üst köşesi
+  const anchorR = horiz ? row         : row - offsetCell;
+  const anchorC = horiz ? col - offsetCell : col;
+  const cells = getPreviewCells(anchorR, anchorC, horiz, ship.size);
+  if (!cells) return;
+
+  // Sınır ve çakışma kontrolü
+  const valid = cells.every(({r,c}) => r>=0&&r<ROWS&&c>=0&&c<COLS) && isValidPlacement(cells, null);
+
+  cells.forEach(({r, c}) => {
+    if (r<0||r>=ROWS||c<0||c>=COLS) return;
+    const el = getCellEl('place-grid-rows', r, c);
+    if (el) el.classList.add(valid ? 'ship-preview' : 'ship-preview-invalid');
+  });
+  showPreviewOverlay('place-grid-rows', ship.id, cells.filter(({r,c})=>r>=0&&r<ROWS&&c>=0&&c<COLS), horiz, valid);
+  dragState._lastCells = cells;
+  dragState._lastValid = valid;
+}
+
+function handleDragEnd(ev) {
+  if (!dragState) { isDraggingPlaced = false; return; }
+  clearPreview();
+  clearPreviewOverlay();
+
+  const { ship, offsetCell, horiz, origCells, origHoriz } = dragState;
+  const { row, col } = getGridCellFromPointer(ev.clientX, ev.clientY);
+  const anchorR = horiz ? row         : row - offsetCell;
+  const anchorC = horiz ? col - offsetCell : col;
+  const cells = getPreviewCells(anchorR, anchorC, horiz, ship.size);
+
+  const canPlace = cells &&
+    cells.every(({r,c}) => r>=0&&r<ROWS&&c>=0&&c<COLS) &&
+    isValidPlacement(cells, null);
+
+  if (canPlace) {
+    // Yeni konuma yerleştir
+    cells.forEach(({r, c}) => {
+      myBoard[r][c] = 1;
+      const el = getCellEl('place-grid-rows', r, c);
+      if (el) el.classList.add('ship');
+    });
+    shipsPlaced[ship.id] = cells;
+    const overlayEl = renderShipOverlay('place-grid-rows', ship.id, cells, horiz, 'normal', 'placed');
+    if (overlayEl) attachShipOverlayEvents(overlayEl, ship.id);
+  } else {
+    // Geçersiz — eski konuma geri koy
+    origCells.forEach(({r, c}) => {
+      myBoard[r][c] = 1;
+      const el = getCellEl('place-grid-rows', r, c);
+      if (el) el.classList.add('ship');
+    });
+    shipsPlaced[ship.id] = origCells;
+    const overlayEl = renderShipOverlay('place-grid-rows', ship.id, origCells, origHoriz, 'normal', 'placed');
+    if (overlayEl) attachShipOverlayEvents(overlayEl, ship.id);
+    if (row>=0 && row<ROWS && col>=0 && col<COLS) showToast('Geçersiz konum — gemi eski yerine döndü');
+  }
+
+  dragState = null;
+  isDraggingPlaced = false;
   checkAllPlaced();
 }
 
@@ -2056,21 +2631,22 @@ function checkAllPlaced() {
 function autoPlace() {
   clearBoard();
   for (const ship of SHIPS_CONFIG) {
-    let placed = false;
-    let tries = 0;
+    let placed = false, tries = 0;
     while (!placed && tries < 500) {
       tries++;
-      const h = Math.random()>0.5;
-      const r = Math.floor(Math.random()*(h?ROWS:ROWS-ship.size+1));
-      const c = Math.floor(Math.random()*(h?COLS-ship.size+1:COLS));
+      const h = Math.random() > 0.5;
+      const r = Math.floor(Math.random() * (h ? ROWS : ROWS - ship.size + 1));
+      const c = Math.floor(Math.random() * (h ? COLS - ship.size + 1 : COLS));
       const cells = [];
-      for (let i=0;i<ship.size;i++) cells.push({r:r+(h?0:i), c:c+(h?i:0)});
+      for (let i = 0; i < ship.size; i++) cells.push({ r: r+(h?0:i), c: c+(h?i:0) });
       if (isValidPlacement(cells)) {
-        cells.forEach(({r,c})=>{ myBoard[r][c]=1; const el=getCellEl('place-grid-rows',r,c); if(el)el.classList.add('ship'); });
-        shipsPlaced[ship.id]=cells;
-        renderShipOverlay('place-grid-rows', ship.id, cells, h, 'normal', '');
+        cells.forEach(({r, c}) => { myBoard[r][c]=1; const el=getCellEl('place-grid-rows',r,c); if(el)el.classList.add('ship'); });
+        shipsPlaced[ship.id] = cells;
+        const overlayEl = renderShipOverlay('place-grid-rows', ship.id, cells, h, 'normal', 'placed');
+        if (overlayEl) attachShipOverlayEvents(overlayEl, ship.id);
         document.getElementById('ship-item-'+ship.id).classList.add('placed');
-        placed=true;
+        placed = true;
+        // Gemi listesini "placed" olarak işaretle
       }
     }
   }
@@ -2080,8 +2656,10 @@ function autoPlace() {
 function clearBoard() {
   myBoard = emptyBoard();
   shipsPlaced = {};
-  document.querySelectorAll('#place-grid-rows .cell').forEach(el=>el.classList.remove('ship'));
-  document.querySelectorAll('.ship-item').forEach(el=>el.classList.remove('placed','selected'));
+  dragState = null;
+  isDraggingPlaced = false;
+  document.querySelectorAll('#place-grid-rows .cell').forEach(el => el.classList.remove('ship'));
+  document.querySelectorAll('.ship-item').forEach(el => el.classList.remove('placed','selected'));
   document.getElementById('place-ready-section').style.display='none';
   selectedShip = null;
   removeAllOverlays('place-grid-rows');
@@ -2099,8 +2677,9 @@ function readyUp() {
 function checkBothReady() {
   if (myReady && enemyReady) {
     if (isHost) {
+      // Host başlar — guest'e bildir
       myTurn = true;
-      sendMsg({type:'start_game'});
+      sendMsg({type:'start_game', hostStarts: true});
       startGame();
     }
   }
@@ -2150,6 +2729,9 @@ function startGame(restore=false) {
   });
   updateTurnUI();
   addLog(`Savaş başladı! ${myTurn?'İlk hamle sizin!':'İlk hamle rakibin!'}`, 'system');
+  // Heartbeat başlat
+  startHeartbeat();
+  updateConnIndicator(true);
 }
 
 function updateTurnUI() {
@@ -2293,6 +2875,7 @@ function addLog(text, type='') {
 // END GAME
 // ═══════════════════════════════════════════════════
 function endGame(won) {
+  stopHeartbeat();
   const title=document.getElementById('result-title');
   title.textContent = won ? '🏆 ZAFERSİNİZ!' : '⚓ BATTI…';
   title.className = 'result-title '+(won?'win':'lose');
@@ -2385,15 +2968,20 @@ function showForfeitResult(won, surrenderedName) {
 }
 
 function goLobby() {
+  stopHeartbeat();
   clearTimeout(reconnectTimer);
   clearSession();
   forfeitInProgress = false;
+  gameActive = false;
   if (peer) { try{peer.destroy();}catch{} peer=null; conn=null; }
   document.getElementById('room-code-section').style.display='none';
   document.getElementById('join-status').style.display='none';
   document.getElementById('create-name').value='';
   document.getElementById('join-name').value='';
-  document.getElementById('join-code').value='';
+  const jc = document.getElementById('join-code'); jc.value=''; jc.readOnly=false;
+  const badge = document.getElementById('join-code-auto-badge'); if(badge) badge.style.display='none';
+  const joinCard = jc.closest('.lobby-card');
+  if(joinCard){joinCard.style.borderColor='';joinCard.style.boxShadow='';}
   // Zafer ışınlarını temizle
   document.querySelectorAll('.victory-rays').forEach(e=>e.remove());
   renderLeaderboard('leaderboard-body');
@@ -2403,7 +2991,37 @@ function goLobby() {
 // ═══════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════
+initTheme();
+checkInviteParam();
 renderLeaderboard('leaderboard-body');
+
+// Esc ile sürüklemeyi / seçimi iptal et
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    if (dragState) {
+      // Sürüklemeyi iptal et — eski konuma geri koy
+      const { ship, origCells, origHoriz } = dragState;
+      origCells.forEach(({r,c}) => {
+        myBoard[r][c] = 1;
+        const el = getCellEl('place-grid-rows', r, c);
+        if (el) el.classList.add('ship');
+      });
+      shipsPlaced[ship.id] = origCells;
+      const ov = renderShipOverlay('place-grid-rows', ship.id, origCells, origHoriz, 'normal', 'placed');
+      if (ov) attachShipOverlayEvents(ov, ship.id);
+      dragState = null; isDraggingPlaced = false;
+      clearPreview(); clearPreviewOverlay();
+    } else if (selectedShip) {
+      selectedShip = null;
+      document.querySelectorAll('.ship-item').forEach(el => el.classList.remove('selected'));
+      clearPreview();
+    }
+  }
+  // R tuşu: seçili/son geminin yönünü değiştir
+  if ((e.key === 'r' || e.key === 'R') && !e.ctrlKey) {
+    rotateShip();
+  }
+});
 </script>
 </body>
 </html>
