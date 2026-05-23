@@ -241,10 +241,10 @@ body {
 .grid-wrap { display:flex; flex-direction:column; align-items:center; gap:10px; }
 .grid-label { font-family:'Share Tech Mono',monospace; font-size:0.72rem; color:var(--text-dim); letter-spacing:3px; }
 
-.grid-container { position:relative; }
+.grid-container { position:relative; overflow:visible; }
 .grid-letters { display:flex; gap:0; margin-left:28px; margin-bottom:2px; }
 .grid-letter { width:40px; height:16px; text-align:center; font-family:'Share Tech Mono',monospace; font-size:0.65rem; color:var(--text-dim); }
-.grid-rows { display:flex; flex-direction:column; gap:0; }
+.grid-rows { display:flex; flex-direction:column; gap:0; position:relative; }
 .grid-row { display:flex; align-items:center; gap:0; }
 .grid-row-num { width:28px; text-align:right; padding-right:6px; font-family:'Share Tech Mono',monospace; font-size:0.65rem; color:var(--text-dim); }
 
@@ -262,9 +262,20 @@ body {
     linear-gradient(90deg, rgba(77,184,232,0.03) 1px, transparent 1px);
 }
 .cell:hover { border-color:rgba(77,184,232,0.5); background:var(--grid-hover); }
-.cell.ship { background:linear-gradient(135deg,rgba(42,95,143,0.8),rgba(26,79,122,0.9)); border-color:rgba(77,184,232,0.5); }
-.cell.ship-preview { background:rgba(201,168,76,0.25); border-color:rgba(201,168,76,0.6); }
-.cell.ship-preview-invalid { background:rgba(230,57,70,0.25); border-color:rgba(230,57,70,0.6); }
+.cell.ship { background:linear-gradient(135deg,rgba(20,55,100,0.6),rgba(10,35,70,0.7)); border-color:rgba(77,184,232,0.3); }
+.cell.ship-preview { background:rgba(201,168,76,0.15); border-color:rgba(201,168,76,0.6); }
+.cell.ship-preview-invalid { background:rgba(230,57,70,0.15); border-color:rgba(230,57,70,0.6); }
+
+/* Gemi SVG overlay */
+.ship-svg-overlay {
+  position: absolute;
+  pointer-events: none;
+  z-index: 2;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.7));
+  transition: opacity 0.2s;
+}
+.ship-svg-overlay.preview { opacity: 0.85; filter: drop-shadow(0 0 8px rgba(201,168,76,0.8)); }
+.ship-svg-overlay.invalid { filter: drop-shadow(0 0 8px rgba(230,57,70,0.8)); opacity: 0.7; }
 .cell.hit {
   background:radial-gradient(circle, rgba(230,57,70,0.9) 0%, rgba(140,20,20,0.8) 100%);
   border-color: var(--red-hit);
@@ -601,6 +612,46 @@ body {
   animation: victoryRays 20s linear infinite;
 }
 
+/* ── RECONNECT SCREEN ── */
+#screen-reconnect {
+  gap: 0;
+}
+
+/* ── TEYIT MODALI ── */
+#confirm-modal {
+  display: none;
+  position: fixed; inset: 0; z-index: 500;
+  background: rgba(2,11,24,0.85);
+  backdrop-filter: blur(8px);
+  align-items: center; justify-content: center;
+}
+#confirm-modal.open { display: flex; }
+.confirm-box {
+  background: linear-gradient(135deg, rgba(10,48,96,0.95), rgba(4,20,40,0.98));
+  border: 1px solid rgba(230,57,70,0.4);
+  border-radius: 16px;
+  padding: 36px 40px;
+  max-width: 420px; width: 90%;
+  text-align: center;
+  box-shadow: 0 0 60px rgba(230,57,70,0.2), 0 20px 60px rgba(0,0,0,0.8);
+  animation: modalIn 0.3s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes modalIn {
+  from { transform: scale(0.85); opacity: 0; }
+  to   { transform: scale(1);    opacity: 1; }
+}
+.confirm-icon { font-size: 2.8rem; margin-bottom: 12px; }
+.confirm-title {
+  font-family: 'Cinzel', serif; font-size: 1.2rem; font-weight: 700;
+  color: var(--red-glow); letter-spacing: 2px; margin-bottom: 10px;
+}
+.confirm-desc {
+  font-family: 'Share Tech Mono', monospace; font-size: 0.82rem;
+  color: var(--text-dim); line-height: 1.7; margin-bottom: 24px;
+}
+.confirm-desc strong { color: var(--gold-bright); }
+.confirm-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
 /* Ses butonu */
 .sound-toggle {
   position:fixed; top:16px; right:16px; z-index:100;
@@ -781,9 +832,14 @@ body {
       <div class="status-dot idle" id="turn-dot"></div>
       <div class="status-text" id="turn-text">Başlatılıyor…</div>
     </div>
-    <div class="conn-indicator">
-      <div class="conn-dot connected" id="game-conn-dot"></div>
-      <span id="game-conn-text">Bağlı</span>
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <div class="conn-indicator">
+        <div class="conn-dot connected" id="game-conn-dot"></div>
+        <span id="game-conn-text">Bağlı</span>
+      </div>
+      <button class="btn btn-danger btn-sm" onclick="askForfeit()" title="Oyundan ayrıl (hükmen mağlup)">
+        🏳️ Teslim Ol
+      </button>
     </div>
   </div>
 
@@ -863,7 +919,48 @@ body {
   </div>
 </div>
 
+<!-- ═══ RECONNECT ═══ -->
+<div id="screen-reconnect" class="screen">
+  <div style="text-align:center; display:flex; flex-direction:column; align-items:center; gap:24px; max-width:420px;">
+    <div style="font-size:3rem">⚓</div>
+    <div style="font-family:'Cinzel Decorative',cursive; font-size:1.6rem; color:var(--gold-bright); letter-spacing:3px;">BAĞLANTI KESİLDİ</div>
+    <div class="text-dim" id="reconnect-reason">Rakiple bağlantı koptu.</div>
+    <div style="background:rgba(4,20,40,0.8);border:1px solid rgba(77,184,232,0.2);border-radius:12px;padding:20px 28px;width:100%">
+      <div class="input-label" style="margin-bottom:6px">OTURUM KODU</div>
+      <div class="peer-id-box" id="reconnect-session-code" onclick="copySessionCode()" title="Kopyala">—</div>
+      <div class="peer-id-hint">Rakibinize bu kodu verin, tekrar bağlanmak için kullanın</div>
+    </div>
+    <div id="reconnect-countdown-wrap" style="font-family:'Share Tech Mono',monospace;font-size:0.9rem;color:var(--foam)">
+      Rakip bekleniyor… <span id="reconnect-countdown">60</span>s
+    </div>
+    <div class="conn-indicator" id="reconnect-status-row" style="justify-content:center">
+      <div class="conn-dot connecting" id="reconnect-dot"></div>
+      <span id="reconnect-status-text">Yeniden bağlanılıyor…</span>
+    </div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
+      <button class="btn btn-secondary" onclick="tryReconnectManual()">🔄 Tekrar Dene</button>
+      <button class="btn btn-danger btn-sm" onclick="goLobby()">🏠 Lobbye Dön</button>
+    </div>
+  </div>
+</div>
+
 </div><!-- #app -->
+
+<!-- Teyit Modalı -->
+<div id="confirm-modal">
+  <div class="confirm-box">
+    <div class="confirm-icon">⚠️</div>
+    <div class="confirm-title">OYUNDAN AYRILMAK İSTİYOR MUSUNUZ?</div>
+    <div class="confirm-desc">
+      Oyundan ayrılırsanız <strong>hükmen mağlup</strong> sayılacaksınız.<br>
+      Rakibiniz galip ilan edilecek ve bu sonuç turnuva tablosuna işlenecektir.
+    </div>
+    <div class="confirm-btns">
+      <button class="btn btn-danger" onclick="confirmForfeit()">🏳️ Evet, Teslim Oluyorum</button>
+      <button class="btn btn-secondary" onclick="closeConfirmModal()">↩️ Geri Dön</button>
+    </div>
+  </div>
+</div>
 
 <div id="toast"></div>
 
@@ -1201,6 +1298,200 @@ const SHIPS_CONFIG = [
   {id:'submarine', name:'Denizaltı',    size:3, icon:'🌊'},
   {id:'destroyer', name:'Muhrip',       size:2, icon:'⚡'},
 ];
+const CELL_SIZE = 40;
+
+// ═══════════════════════════════════════════════════
+// SVG GEMİ ÇİZİMLERİ
+// ═══════════════════════════════════════════════════
+function buildShipPath(shipId, W, H, tint) {
+  const mid = H / 2;
+  const hull  = tint==='gold'?'#b8860b':tint==='red'?'#8b1a1a':'#1a4f7a';
+  const hull2 = tint==='gold'?'#daa520':tint==='red'?'#c0392b':'#2a6fa8';
+  const deck  = tint==='gold'?'#c9a84c':tint==='red'?'#e74c3c':'#3a8fd4';
+  const metal = tint==='gold'?'#f0c060':tint==='red'?'#ff6b6b':'#4db8e8';
+  const dark  = tint==='gold'?'#8b6914':tint==='red'?'#6b0f0f':'#062040';
+  const shine = 'rgba(255,255,255,0.18)';
+  switch(shipId) {
+    case 'carrier':    return svgCarrier(W,H,mid,hull,hull2,deck,metal,dark,shine);
+    case 'battleship': return svgBattleship(W,H,mid,hull,hull2,deck,metal,dark,shine);
+    case 'cruiser':    return svgCruiser(W,H,mid,hull,hull2,deck,metal,dark,shine);
+    case 'submarine':  return svgSubmarine(W,H,mid,hull,hull2,deck,metal,dark,shine);
+    case 'destroyer':  return svgDestroyer(W,H,mid,hull,hull2,deck,metal,dark,shine);
+    default: return `<rect x="2" y="${H*0.25}" width="${W-4}" height="${H*0.5}" rx="4" fill="${hull}" stroke="${metal}" stroke-width="0.8"/>`;
+  }
+}
+
+function getShipSVG(shipId, cellCount, horizontal, cellPx, tint) {
+  const dW = cellCount * cellPx, dH = cellPx;
+  const body = buildShipPath(shipId, dW, dH, tint);
+  if (horizontal) {
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${dW}" height="${dH}" viewBox="0 0 ${dW} ${dH}">${body}</svg>`;
+  } else {
+    const rW = cellPx, rH = cellCount * cellPx;
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${rW}" height="${rH}" viewBox="0 0 ${rW} ${rH}">
+      <g transform="translate(${rW},0) rotate(90) scale(${rW/dH},${rH/dW})">${buildShipPath(shipId, dW, dH, tint)}</g>
+    </svg>`;
+  }
+}
+
+function svgCarrier(W,H,mid,hull,hull2,deck,metal,dark,shine){
+  return `<defs>
+    <linearGradient id="g_c_${W|0}" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="${hull2}"/>
+      <stop offset="60%" stop-color="${hull}"/>
+      <stop offset="100%" stop-color="${dark}"/>
+    </linearGradient></defs>
+  <path d="M${W*.04},${H*.35} L${W*.02},${mid} L${W*.04},${H*.65} L${W*.88},${H*.65} Q${W*.97},${H*.65} ${W*.98},${mid} Q${W*.97},${H*.35} ${W*.88},${H*.35} Z" fill="url(#g_c_${W|0})" stroke="${dark}" stroke-width="0.8"/>
+  <rect x="${W*.06}" y="${H*.28}" width="${W*.82}" height="${H*.14}" rx="2" fill="${deck}" opacity="0.7"/>
+  <line x1="${W*.1}" y1="${H*.345}" x2="${W*.84}" y2="${H*.345}" stroke="${metal}" stroke-width="0.6" opacity="0.5" stroke-dasharray="6,4"/>
+  <rect x="${W*.62}" y="${H*.14}" width="${W*.12}" height="${H*.22}" rx="2" fill="${hull2}" stroke="${metal}" stroke-width="0.6"/>
+  <rect x="${W*.63}" y="${H*.09}" width="${W*.1}" height="${H*.08}" rx="1" fill="${deck}" stroke="${metal}" stroke-width="0.4"/>
+  <line x1="${W*.68}" y1="${H*.09}" x2="${W*.68}" y2="${H*.03}" stroke="${metal}" stroke-width="1.2"/>
+  <circle cx="${W*.68}" cy="${H*.03}" r="2" fill="${metal}"/>
+  <path d="M${W*.05},${H*.65} Q${W*.12},${H*.79} ${W*.22},${H*.81} L${W*.8},${H*.81} Q${W*.9},${H*.79} ${W*.95},${H*.65} Z" fill="${dark}" opacity="0.55"/>
+  <path d="M${W*.07},${H*.62} Q${W*.5},${H*.59} ${W*.9},${H*.62}" stroke="${shine}" stroke-width="1.2" fill="none"/>
+  <path d="M${W*.14},${H*.31} l5,-3 l9,0 l-3,3 Z" fill="${metal}" opacity="0.55"/>
+  <path d="M${W*.32},${H*.31} l5,-3 l9,0 l-3,3 Z" fill="${metal}" opacity="0.55"/>`;
+}
+
+function svgBattleship(W,H,mid,hull,hull2,deck,metal,dark,shine){
+  return `<defs>
+    <linearGradient id="g_b_${W|0}" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="${hull2}"/>
+      <stop offset="55%" stop-color="${hull}"/>
+      <stop offset="100%" stop-color="${dark}"/>
+    </linearGradient></defs>
+  <path d="M${W*.05},${H*.3} L${W*.02},${mid} L${W*.05},${H*.7} L${W*.85},${H*.7} Q${W*.97},${H*.7} ${W*.98},${mid} Q${W*.97},${H*.3} ${W*.85},${H*.3} Z" fill="url(#g_b_${W|0})" stroke="${dark}" stroke-width="0.8"/>
+  <rect x="${W*.07}" y="${H*.3}" width="${W*.76}" height="${H*.12}" rx="1" fill="${deck}" opacity="0.65"/>
+  <rect x="${W*.55}" y="${H*.15}" width="${W*.14}" height="${H*.22}" rx="2" fill="${hull2}" stroke="${metal}" stroke-width="0.6"/>
+  <rect x="${W*.56}" y="${H*.1}" width="${W*.12}" height="${H*.08}" rx="1" fill="${deck}"/>
+  <rect x="${W*.48}" y="${H*.2}" width="${W*.16}" height="${H*.045}" rx="1" fill="${metal}" opacity="0.9"/>
+  <rect x="${W*.48}" y="${H*.26}" width="${W*.16}" height="${H*.04}" rx="1" fill="${metal}" opacity="0.8"/>
+  <rect x="${W*.28}" y="${H*.22}" width="${W*.1}" height="${H*.16}" rx="1.5" fill="${hull2}" stroke="${metal}" stroke-width="0.5"/>
+  <rect x="${W*.22}" y="${H*.275}" width="${W*.12}" height="${H*.035}" rx="1" fill="${metal}" opacity="0.8"/>
+  <rect x="${W*.44}" y="${H*.08}" width="${W*.05}" height="${H*.15}" rx="1" fill="${dark}" stroke="${metal}" stroke-width="0.5"/>
+  <line x1="${W*.62}" y1="${H*.1}" x2="${W*.62}" y2="${H*.02}" stroke="${metal}" stroke-width="1.2"/>
+  <line x1="${W*.58}" y1="${H*.04}" x2="${W*.66}" y2="${H*.04}" stroke="${metal}" stroke-width="0.8"/>
+  <path d="M${W*.06},${H*.7} Q${W*.12},${H*.82} ${W*.22},${H*.84} L${W*.78},${H*.84} Q${W*.88},${H*.82} ${W*.94},${H*.7} Z" fill="${dark}" opacity="0.5"/>
+  <path d="M${W*.07},${H*.67} Q${W*.5},${H*.64} ${W*.88},${H*.67}" stroke="${shine}" stroke-width="1.2" fill="none"/>`;
+}
+
+function svgCruiser(W,H,mid,hull,hull2,deck,metal,dark,shine){
+  return `<defs>
+    <linearGradient id="g_cr_${W|0}" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="${hull2}"/>
+      <stop offset="60%" stop-color="${hull}"/>
+      <stop offset="100%" stop-color="${dark}"/>
+    </linearGradient></defs>
+  <path d="M${W*.06},${H*.28} L${W*.02},${mid} L${W*.06},${H*.72} L${W*.83},${H*.72} Q${W*.97},${H*.72} ${W*.98},${mid} Q${W*.97},${H*.28} ${W*.83},${H*.28} Z" fill="url(#g_cr_${W|0})" stroke="${dark}" stroke-width="0.8"/>
+  <rect x="${W*.08}" y="${H*.28}" width="${W*.7}" height="${H*.13}" rx="1" fill="${deck}" opacity="0.6"/>
+  <rect x="${W*.52}" y="${H*.12}" width="${W*.17}" height="${H*.24}" rx="2" fill="${hull2}" stroke="${metal}" stroke-width="0.6"/>
+  <rect x="${W*.54}" y="${H*.07}" width="${W*.13}" height="${H*.08}" rx="1" fill="${deck}"/>
+  <rect x="${W*.28}" y="${H*.24}" width="${W*.15}" height="${H*.04}" rx="1" fill="${metal}" opacity="0.9"/>
+  <rect x="${W*.46}" y="${H*.1}" width="${W*.04}" height="${H*.14}" rx="1" fill="${dark}" stroke="${metal}" stroke-width="0.4"/>
+  <line x1="${W*.6}" y1="${H*.07}" x2="${W*.6}" y2="${H*.01}" stroke="${metal}" stroke-width="1"/>
+  <path d="M${W*.07},${H*.72} Q${W*.15},${H*.83} ${W*.25},${H*.85} L${W*.75},${H*.85} Q${W*.85},${H*.83} ${W*.93},${H*.72} Z" fill="${dark}" opacity="0.45"/>
+  <path d="M${W*.08},${H*.69} Q${W*.5},${H*.66} ${W*.87},${H*.69}" stroke="${shine}" stroke-width="1" fill="none"/>`;
+}
+
+function svgSubmarine(W,H,mid,hull,hull2,deck,metal,dark,shine){
+  return `<defs>
+    <linearGradient id="g_s_${W|0}" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="${hull2}"/>
+      <stop offset="50%" stop-color="${hull}"/>
+      <stop offset="100%" stop-color="${dark}"/>
+    </linearGradient></defs>
+  <ellipse cx="${W*.5}" cy="${mid}" rx="${W*.46}" ry="${H*.32}" fill="url(#g_s_${W|0})" stroke="${dark}" stroke-width="0.8"/>
+  <ellipse cx="${W*.06}" cy="${mid}" rx="${W*.07}" ry="${H*.2}" fill="${hull2}" stroke="${dark}" stroke-width="0.5"/>
+  <path d="M${W*.88},${H*.36} L${W*.99},${H*.22} L${W*.99},${H*.38} Z" fill="${deck}" opacity="0.7"/>
+  <path d="M${W*.88},${H*.64} L${W*.99},${H*.78} L${W*.99},${H*.62} Z" fill="${deck}" opacity="0.7"/>
+  <rect x="${W*.42}" y="${H*.12}" width="${W*.14}" height="${H*.26}" rx="3" fill="${hull2}" stroke="${metal}" stroke-width="0.6"/>
+  <line x1="${W*.52}" y1="${H*.12}" x2="${W*.52}" y2="${H*.03}" stroke="${metal}" stroke-width="1.2"/>
+  <rect x="${W*.5}" y="${H*.03}" width="${W*.04}" height="${H*.035}" rx="1" fill="${metal}"/>
+  <line x1="${W*.15}" y1="${H*.42}" x2="${W*.85}" y2="${H*.42}" stroke="${metal}" stroke-width="0.5" opacity="0.3"/>
+  <ellipse cx="${W*.36}" cy="${H*.38}" rx="${W*.13}" ry="${H*.07}" fill="white" opacity="0.08"/>`;
+}
+
+function svgDestroyer(W,H,mid,hull,hull2,deck,metal,dark,shine){
+  return `<defs>
+    <linearGradient id="g_d_${W|0}" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="${hull2}"/>
+      <stop offset="55%" stop-color="${hull}"/>
+      <stop offset="100%" stop-color="${dark}"/>
+    </linearGradient></defs>
+  <path d="M${W*.04},${H*.32} L${W*.01},${mid} L${W*.04},${H*.68} L${W*.82},${H*.68} Q${W*.98},${H*.68} ${W*.99},${mid} Q${W*.98},${H*.32} ${W*.82},${H*.32} Z" fill="url(#g_d_${W|0})" stroke="${dark}" stroke-width="0.7"/>
+  <rect x="${W*.06}" y="${H*.32}" width="${W*.73}" height="${H*.11}" rx="1" fill="${deck}" opacity="0.55"/>
+  <rect x="${W*.5}" y="${H*.16}" width="${W*.17}" height="${H*.22}" rx="2" fill="${hull2}" stroke="${metal}" stroke-width="0.5"/>
+  <rect x="${W*.22}" y="${H*.26}" width="${W*.14}" height="${H*.04}" rx="1" fill="${metal}" opacity="0.9"/>
+  <rect x="${W*.44}" y="${H*.11}" width="${W*.04}" height="${H*.13}" rx="1" fill="${dark}" stroke="${metal}" stroke-width="0.4"/>
+  <line x1="${W*.58}" y1="${H*.16}" x2="${W*.58}" y2="${H*.04}" stroke="${metal}" stroke-width="1"/>
+  <path d="M${W*.05},${H*.68} Q${W*.12},${H*.8} ${W*.22},${H*.82} L${W*.78},${H*.82} Q${W*.88},${H*.8} ${W*.95},${H*.68} Z" fill="${dark}" opacity="0.4"/>
+  <path d="M${W*.06},${H*.65} Q${W*.5},${H*.62} ${W*.88},${H*.65}" stroke="${shine}" stroke-width="1" fill="none"/>`;
+}
+
+// ═══════════════════════════════════════════════════
+// GEMİ SVG OVERLAY SİSTEMİ
+// ═══════════════════════════════════════════════════
+function renderShipOverlay(gridRowsId, shipId, cells, horizontal, tint, extraClass) {
+  const rowsEl = document.getElementById(gridRowsId);
+  const container = rowsEl ? rowsEl.closest('.grid-container') : null;
+  if (!container) return null;
+  container.style.position = 'relative';
+
+  const size = cells.length;
+  const r0 = cells[0].r, c0 = cells[0].c;
+  const firstCell = getCellEl(gridRowsId, r0, c0);
+  if (!firstCell) return null;
+
+  const contRect = container.getBoundingClientRect();
+  const cellRect = firstCell.getBoundingClientRect();
+  const offsetX = cellRect.left - contRect.left;
+  const offsetY = cellRect.top  - contRect.top;
+
+  const W = horizontal ? size * CELL_SIZE : CELL_SIZE;
+  const H = horizontal ? CELL_SIZE : size * CELL_SIZE;
+
+  const svgStr = getShipSVG(shipId, size, horizontal, CELL_SIZE, tint || 'normal');
+  const blob = new Blob([svgStr], {type:'image/svg+xml'});
+  const url = URL.createObjectURL(blob);
+
+  const img = document.createElement('img');
+  img.className = 'ship-svg-overlay' + (extraClass ? ' ' + extraClass : '');
+  img.dataset.shipId = shipId;
+  img.dataset.gridId = gridRowsId;
+  img.style.cssText = `left:${offsetX}px; top:${offsetY}px; width:${W}px; height:${H}px;`;
+  img.src = url;
+  img.addEventListener('load', () => URL.revokeObjectURL(url), {once:true});
+  container.appendChild(img);
+  return img;
+}
+
+function removeShipOverlay(gridRowsId, shipId) {
+  const rowsEl = document.getElementById(gridRowsId);
+  const container = rowsEl ? rowsEl.closest('.grid-container') : null;
+  if (!container) return;
+  container.querySelectorAll(`.ship-svg-overlay[data-ship-id="${shipId}"][data-grid-id="${gridRowsId}"]`)
+    .forEach(el => el.remove());
+}
+
+function removeAllOverlays(gridRowsId) {
+  const rowsEl = document.getElementById(gridRowsId);
+  const container = rowsEl ? rowsEl.closest('.grid-container') : null;
+  if (!container) return;
+  container.querySelectorAll('.ship-svg-overlay').forEach(el => el.remove());
+}
+
+let previewOverlayEl = null;
+function showPreviewOverlay(gridRowsId, shipId, cells, horizontal, valid) {
+  clearPreviewOverlay();
+  if (!cells || !cells.length) return;
+  for (const {r,c} of cells) if (r<0||r>=ROWS||c<0||c>=COLS) return;
+  previewOverlayEl = renderShipOverlay(gridRowsId, shipId, cells, horizontal,
+    valid ? 'gold' : 'red', valid ? 'preview' : 'invalid');
+}
+function clearPreviewOverlay() {
+  if (previewOverlayEl) { previewOverlayEl.remove(); previewOverlayEl = null; }
+}
 
 // ═══════════════════════════════════════════════════
 // STATE
@@ -1307,35 +1598,210 @@ function getCellEl(rowsId, r, c) {
 // ═══════════════════════════════════════════════════
 // PEER CONNECTION
 // ═══════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════
+// KISA KOD ÜRETECİ
+// ═══════════════════════════════════════════════════
+// PeerJS'in uzun UUID'si yerine 6 haneli okunabilir kod üret
+// Format: ABC-123  (3 harf + 3 rakam)
+function generateShortCode() {
+  const letters = 'ABCDEFGHJKLMNPQRSTUVWXYZ'; // I,O yok (karışmasın)
+  const digits  = '23456789';                  // 0,1 yok
+  let l = '', d = '';
+  for (let i=0;i<3;i++) l += letters[Math.floor(Math.random()*letters.length)];
+  for (let i=0;i<3;i++) d += digits[Math.floor(Math.random()*digits.length)];
+  return l + '-' + d;
+}
+
+// ═══════════════════════════════════════════════════
+// RECONNECT SİSTEMİ
+// ═══════════════════════════════════════════════════
+let sessionCode    = '';   // Oturum kodu — her iki taraf paylaşır
+let myPeerId       = '';   // Kendi güncel Peer ID
+let enemyPeerId    = '';   // Rakibin son bilinen Peer ID
+let reconnectTimer = null;
+let reconnectCountdown = 0;
+const RECONNECT_TIMEOUT = 60; // saniye
+
+function saveSession() {
+  if (!sessionCode) return;
+  const state = {
+    sessionCode, myName, enemyName, isHost,
+    myBoard: JSON.stringify(myBoard),
+    shipsPlaced: JSON.stringify(shipsPlaced),
+    enemyBoard: JSON.stringify(enemyBoard),
+    myTurn, gameActive,
+    myShotsFired, myHits, enemySunkCount, mySunkCount,
+    ts: Date.now()
+  };
+  localStorage.setItem('ab_session_' + sessionCode, JSON.stringify(state));
+}
+
+function loadSession(code) {
+  try {
+    const raw = localStorage.getItem('ab_session_' + code);
+    if (!raw) return null;
+    const s = JSON.parse(raw);
+    // 2 saatten eski oturumu geçersiz say
+    if (Date.now() - s.ts > 2 * 60 * 60 * 1000) { localStorage.removeItem('ab_session_' + code); return null; }
+    return s;
+  } catch { return null; }
+}
+
+function clearSession() {
+  if (sessionCode) localStorage.removeItem('ab_session_' + sessionCode);
+}
+
+function startReconnectMode(reason) {
+  clearTimeout(reconnectTimer);
+  saveSession();
+
+  document.getElementById('reconnect-reason').textContent = reason || 'Rakiple bağlantı koptu.';
+  document.getElementById('reconnect-session-code').textContent = sessionCode;
+  document.getElementById('reconnect-dot').className = 'conn-dot connecting';
+  document.getElementById('reconnect-status-text').textContent = 'Yeniden bağlanmak için dinleniyor…';
+  showScreen('reconnect');
+
+  // Yeni Peer aç — rakip eski session code'u kullanarak bağlanmayı dener
+  reconnectCountdown = RECONNECT_TIMEOUT;
+  updateReconnectCountdown();
+  beginListeningForReconnect();
+}
+
+function updateReconnectCountdown() {
+  document.getElementById('reconnect-countdown').textContent = reconnectCountdown;
+  if (reconnectCountdown <= 0) {
+    document.getElementById('reconnect-countdown-wrap').textContent = 'Süre doldu. Yeni oyun başlatın.';
+    document.getElementById('reconnect-dot').className = 'conn-dot';
+    return;
+  }
+  reconnectCountdown--;
+  reconnectTimer = setTimeout(updateReconnectCountdown, 1000);
+}
+
+// Kopan taraf yeni Peer açar ve rakibinin kendisine bağlanmasını bekler
+// Peer ID olarak sessionCode + kendi rolünü kullanır → sabit, tahmin edilebilir
+function getReconnectPeerId(role) {
+  // role: 'host' veya 'guest'
+  // sessionCode: "ABC-123" → "AB123host" gibi temiz bir ID
+  return sessionCode.replace('-','') + role;
+}
+
+function beginListeningForReconnect() {
+  if (peer) { try { peer.destroy(); } catch{} peer = null; }
+  const listenId = getReconnectPeerId(isHost ? 'host' : 'guest');
+  peer = new Peer(listenId, {debug:0});
+  peer.on('open', id => {
+    myPeerId = id;
+    // Aynı zamanda rakibe bağlanmayı da dene (karşılıklı)
+    attemptReconnectToPeer();
+  });
+  peer.on('connection', c => {
+    // Rakip bize bağlandı
+    conn = c;
+    conn.on('data', handleMessage);
+    conn.on('close', onConnClose);
+    conn.on('open', () => {
+      clearTimeout(reconnectTimer);
+      onReconnected();
+      sendMsg({type:'reconnect_hello', name:myName, sessionCode});
+    });
+  });
+  peer.on('error', e => {
+    // ID çakışması olabilir, rastgele ID ile tekrar dene
+    if (e.type === 'unavailable-id') {
+      if (peer) { try{peer.destroy();}catch{} peer=null; }
+      peer = new Peer(undefined, {debug:0});
+      peer.on('open', () => { myPeerId = peer.id; attemptReconnectToPeer(); });
+      peer.on('connection', c => {
+        conn = c;
+        conn.on('data', handleMessage);
+        conn.on('close', onConnClose);
+        conn.on('open', () => { clearTimeout(reconnectTimer); onReconnected(); sendMsg({type:'reconnect_hello',name:myName,sessionCode}); });
+      });
+    }
+  });
+}
+
+function attemptReconnectToPeer() {
+  // Rakibin beklediği ID'yi tahmin et
+  const targetId = getReconnectPeerId(isHost ? 'guest' : 'host');
+  setTimeout(() => {
+    if (!peer || conn?.open) return;
+    try {
+      const c = peer.connect(targetId, {reliable:true});
+      c.on('data', handleMessage);
+      c.on('close', onConnClose);
+      c.on('open', () => {
+        if (conn?.open) { try{c.close();}catch{} return; } // zaten bağlandık
+        conn = c;
+        clearTimeout(reconnectTimer);
+        onReconnected();
+        sendMsg({type:'reconnect_hello', name:myName, sessionCode});
+      });
+      c.on('error', ()=>{}); // sessizce yut
+    } catch {}
+  }, 2000);
+}
+
+function tryReconnectManual() {
+  document.getElementById('reconnect-dot').className='conn-dot connecting';
+  document.getElementById('reconnect-status-text').textContent='Yeniden deneniyor…';
+  beginListeningForReconnect();
+}
+
+function onReconnected() {
+  document.getElementById('reconnect-dot').className='conn-dot connected';
+  document.getElementById('reconnect-status-text').textContent='Bağlantı kuruldu!';
+  showToast('Bağlantı yeniden kuruldu! 🎉');
+}
+
+function copySessionCode() {
+  navigator.clipboard.writeText(sessionCode).then(()=>showToast('Oturum kodu kopyalandı! 📋'));
+}
+
+// ═══════════════════════════════════════════════════
+// BAĞLANTI FONKSİYONLARI
+// ═══════════════════════════════════════════════════
 function createRoom() {
   const name = document.getElementById('create-name').value.trim();
   if (!name) { showToast('Komutan adı girin!'); return; }
   myName = name; isHost = true;
 
-  peer = new Peer(undefined, {debug:0});
+  // Kısa oda kodu üret — bu aynı zamanda PeerJS ID olacak
+  const shortCode = generateShortCode();
+  sessionCode = shortCode;
+
+  peer = new Peer('room-' + shortCode, {debug:0});
   peer.on('open', id => {
+    myPeerId = id;
     document.getElementById('room-code-section').style.display='block';
-    document.getElementById('room-code-display').textContent = id;
+    document.getElementById('room-code-display').textContent = shortCode; // Sadece kısa kod göster
   });
   peer.on('connection', c => {
     conn = c;
-    // Önce data listener'ı kur, sonra open bekle
     conn.on('data', handleMessage);
     conn.on('close', onConnClose);
     conn.on('open', () => {
       document.getElementById('host-conn-dot').className='conn-dot connected';
       document.getElementById('host-conn-text').textContent='Rakip bağlandı!';
       showToast('Rakip bağlandı! 🎉');
-      // Bağlantı tamamen açıkken hello gönder
-      sendMsg({type:'hello', name:myName});
+      sendMsg({type:'hello', name:myName, sessionCode});
     });
   });
-  peer.on('error', e => showToast('Bağlantı hatası: '+e.type));
+  peer.on('error', e => {
+    // Kod çakıştıysa yeni kod dene
+    if (e.type === 'unavailable-id') {
+      try{peer.destroy();}catch{} peer=null;
+      createRoom(); // tekrar dene
+    } else {
+      showToast('Bağlantı hatası: '+e.type);
+    }
+  });
 }
 
 function joinRoom() {
   const name = document.getElementById('join-name').value.trim();
-  const code = document.getElementById('join-code').value.trim();
+  const code = document.getElementById('join-code').value.trim().toUpperCase();
   if (!name) { showToast('Komutan adı girin!'); return; }
   if (!code) { showToast('Oda kodu girin!'); return; }
   myName = name; isHost = false;
@@ -1345,8 +1811,8 @@ function joinRoom() {
 
   peer = new Peer(undefined, {debug:0});
   peer.on('open', () => {
-    conn = peer.connect(code, {reliable:true});
-    // Önce data listener'ı kur
+    myPeerId = peer.id;
+    conn = peer.connect('room-' + code, {reliable:true});
     conn.on('data', handleMessage);
     conn.on('close', onConnClose);
     conn.on('open', () => {
@@ -1355,16 +1821,17 @@ function joinRoom() {
     });
   });
   peer.on('error', e => {
-    document.getElementById('join-status-text').textContent='Hata: '+e.type;
-    showToast('Bağlantı hatası: '+e.type);
+    document.getElementById('join-status-text').textContent='Hata: Oda bulunamadı';
+    showToast('Oda kodu geçersiz veya süresi dolmuş!');
   });
 }
 
 function onConnClose() {
-  if (gameActive) {
-    showToast('Rakip bağlantıyı kesti!');
-    document.getElementById('game-conn-dot').className='conn-dot';
-    document.getElementById('game-conn-text').textContent='Bağlantı kesildi';
+  // Kasıtlı teslim olduysa zaten endGame çağrıldı, tekrar işleme
+  if (forfeitInProgress) return;
+  if (gameActive || document.getElementById('screen-place').classList.contains('active')) {
+    const reason = 'Rakiple bağlantı koptu. Yeniden bağlanmak için bekleyin.';
+    startReconnectMode(reason);
   }
 }
 
@@ -1385,6 +1852,8 @@ function handleMessage(raw) {
   switch(msg.type) {
     case 'hello':
       enemyName = msg.name;
+      // Oturum kodunu guest'e ilet (host üretir)
+      if (msg.sessionCode) { sessionCode = msg.sessionCode; }
       showToast(`${enemyName} savaşa katıldı! ⚓`);
       startPlacement();
       break;
@@ -1400,13 +1869,75 @@ function handleMessage(raw) {
       handleShotResult(msg);
       break;
     case 'start_game':
-      myTurn = !isHost; // host goes first
+      myTurn = !isHost;
       startGame();
       break;
     case 'rematch':
       handleRematch();
       break;
+    case 'forfeit':
+      // Rakip teslim oldu — biz kazandık
+      handleEnemyForfeit(msg.name);
+      break;
+    case 'reconnect_hello':
+      // Yeniden bağlanma sağlandı
+      enemyName = msg.name;
+      clearTimeout(reconnectTimer);
+      // Oturum durumunu geri yükle
+      restoreSessionState();
+      showToast(`${enemyName} geri döndü! Oyun devam ediyor ⚓`);
+      break;
+    case 'state_sync':
+      // Rakip bize son oyun durumunu gönderiyor
+      applyStateSync(msg);
+      break;
   }
+}
+
+function restoreSessionState() {
+  const saved = loadSession(sessionCode);
+  if (!saved || !saved.gameActive) {
+    // Oyun bitmemişse placement'a dön
+    showToast('Oturum kurtarıldı, yerleştirme ekranına dönülüyor.');
+    startPlacement();
+    return;
+  }
+  // Oyun durumunu geri yükle
+  myBoard      = JSON.parse(saved.myBoard);
+  shipsPlaced  = JSON.parse(saved.shipsPlaced);
+  enemyBoard   = JSON.parse(saved.enemyBoard);
+  myTurn       = saved.myTurn;
+  gameActive   = saved.gameActive;
+  myShotsFired = saved.myShotsFired;
+  myHits       = saved.myHits;
+  enemySunkCount = saved.enemySunkCount;
+  mySunkCount    = saved.mySunkCount;
+  isHost         = saved.isHost;
+  // Oyunu yeniden çiz
+  startGame(true); // true = restore modu
+  // Rakibe mevcut durumu gönder
+  sendMsg({type:'state_sync',
+    myTurn: !myTurn,
+    myShotsFired, myHits,
+    enemySunkCount: mySunkCount,
+    mySunkCount: enemySunkCount
+  });
+}
+
+function applyStateSync(msg) {
+  // Rakibin gönderdiği istatistikleri uygula
+  if (typeof msg.myShotsFired !== 'undefined') {
+    myShotsFired   = msg.myShotsFired;
+    myHits         = msg.myHits;
+    enemySunkCount = msg.enemySunkCount;
+    mySunkCount    = msg.mySunkCount;
+    myTurn         = msg.myTurn;
+  }
+  document.getElementById('my-shots').textContent = myShotsFired;
+  document.getElementById('my-sunk-count').textContent = enemySunkCount;
+  document.getElementById('enemy-sunk-count').textContent = mySunkCount;
+  updateTurnUI();
+  addLog('Oyun kaldığı yerden devam ediyor.', 'system');
 }
 
 // ═══════════════════════════════════════════════════
@@ -1480,30 +2011,38 @@ function isValidPlacement(cells) {
 function placeHover(r,c) {
   clearPreview();
   const cells = getPreviewCells(r,c);
-  if (!cells) return;
+  if (!cells || !selectedShip) return;
   const valid = isValidPlacement(cells);
+  // Hücre rengini koru, SVG preview overlay göster
   cells.forEach(({r,c})=>{
     const el = getCellEl('place-grid-rows',r,c);
     if (el) el.classList.add(valid?'ship-preview':'ship-preview-invalid');
   });
+  showPreviewOverlay('place-grid-rows', selectedShip.id, cells, isHorizontal, valid);
 }
 function placeLeave() { clearPreview(); }
 function clearPreview() {
   document.querySelectorAll('#place-grid-rows .ship-preview, #place-grid-rows .ship-preview-invalid')
     .forEach(el=>el.classList.remove('ship-preview','ship-preview-invalid'));
+  clearPreviewOverlay();
 }
 
 function placeClick(r,c) {
   if (!selectedShip) { showToast('Önce bir gemi seçin!'); return; }
   const cells = getPreviewCells(r,c);
   if (!isValidPlacement(cells)) { showToast('Geçersiz konum!'); return; }
+  clearPreviewOverlay();
+  const sid = selectedShip.id;
+  const horiz = isHorizontal;
   cells.forEach(({r,c})=>{
     myBoard[r][c]=1;
     const el=getCellEl('place-grid-rows',r,c);
     if(el) el.classList.add('ship');
   });
-  shipsPlaced[selectedShip.id] = cells;
-  document.getElementById('ship-item-'+selectedShip.id).classList.add('placed');
+  shipsPlaced[sid] = cells;
+  // SVG gemi overlay çiz
+  renderShipOverlay('place-grid-rows', sid, cells, horiz, 'normal', '');
+  document.getElementById('ship-item-'+sid).classList.add('placed');
   selectedShip = null;
   checkAllPlaced();
 }
@@ -1529,6 +2068,7 @@ function autoPlace() {
       if (isValidPlacement(cells)) {
         cells.forEach(({r,c})=>{ myBoard[r][c]=1; const el=getCellEl('place-grid-rows',r,c); if(el)el.classList.add('ship'); });
         shipsPlaced[ship.id]=cells;
+        renderShipOverlay('place-grid-rows', ship.id, cells, h, 'normal', '');
         document.getElementById('ship-item-'+ship.id).classList.add('placed');
         placed=true;
       }
@@ -1544,6 +2084,8 @@ function clearBoard() {
   document.querySelectorAll('.ship-item').forEach(el=>el.classList.remove('placed','selected'));
   document.getElementById('place-ready-section').style.display='none';
   selectedShip = null;
+  removeAllOverlays('place-grid-rows');
+  clearPreviewOverlay();
 }
 
 function readyUp() {
@@ -1567,32 +2109,45 @@ function checkBothReady() {
 // ═══════════════════════════════════════════════════
 // GAME
 // ═══════════════════════════════════════════════════
-function startGame() {
+function startGame(restore=false) {
   gameActive = true;
-  enemyBoard = emptyBoard();
-  myShotsFired = 0; myHits = 0;
-  enemySunkCount = 0; mySunkCount = 0;
-  myShipsRemaining = SHIPS_CONFIG.length;
-  enemyShipsRemaining = SHIPS_CONFIG.length;
+  if (!restore) {
+    enemyBoard = emptyBoard();
+    myShotsFired = 0; myHits = 0;
+    enemySunkCount = 0; mySunkCount = 0;
+  }
+  myShipsRemaining = SHIPS_CONFIG.length - mySunkCount;
+  enemyShipsRemaining = SHIPS_CONFIG.length - enemySunkCount;
 
   document.getElementById('my-name-display').textContent = myName;
   document.getElementById('enemy-name-display').textContent = enemyName;
-  document.getElementById('my-sunk-count').textContent = '0';
-  document.getElementById('enemy-sunk-count').textContent = '0';
-  document.getElementById('my-shots').textContent = '0';
+  document.getElementById('my-sunk-count').textContent = enemySunkCount;
+  document.getElementById('enemy-sunk-count').textContent = mySunkCount;
+  document.getElementById('my-shots').textContent = myShotsFired;
   document.getElementById('my-ships-left').textContent = `Gemi: ${myShipsRemaining}`;
   document.getElementById('enemy-ships-left').textContent = `Gemi: ${enemyShipsRemaining}`;
-  document.getElementById('battle-log').innerHTML = '';
+  if (!restore) document.getElementById('battle-log').innerHTML = '';
 
   buildGrid('my-grid-rows','my-col-labels', null, null, null);
   buildGrid('enemy-grid-rows','enemy-col-labels', attackCell, null, null);
 
-  // Render my ships
+  // Render my ships — hücre rengi + SVG overlay
   for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) {
     if (myBoard[r][c]===1) { const el=getCellEl('my-grid-rows',r,c); if(el)el.classList.add('ship'); }
   }
-
+  // SVG overlay'leri placement bilgisinden çiz
   showScreen('game');
+  // showScreen sonrası DOM'da grid var, overlay çizebiliriz
+  requestAnimationFrame(() => {
+    removeAllOverlays('my-grid-rows');
+    for (const [sid, cells] of Object.entries(shipsPlaced)) {
+      if (!cells || cells.length === 0) continue;
+      const r0=cells[0].r, c0=cells[0].c;
+      const r1=cells[cells.length-1].r, c1=cells[cells.length-1].c;
+      const horiz = r0===r1; // aynı satırda ise yatay
+      renderShipOverlay('my-grid-rows', sid, cells, horiz, 'normal', '');
+    }
+  });
   updateTurnUI();
   addLog(`Savaş başladı! ${myTurn?'İlk hamle sizin!':'İlk hamle rakibin!'}`, 'system');
 }
@@ -1624,6 +2179,7 @@ function attackCell(r,c) {
   const el = getCellEl('enemy-grid-rows', r, c);
   if (el) { el.classList.add('firing'); setTimeout(()=>el.classList.remove('firing'),400); }
   sendMsg({type:'shot', r, c});
+  saveSession();
 }
 
 function handleIncomingShot(r,c) {
@@ -1751,6 +2307,7 @@ function endGame(won) {
 
   updateLeaderboard(myName, won);
   renderLeaderboard('result-leaderboard-body');
+  clearSession(); // Oyun bitti, oturumu sil
   showScreen('result');
 
   // Ses & görsel
@@ -1767,8 +2324,71 @@ function rematch() {
 function handleRematch() {
   startPlacement();
 }
+// ═══════════════════════════════════════════════════
+// FORFEIT (HÜKMEN MAĞLUP) SİSTEMİ
+// ═══════════════════════════════════════════════════
+let forfeitInProgress = false;
+
+function askForfeit() {
+  document.getElementById('confirm-modal').classList.add('open');
+}
+
+function closeConfirmModal() {
+  document.getElementById('confirm-modal').classList.remove('open');
+}
+
+function confirmForfeit() {
+  closeConfirmModal();
+  forfeitInProgress = true;
+  // Rakibe teslim olduğumuzu bildir
+  sendMsg({ type: 'forfeit', name: myName });
+  addLog('Teslim oldunuz. Hükmen mağlup.', 'sunk');
+  // Kısa gecikme — mesajın gitmesi için
+  setTimeout(() => {
+    gameActive = false;
+    playDefeat();
+    updateLeaderboard(myName, false);
+    // Sonuç ekranını forfeit özel mesajıyla göster
+    showForfeitResult(false);
+    forfeitInProgress = false;
+  }, 400);
+}
+
+function handleEnemyForfeit(enemyNameForfeit) {
+  gameActive = false;
+  addLog(`${enemyNameForfeit} teslim oldu! Hükmen galipsiniz! 🏆`, 'sunk');
+  showToast(`${enemyNameForfeit} teslim oldu! Zafer sizin! 🏆`, 'win');
+  playVictory();
+  updateLeaderboard(myName, true);
+  showForfeitResult(true, enemyNameForfeit);
+}
+
+function showForfeitResult(won, surrenderedName) {
+  const title = document.getElementById('result-title');
+  title.textContent = won ? '🏆 HÜKMEN GALİP!' : '🏳️ HÜKMEN MAĞLUP';
+  title.className = 'result-title ' + (won ? 'win' : 'lose');
+
+  const desc = won
+    ? `${surrenderedName || 'Rakip'} teslim bayrağı çekti.<br>Zafer senindir, Komutan!`
+    : `Teslim oldunuz.<br>Bir komutan her zaman bir sonraki savaşa hazırlanır.`;
+
+  document.getElementById('result-stats').innerHTML = `
+    <div class="stat-box" style="max-width:360px;width:100%">
+      <div style="font-size:2.5rem;margin-bottom:8px">${won ? '🏆' : '🏳️'}</div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:0.85rem;color:var(--text-dim);line-height:1.8">${desc}</div>
+    </div>`;
+
+  renderLeaderboard('result-leaderboard-body');
+  clearSession();
+  showScreen('result');
+  if (won) setTimeout(showVictoryRays, 300);
+}
+
 function goLobby() {
-  if (peer) { peer.destroy(); peer=null; conn=null; }
+  clearTimeout(reconnectTimer);
+  clearSession();
+  forfeitInProgress = false;
+  if (peer) { try{peer.destroy();}catch{} peer=null; conn=null; }
   document.getElementById('room-code-section').style.display='none';
   document.getElementById('join-status').style.display='none';
   document.getElementById('create-name').value='';
