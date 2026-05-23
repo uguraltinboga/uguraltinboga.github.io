@@ -384,11 +384,14 @@ body.light .wave-layer { opacity: 0.08; }
 .board-name { font-family:'Cinzel',serif; font-size:0.9rem; font-weight:700; letter-spacing:2px; }
 .board-name.mine { color:var(--foam); }
 .board-name.enemy { color:var(--gold-bright); }
+body.light .board-name.mine { color:var(--ocean-blue); }
+body.light .board-name.enemy { color:var(--gold); }
 .ships-remaining {
-  font-family:'Share Tech Mono',monospace; font-size:0.72rem; color:var(--text-dim);
-  background:rgba(4,20,40,0.6); border:1px solid rgba(77,184,232,0.15); border-radius:6px;
+  font-family:'Share Tech Mono',monospace; font-size:0.72rem; color:var(--text-bright);
+  background:var(--panel-bg); border:1px solid var(--panel-border); border-radius:6px;
   padding:3px 10px;
 }
+body.light .ships-remaining { color:var(--text-bright); }
 
 /* Attack overlay */
 .attack-grid .cell:hover {
@@ -396,7 +399,29 @@ body.light .wave-layer { opacity: 0.08; }
   border-color: rgba(230,57,70,0.6);
   cursor: crosshair;
 }
+.attack-grid.disabled { position:relative; }
 .attack-grid.disabled .cell { cursor:not-allowed; pointer-events:none; }
+.attack-grid.disabled::after {
+  content: attr(data-wait-msg);
+  position: absolute; inset: 0;
+  background: rgba(2,11,24,0.55);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Cinzel', serif; font-size: clamp(0.7rem,2vw,0.95rem);
+  font-weight: 700; color: var(--gold-bright); letter-spacing: 2px;
+  text-align: center; padding: 8px;
+  backdrop-filter: blur(2px);
+  border-radius: 4px;
+  pointer-events: none;
+  animation: waitPulse 2s ease-in-out infinite;
+}
+@keyframes waitPulse {
+  0%,100% { opacity:0.7; }
+  50% { opacity:1; }
+}
+body.light .attack-grid.disabled::after {
+  background: rgba(180,210,235,0.6);
+  color: var(--gold);
+}
 
 /* ── LOG PANEL ── */
 .log-panel {
@@ -1415,8 +1440,10 @@ function getCellSize() {
 // ═══════════════════════════════════════════════════
 // SVG GEMİ ÇİZİMLERİ
 // ═══════════════════════════════════════════════════
+let _svgUid = 0;
 function buildShipPath(shipId, W, H, tint) {
   const mid = H / 2;
+  const uid = ++_svgUid; // Her çağrıda benzersiz ID — gradient çakışmasını önler
   const hull  = tint==='gold'?'#b8860b':tint==='red'?'#8b1a1a':'#1a4f7a';
   const hull2 = tint==='gold'?'#daa520':tint==='red'?'#c0392b':'#2a6fa8';
   const deck  = tint==='gold'?'#c9a84c':tint==='red'?'#e74c3c':'#3a8fd4';
@@ -1424,11 +1451,11 @@ function buildShipPath(shipId, W, H, tint) {
   const dark  = tint==='gold'?'#8b6914':tint==='red'?'#6b0f0f':'#062040';
   const shine = 'rgba(255,255,255,0.18)';
   switch(shipId) {
-    case 'carrier':    return svgCarrier(W,H,mid,hull,hull2,deck,metal,dark,shine);
-    case 'battleship': return svgBattleship(W,H,mid,hull,hull2,deck,metal,dark,shine);
-    case 'cruiser':    return svgCruiser(W,H,mid,hull,hull2,deck,metal,dark,shine);
-    case 'submarine':  return svgSubmarine(W,H,mid,hull,hull2,deck,metal,dark,shine);
-    case 'destroyer':  return svgDestroyer(W,H,mid,hull,hull2,deck,metal,dark,shine);
+    case 'carrier':    return svgCarrier(W,H,mid,hull,hull2,deck,metal,dark,shine,uid);
+    case 'battleship': return svgBattleship(W,H,mid,hull,hull2,deck,metal,dark,shine,uid);
+    case 'cruiser':    return svgCruiser(W,H,mid,hull,hull2,deck,metal,dark,shine,uid);
+    case 'submarine':  return svgSubmarine(W,H,mid,hull,hull2,deck,metal,dark,shine,uid);
+    case 'destroyer':  return svgDestroyer(W,H,mid,hull,hull2,deck,metal,dark,shine,uid);
     default: return `<rect x="2" y="${H*0.25}" width="${W-4}" height="${H*0.5}" rx="4" fill="${hull}" stroke="${metal}" stroke-width="0.8"/>`;
   }
 }
@@ -1454,14 +1481,14 @@ function getShipSVG(shipId, cellCount, horizontal, cellPx, tint) {
   }
 }
 
-function svgCarrier(W,H,mid,hull,hull2,deck,metal,dark,shine){
+function svgCarrier(W,H,mid,hull,hull2,deck,metal,dark,shine,uid){
   return `<defs>
-    <linearGradient id="g_c_${W|0}" x1="0" y1="0" x2="0" y2="1">
+    <linearGradient id="g_c_${uid}" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="${hull2}"/>
       <stop offset="60%" stop-color="${hull}"/>
       <stop offset="100%" stop-color="${dark}"/>
     </linearGradient></defs>
-  <path d="M${W*.04},${H*.35} L${W*.02},${mid} L${W*.04},${H*.65} L${W*.88},${H*.65} Q${W*.97},${H*.65} ${W*.98},${mid} Q${W*.97},${H*.35} ${W*.88},${H*.35} Z" fill="url(#g_c_${W|0})" stroke="${dark}" stroke-width="0.8"/>
+  <path d="M${W*.04},${H*.35} L${W*.02},${mid} L${W*.04},${H*.65} L${W*.88},${H*.65} Q${W*.97},${H*.65} ${W*.98},${mid} Q${W*.97},${H*.35} ${W*.88},${H*.35} Z" fill="url(#g_c_${uid})" stroke="${dark}" stroke-width="0.8"/>
   <rect x="${W*.06}" y="${H*.28}" width="${W*.82}" height="${H*.14}" rx="2" fill="${deck}" opacity="0.7"/>
   <line x1="${W*.1}" y1="${H*.345}" x2="${W*.84}" y2="${H*.345}" stroke="${metal}" stroke-width="0.6" opacity="0.5" stroke-dasharray="6,4"/>
   <rect x="${W*.62}" y="${H*.14}" width="${W*.12}" height="${H*.22}" rx="2" fill="${hull2}" stroke="${metal}" stroke-width="0.6"/>
@@ -1474,14 +1501,14 @@ function svgCarrier(W,H,mid,hull,hull2,deck,metal,dark,shine){
   <path d="M${W*.32},${H*.31} l5,-3 l9,0 l-3,3 Z" fill="${metal}" opacity="0.55"/>`;
 }
 
-function svgBattleship(W,H,mid,hull,hull2,deck,metal,dark,shine){
+function svgBattleship(W,H,mid,hull,hull2,deck,metal,dark,shine,uid){
   return `<defs>
-    <linearGradient id="g_b_${W|0}" x1="0" y1="0" x2="0" y2="1">
+    <linearGradient id="g_b_${uid}" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="${hull2}"/>
       <stop offset="55%" stop-color="${hull}"/>
       <stop offset="100%" stop-color="${dark}"/>
     </linearGradient></defs>
-  <path d="M${W*.05},${H*.3} L${W*.02},${mid} L${W*.05},${H*.7} L${W*.85},${H*.7} Q${W*.97},${H*.7} ${W*.98},${mid} Q${W*.97},${H*.3} ${W*.85},${H*.3} Z" fill="url(#g_b_${W|0})" stroke="${dark}" stroke-width="0.8"/>
+  <path d="M${W*.05},${H*.3} L${W*.02},${mid} L${W*.05},${H*.7} L${W*.85},${H*.7} Q${W*.97},${H*.7} ${W*.98},${mid} Q${W*.97},${H*.3} ${W*.85},${H*.3} Z" fill="url(#g_b_${uid})" stroke="${dark}" stroke-width="0.8"/>
   <rect x="${W*.07}" y="${H*.3}" width="${W*.76}" height="${H*.12}" rx="1" fill="${deck}" opacity="0.65"/>
   <rect x="${W*.55}" y="${H*.15}" width="${W*.14}" height="${H*.22}" rx="2" fill="${hull2}" stroke="${metal}" stroke-width="0.6"/>
   <rect x="${W*.56}" y="${H*.1}" width="${W*.12}" height="${H*.08}" rx="1" fill="${deck}"/>
@@ -1496,14 +1523,14 @@ function svgBattleship(W,H,mid,hull,hull2,deck,metal,dark,shine){
   <path d="M${W*.07},${H*.67} Q${W*.5},${H*.64} ${W*.88},${H*.67}" stroke="${shine}" stroke-width="1.2" fill="none"/>`;
 }
 
-function svgCruiser(W,H,mid,hull,hull2,deck,metal,dark,shine){
+function svgCruiser(W,H,mid,hull,hull2,deck,metal,dark,shine,uid){
   return `<defs>
-    <linearGradient id="g_cr_${W|0}" x1="0" y1="0" x2="0" y2="1">
+    <linearGradient id="g_cr_${uid}" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="${hull2}"/>
       <stop offset="60%" stop-color="${hull}"/>
       <stop offset="100%" stop-color="${dark}"/>
     </linearGradient></defs>
-  <path d="M${W*.06},${H*.28} L${W*.02},${mid} L${W*.06},${H*.72} L${W*.83},${H*.72} Q${W*.97},${H*.72} ${W*.98},${mid} Q${W*.97},${H*.28} ${W*.83},${H*.28} Z" fill="url(#g_cr_${W|0})" stroke="${dark}" stroke-width="0.8"/>
+  <path d="M${W*.06},${H*.28} L${W*.02},${mid} L${W*.06},${H*.72} L${W*.83},${H*.72} Q${W*.97},${H*.72} ${W*.98},${mid} Q${W*.97},${H*.28} ${W*.83},${H*.28} Z" fill="url(#g_cr_${uid})" stroke="${dark}" stroke-width="0.8"/>
   <rect x="${W*.08}" y="${H*.28}" width="${W*.7}" height="${H*.13}" rx="1" fill="${deck}" opacity="0.6"/>
   <rect x="${W*.52}" y="${H*.12}" width="${W*.17}" height="${H*.24}" rx="2" fill="${hull2}" stroke="${metal}" stroke-width="0.6"/>
   <rect x="${W*.54}" y="${H*.07}" width="${W*.13}" height="${H*.08}" rx="1" fill="${deck}"/>
@@ -1514,14 +1541,14 @@ function svgCruiser(W,H,mid,hull,hull2,deck,metal,dark,shine){
   <path d="M${W*.08},${H*.69} Q${W*.5},${H*.66} ${W*.87},${H*.69}" stroke="${shine}" stroke-width="1" fill="none"/>`;
 }
 
-function svgSubmarine(W,H,mid,hull,hull2,deck,metal,dark,shine){
+function svgSubmarine(W,H,mid,hull,hull2,deck,metal,dark,shine,uid){
   return `<defs>
-    <linearGradient id="g_s_${W|0}" x1="0" y1="0" x2="0" y2="1">
+    <linearGradient id="g_s_${uid}" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="${hull2}"/>
       <stop offset="50%" stop-color="${hull}"/>
       <stop offset="100%" stop-color="${dark}"/>
     </linearGradient></defs>
-  <ellipse cx="${W*.5}" cy="${mid}" rx="${W*.46}" ry="${H*.32}" fill="url(#g_s_${W|0})" stroke="${dark}" stroke-width="0.8"/>
+  <ellipse cx="${W*.5}" cy="${mid}" rx="${W*.46}" ry="${H*.32}" fill="url(#g_s_${uid})" stroke="${dark}" stroke-width="0.8"/>
   <ellipse cx="${W*.06}" cy="${mid}" rx="${W*.07}" ry="${H*.2}" fill="${hull2}" stroke="${dark}" stroke-width="0.5"/>
   <path d="M${W*.88},${H*.36} L${W*.99},${H*.22} L${W*.99},${H*.38} Z" fill="${deck}" opacity="0.7"/>
   <path d="M${W*.88},${H*.64} L${W*.99},${H*.78} L${W*.99},${H*.62} Z" fill="${deck}" opacity="0.7"/>
@@ -1532,14 +1559,14 @@ function svgSubmarine(W,H,mid,hull,hull2,deck,metal,dark,shine){
   <ellipse cx="${W*.36}" cy="${H*.38}" rx="${W*.13}" ry="${H*.07}" fill="white" opacity="0.08"/>`;
 }
 
-function svgDestroyer(W,H,mid,hull,hull2,deck,metal,dark,shine){
+function svgDestroyer(W,H,mid,hull,hull2,deck,metal,dark,shine,uid){
   return `<defs>
-    <linearGradient id="g_d_${W|0}" x1="0" y1="0" x2="0" y2="1">
+    <linearGradient id="g_d_${uid}" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="${hull2}"/>
       <stop offset="55%" stop-color="${hull}"/>
       <stop offset="100%" stop-color="${dark}"/>
     </linearGradient></defs>
-  <path d="M${W*.04},${H*.32} L${W*.01},${mid} L${W*.04},${H*.68} L${W*.82},${H*.68} Q${W*.98},${H*.68} ${W*.99},${mid} Q${W*.98},${H*.32} ${W*.82},${H*.32} Z" fill="url(#g_d_${W|0})" stroke="${dark}" stroke-width="0.7"/>
+  <path d="M${W*.04},${H*.32} L${W*.01},${mid} L${W*.04},${H*.68} L${W*.82},${H*.68} Q${W*.98},${H*.68} ${W*.99},${mid} Q${W*.98},${H*.32} ${W*.82},${H*.32} Z" fill="url(#g_d_${uid})" stroke="${dark}" stroke-width="0.7"/>
   <rect x="${W*.06}" y="${H*.32}" width="${W*.73}" height="${H*.11}" rx="1" fill="${deck}" opacity="0.55"/>
   <rect x="${W*.5}" y="${H*.16}" width="${W*.17}" height="${H*.22}" rx="2" fill="${hull2}" stroke="${metal}" stroke-width="0.5"/>
   <rect x="${W*.22}" y="${H*.26}" width="${W*.14}" height="${H*.04}" rx="1" fill="${metal}" opacity="0.9"/>
@@ -1904,13 +1931,9 @@ function tryReconnectManual() {
 }
 
 function onReconnected() {
-  clearTimeout(reconnectTimer);
-  stopHeartbeat();
+  // Sadece UI güncelle — oyuna geçiş mesajlaşma ile tetiklenir
   document.getElementById('reconnect-dot').className='conn-dot connected';
-  document.getElementById('reconnect-status-text').textContent='Bağlantı kuruldu!';
-  showToast('Bağlantı yeniden kuruldu! 🎉');
-  // Heartbeat'i yeniden başlat
-  setTimeout(() => startHeartbeat(), 500);
+  document.getElementById('reconnect-status-text').textContent='Bağlantı kuruldu! Oyun yükleniyor…';
   updateConnIndicator(true);
 }
 
@@ -2160,12 +2183,13 @@ function handleMessage(raw) {
       handleEnemyForfeit(msg.name);
       break;
     case 'reconnect_hello':
-      // Yeniden bağlanma sağlandı
+      // Yeniden bağlanma sağlandı — bağlantıyı kabul eden taraf
       enemyName = msg.name;
       clearTimeout(reconnectTimer);
-      // Oturum durumunu geri yükle
-      restoreSessionState();
+      stopHeartbeat();
       showToast(`${enemyName} geri döndü! Oyun devam ediyor ⚓`);
+      restoreSessionState(); // state_sync gönderir + showScreen('game')
+      setTimeout(() => startHeartbeat(), 600);
       break;
     case 'state_sync':
       applyStateSync(msg);
@@ -2214,7 +2238,7 @@ function restoreSessionState() {
 }
 
 function applyStateSync(msg) {
-  // Rakibin gönderdiği istatistikleri uygula
+  // Rakibin gönderdiği istatistikleri uygula — sonra oyun ekranına geç
   if (typeof msg.myShotsFired !== 'undefined') {
     myShotsFired   = msg.myShotsFired;
     myHits         = msg.myHits;
@@ -2222,10 +2246,28 @@ function applyStateSync(msg) {
     mySunkCount    = msg.mySunkCount;
     myTurn         = msg.myTurn;
   }
-  document.getElementById('my-shots').textContent = myShotsFired;
-  document.getElementById('my-sunk-count').textContent = enemySunkCount;
-  document.getElementById('enemy-sunk-count').textContent = mySunkCount;
-  updateTurnUI();
+  // Bu taraf reconnect ekranındaysa oyun ekranına geç
+  const onReconnectScreen = document.getElementById('screen-reconnect').classList.contains('active');
+  if (onReconnectScreen) {
+    clearTimeout(reconnectTimer);
+    stopHeartbeat();
+    // Board'ı localStorage'dan geri yükle
+    const saved = loadSession(sessionCode);
+    if (saved) {
+      myBoard     = JSON.parse(saved.myBoard);
+      shipsPlaced = JSON.parse(saved.shipsPlaced);
+      enemyBoard  = JSON.parse(saved.enemyBoard);
+      gameActive  = true;
+    }
+    startGame(true);
+    setTimeout(() => startHeartbeat(), 600);
+  } else {
+    // Zaten oyun ekranındaysa sadece UI güncelle
+    document.getElementById('my-shots').textContent = myShotsFired;
+    document.getElementById('my-sunk-count').textContent = enemySunkCount;
+    document.getElementById('enemy-sunk-count').textContent = mySunkCount;
+    updateTurnUI();
+  }
   addLog('Oyun kaldığı yerden devam ediyor.', 'system');
 }
 
@@ -2742,10 +2784,12 @@ function updateTurnUI() {
     dot.className='status-dot my-turn';
     txt.textContent='SİZİN SIRA — Ateş edin!';
     enemyGrid.classList.remove('disabled');
+    enemyGrid.removeAttribute('data-wait-msg');
   } else {
     dot.className='status-dot wait';
     txt.textContent=`${enemyName} ateş ediyor…`;
     enemyGrid.classList.add('disabled');
+    enemyGrid.setAttribute('data-wait-msg', `⏳ ${enemyName} ateş ediyor…`);
   }
 }
 
