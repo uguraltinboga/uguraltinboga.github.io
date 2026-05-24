@@ -4,6 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AMİRAL BATTI — Deniz Savaşı</title>
+<meta name="description" content="Online 2 oyunculu Amiral Battı oyunu">
+<meta name="theme-color" content="#041428">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Amiral Battı">
+<link rel="manifest" id="pwa-manifest">
+<link rel="apple-touch-icon" id="pwa-apple-icon">
+<link rel="icon" type="image/svg+xml" id="pwa-favicon">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
@@ -329,21 +338,49 @@ body.light .wave-layer { opacity: 0.08; }
 }
 .ship-svg-overlay.preview { opacity: 0.85; filter: drop-shadow(0 0 8px rgba(201,168,76,0.8)); }
 .ship-svg-overlay.invalid { filter: drop-shadow(0 0 8px rgba(230,57,70,0.8)); opacity: 0.7; }
-.ship-svg-overlay.placed  { pointer-events: all; cursor: grab; transition: filter 0.15s, transform 0.15s; }
-.ship-svg-overlay.placed:hover { filter: drop-shadow(0 0 10px rgba(77,184,232,0.9)); transform: scale(1.03); }
-.ship-svg-overlay.placed.dragging { cursor: grabbing; opacity: 0.5; z-index: 20; transform: scale(1.06); }
-.ship-svg-overlay.placed.selected-ship { filter: drop-shadow(0 0 12px rgba(201,168,76,1)); }
+.ship-svg-overlay.placed  { pointer-events: all; cursor: pointer; transition: filter 0.15s, transform 0.15s; }
+.ship-svg-overlay.placed:hover { filter: drop-shadow(0 0 10px rgba(77,184,232,0.7)); }
+.ship-svg-overlay.placed.ship-selected-glow { filter: drop-shadow(0 0 14px rgba(201,168,76,1)); }
+.ship-svg-overlay.placed.dragging { cursor: grabbing; opacity: 0.45; z-index: 20; }
 
-/* Döndür hint tooltip */
-.rotate-hint {
-  position: absolute; z-index: 30; pointer-events: none;
-  background: rgba(4,20,40,0.9); border: 1px solid var(--gold);
-  color: var(--gold-bright); font-family: 'Share Tech Mono', monospace;
-  font-size: 0.65rem; letter-spacing: 1px; padding: 4px 8px; border-radius: 6px;
-  white-space: nowrap; opacity: 0;
-  transition: opacity 0.2s;
+/* Gemi kontrol ikonları */
+.ship-controls {
+  position: absolute; z-index: 25; pointer-events: none;
+  display: none;
 }
-.rotate-hint.show { opacity: 1; }
+.ship-controls.visible { display: block; pointer-events: all; }
+
+.ship-ctrl-btn {
+  position: absolute;
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.9);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; line-height: 1;
+  cursor: pointer;
+  user-select: none; -webkit-user-select: none;
+  touch-action: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.6);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.ship-ctrl-btn:active { transform: scale(0.9); }
+
+.ship-ctrl-drag {
+  background: rgba(26,127,212,0.92);
+  cursor: grab;
+}
+.ship-ctrl-drag:active { cursor: grabbing; }
+.ship-ctrl-drag:hover { box-shadow: 0 0 12px rgba(77,184,232,0.9); }
+
+.ship-ctrl-rotate {
+  background: rgba(201,168,76,0.92);
+}
+.ship-ctrl-rotate:hover { box-shadow: 0 0 12px rgba(240,192,96,0.9); }
+
+.ship-ctrl-confirm {
+  background: rgba(46,204,113,0.92);
+}
+.ship-ctrl-confirm:hover { box-shadow: 0 0 12px rgba(46,204,113,0.9); }
 .cell.hit {
   background:radial-gradient(circle, rgba(230,57,70,0.9) 0%, rgba(140,20,20,0.8) 100%);
   border-color: var(--red-hit);
@@ -706,8 +743,82 @@ body.light .attack-grid.disabled::after {
 }
 
 /* ── RECONNECT SCREEN ── */
-#screen-reconnect {
-  gap: 0;
+#screen-reconnect { gap: 0; }
+
+/* ── PLACEMENT TIMER ── */
+.placement-timer {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--panel-bg); border: 1px solid var(--panel-border);
+  border-radius: 10px; padding: 8px 18px;
+  font-family: 'Share Tech Mono', monospace;
+}
+.placement-timer-val {
+  font-family: 'Cinzel Decorative', cursive;
+  font-size: 1.4rem; color: var(--foam); min-width: 2ch; text-align: center;
+  transition: color 0.3s;
+}
+.placement-timer-val.urgent {
+  color: var(--red-glow);
+  animation: timerUrgent 0.5s ease-in-out infinite;
+}
+@keyframes timerUrgent {
+  0%,100% { transform: scale(1);    text-shadow: 0 0 0 transparent; }
+  50%      { transform: scale(1.25); text-shadow: 0 0 20px var(--red-glow); }
+}
+.placement-timer-label { font-size: 0.7rem; color: var(--text-dim); letter-spacing: 2px; }
+.placement-ready-indicator {
+  font-family: 'Share Tech Mono', monospace; font-size: 0.75rem;
+  padding: 4px 12px; border-radius: 6px; letter-spacing: 1px;
+}
+.placement-ready-indicator.me    { background: rgba(46,204,113,0.2); color: var(--green-ready); border:1px solid rgba(46,204,113,0.4); }
+.placement-ready-indicator.enemy { background: rgba(77,184,232,0.15); color: var(--foam); border:1px solid rgba(77,184,232,0.3); }
+.placement-ready-indicator.waiting { background: rgba(201,168,76,0.15); color: var(--gold-bright); border:1px solid rgba(201,168,76,0.3); }
+
+/* ── BOARD BLUR TOGGLE ── */
+.board-blur-wrap { position: relative; display: inline-block; }
+.board-blur-overlay {
+  display: none; position: absolute; inset: 0;
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  background: rgba(2,11,24,0.5);
+  border-radius: 4px; z-index: 5;
+  align-items: center; justify-content: center;
+  flex-direction: column; gap: 6px;
+  pointer-events: none;
+}
+body.light .board-blur-overlay { background: rgba(184,216,240,0.55); }
+.board-blur-overlay.active { display: flex; }
+.board-blur-text {
+  font-family: 'Cinzel', serif; font-size: 0.75rem; font-weight: 700;
+  color: var(--foam); letter-spacing: 2px; text-align: center;
+}
+.btn-blur-toggle {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--panel-bg); border: 1px solid var(--panel-border);
+  border-radius: 8px; padding: 5px 12px; cursor: pointer;
+  font-family: 'Share Tech Mono', monospace; font-size: 0.7rem;
+  color: var(--text-dim); letter-spacing: 1px;
+  transition: border-color 0.2s, color 0.2s;
+}
+.btn-blur-toggle:hover { border-color: var(--foam); color: var(--foam); }
+.btn-blur-toggle.active { border-color: var(--red-hit); color: var(--red-glow); }
+
+/* ── REMATCH REQUEST MODAL ── */
+#rematch-modal {
+  display: none; position: fixed; inset: 0; z-index: 550;
+  background: rgba(2,11,24,0.88); backdrop-filter: blur(10px);
+  align-items: center; justify-content: center;
+}
+#rematch-modal.open { display: flex; }
+.rematch-modal-box {
+  background: linear-gradient(135deg, rgba(10,48,96,0.97), rgba(4,20,40,0.99));
+  border: 1px solid rgba(201,168,76,0.5);
+  border-radius: 20px; padding: 36px 32px;
+  max-width: 380px; width: 90%; text-align: center;
+  box-shadow: 0 0 60px rgba(201,168,76,0.15), 0 24px 60px rgba(0,0,0,0.8);
+  animation: modalIn 0.35s cubic-bezier(0.34,1.56,0.64,1);
+}
+body.light .rematch-modal-box {
+  background: linear-gradient(135deg,rgba(255,255,255,0.97),rgba(230,244,253,0.99));
 }
 
 /* ── İSİM MODALI ── */
@@ -847,8 +958,8 @@ body.light .name-modal-box {
           <span>Komutan Adı</span>
           <span id="create-name-saved" style="display:none;color:var(--green-ready);font-size:0.65rem;letter-spacing:1px">● KAYDEDİLDİ</span>
         </div>
-        <input class="input-field" id="create-name" placeholder="Adınızı girin..." maxlength="20"
-          oninput="onNameInput('create-name')">
+        <input class="input-field" id="create-name" placeholder="ADINIZI GİRİN..." maxlength="20"
+          oninput="onNameInputUpper(this,'create-name')" style="text-transform:uppercase">
       </div>
       <button class="btn btn-primary btn-full" onclick="createRoom()">
         <span>⚓</span> ODA OLUŞTUR
@@ -885,13 +996,14 @@ body.light .name-modal-box {
           <span>Komutan Adı</span>
           <span id="join-name-saved" style="display:none;color:var(--green-ready);font-size:0.65rem;letter-spacing:1px">● KAYDEDİLDİ</span>
         </div>
-        <input class="input-field" id="join-name" placeholder="Adınızı girin..." maxlength="20"
-          oninput="onNameInput('join-name')">
+        <input class="input-field" id="join-name" placeholder="ADINIZI GİRİN..." maxlength="20"
+          oninput="onNameInputUpper(this,'join-name')" style="text-transform:uppercase">
       </div>
       <div class="input-group" style="margin-bottom:14px">
         <div class="input-label">Oda Kodu</div>
         <div style="position:relative">
-          <input class="input-field" id="join-code" placeholder="Oda kodunu girin..." maxlength="40">
+          <input class="input-field" id="join-code" placeholder="ODA KODUNU GİRİN..." maxlength="40"
+            oninput="this.value=this.value.toUpperCase()" style="text-transform:uppercase">
           <div id="join-code-auto-badge" style="display:none;position:absolute;right:10px;top:50%;transform:translateY(-50%);background:var(--green-ready);color:#000;font-size:0.6rem;font-family:'Share Tech Mono',monospace;padding:2px 6px;border-radius:4px;letter-spacing:1px">OTOMATİK</div>
         </div>
       </div>
@@ -938,6 +1050,15 @@ body.light .name-modal-box {
   <div class="place-header">
     <div class="place-title">GEMİ YERLEŞTİRME</div>
     <div class="place-sub" id="place-waiting-text">Gemileri konuşlandır, savaşa hazırlan</div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center;margin-top:8px">
+      <div class="placement-timer" id="placement-timer-wrap" style="display:none">
+        <span class="placement-timer-label">⏱ KALAN</span>
+        <span class="placement-timer-val" id="placement-timer-val">45</span>
+        <span class="placement-timer-label">SN</span>
+      </div>
+      <div id="my-ready-badge" style="display:none" class="placement-ready-indicator me">✓ HAZIRSINIZ</div>
+      <div id="enemy-ready-badge" style="display:none" class="placement-ready-indicator waiting">⏳ RAKİP BEKLENİYOR</div>
+    </div>
   </div>
 
   <div class="place-layout">
@@ -1026,12 +1147,19 @@ body.light .name-modal-box {
     <!-- Benim tablom -->
     <div class="board-section">
       <div class="board-label-row">
-        <div class="board-name mine">SİZİN SULARIINIZ</div>
+        <div class="board-name mine">SİZİN SULARINIZ</div>
         <div class="ships-remaining" id="my-ships-left">Gemi: 5</div>
+        <button class="btn-blur-toggle" id="blur-toggle-btn" onclick="toggleBoardBlur()" title="Gemileri gizle/göster">👁 GİZLE</button>
       </div>
-      <div class="grid-container">
-        <div class="grid-letters" id="my-col-labels"></div>
-        <div class="grid-rows" id="my-grid-rows"></div>
+      <div class="board-blur-wrap" id="my-board-blur-wrap">
+        <div class="grid-container">
+          <div class="grid-letters" id="my-col-labels"></div>
+          <div class="grid-rows" id="my-grid-rows"></div>
+        </div>
+        <div class="board-blur-overlay" id="board-blur-overlay">
+          <div style="font-size:1.5rem">🙈</div>
+          <div class="board-blur-text">GEMİLER GİZLENDİ</div>
+        </div>
       </div>
     </div>
 
@@ -1070,8 +1198,21 @@ body.light .name-modal-box {
     </table>
   </div>
   <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
-    <button class="btn btn-primary" onclick="rematch()">⚔️ TEKRAR OYNA</button>
+    <button class="btn btn-primary" id="rematch-btn" onclick="requestRematch()">⚔️ TEKRAR OYNA</button>
     <button class="btn btn-secondary" onclick="goLobby()">🏠 LOBBYE DÖN</button>
+  </div>
+</div>
+
+<!-- ═══ REMATCH MODAL ═══ -->
+<div id="rematch-modal">
+  <div class="rematch-modal-box">
+    <div style="font-size:2.5rem;margin-bottom:12px" id="rematch-modal-icon">⚔️</div>
+    <div style="font-family:'Cinzel Decorative',cursive;font-size:1.1rem;color:var(--gold-bright);letter-spacing:2px;margin-bottom:10px" id="rematch-modal-title">YENİDEN OYNA?</div>
+    <div style="font-family:'Share Tech Mono',monospace;font-size:0.8rem;color:var(--text-dim);margin-bottom:24px;line-height:1.7" id="rematch-modal-desc">Rakibiniz yeniden oynamak istiyor.<br>Kabul ediyor musunuz?</div>
+    <div id="rematch-modal-btns" style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="acceptRematch()">✅ KABUL ET</button>
+      <button class="btn btn-danger" onclick="declineRematch()">❌ REDDET</button>
+    </div>
   </div>
 </div>
 
@@ -1110,8 +1251,10 @@ body.light .name-modal-box {
     <div class="name-modal-desc">Savaşa katılmadan önce komutan adını belirle.<br>Bu ad kaydedilecek ve bir daha sorulmayacak.</div>
     <div class="input-group" style="margin-bottom:16px;text-align:left">
       <div class="input-label">Komutan Adı</div>
-      <input class="input-field" id="modal-name-input" placeholder="Adınızı girin..." maxlength="20"
-        onkeydown="if(event.key==='Enter') confirmNameModal()">
+      <input class="input-field" id="modal-name-input" placeholder="ADINIZI GİRİN..." maxlength="20"
+        oninput="this.value=this.value.toUpperCase()"
+        onkeydown="if(event.key==='Enter') confirmNameModal()"
+        style="text-transform:uppercase">
     </div>
     <button class="btn btn-primary btn-full" onclick="confirmNameModal()">
       ⚔️ SAVAŞA GİR
@@ -1833,12 +1976,13 @@ function getCellEl(rowsId, r, c) {
 // PeerJS'in uzun UUID'si yerine 6 haneli okunabilir kod üret
 // Format: ABC-123  (3 harf + 3 rakam)
 function generateShortCode() {
-  const letters = 'ABCDEFGHJKLMNPQRSTUVWXYZ'; // I,O yok (karışmasın)
+  // Tire yok — 6 karakter: 3 harf + 3 rakam, karışan karakterler çıkarıldı
+  const letters = 'ABCDEFGHJKLMNPQRSTUVWXYZ'; // I,O yok
   const digits  = '23456789';                  // 0,1 yok
-  let l = '', d = '';
-  for (let i=0;i<3;i++) l += letters[Math.floor(Math.random()*letters.length)];
-  for (let i=0;i<3;i++) d += digits[Math.floor(Math.random()*digits.length)];
-  return l + '-' + d;
+  let code = '';
+  for (let i=0;i<3;i++) code += letters[Math.floor(Math.random()*letters.length)];
+  for (let i=0;i<3;i++) code += digits[Math.floor(Math.random()*digits.length)];
+  return code; // ör: KMR467
 }
 
 // ═══════════════════════════════════════════════════
@@ -1945,7 +2089,7 @@ function updateReconnectCountdown(wasInGame) {
 function getReconnectPeerId(role) {
   // role: 'host' veya 'guest'
   // sessionCode: "ABC-123" → "AB123host" gibi temiz bir ID
-  return sessionCode.replace('-','') + role;
+  return sessionCode + role; // Kod zaten tiresiz
 }
 
 function beginListeningForReconnect() {
@@ -2220,7 +2364,7 @@ function getSavedName() {
 }
 
 function saveName(name) {
-  if (name) localStorage.setItem(USER_NAME_KEY, name);
+  if (name) localStorage.setItem(USER_NAME_KEY, name.toUpperCase());
 }
 
 function clearUserData() {
@@ -2236,23 +2380,27 @@ function clearUserData() {
   showToast('Kullanıcı bilgileri temizlendi 🗑');
 }
 
-function onNameInput(fieldId) {
-  // Kullanıcı adı alanını düzenleyince kayıt badge'ini gizle
+function onNameInputUpper(el, fieldId) {
+  // Büyük harfe çevir, caret pozisyonunu koru
+  const start = el.selectionStart, end = el.selectionEnd;
+  el.value = el.value.toUpperCase();
+  el.setSelectionRange(start, end);
+  // Badge gizle
   const badgeId = fieldId === 'create-name' ? 'create-name-saved' : 'join-name-saved';
   document.getElementById(badgeId).style.display = 'none';
-  // Senkronize et — iki alan da aynı değeri göstersin
-  const val = document.getElementById(fieldId).value;
+  // Senkronize et
   const otherId = fieldId === 'create-name' ? 'join-name' : 'create-name';
   const otherBadge = otherId === 'create-name' ? 'create-name-saved' : 'join-name-saved';
-  document.getElementById(otherId).value = val;
+  document.getElementById(otherId).value = el.value;
   document.getElementById(otherBadge).style.display = 'none';
 }
 
 function fillSavedName() {
   const saved = getSavedName();
   if (!saved) return;
-  document.getElementById('create-name').value = saved;
-  document.getElementById('join-name').value = saved;
+  const upper = saved.toUpperCase();
+  document.getElementById('create-name').value = upper;
+  document.getElementById('join-name').value = upper;
   document.getElementById('create-name-saved').style.display = 'inline';
   document.getElementById('join-name-saved').style.display = 'inline';
 }
@@ -2411,6 +2559,10 @@ function handleMessage(raw) {
     case 'ready':
       enemyReady = true;
       addLog(`${enemyName} hazır!`, 'system');
+      // Enemy ready badge güncelle
+      const eb2 = document.getElementById('enemy-ready-badge');
+      if (eb2) { eb2.style.display = 'inline'; eb2.textContent = `✓ ${enemyName} HAZIR`; eb2.className = 'placement-ready-indicator enemy'; }
+      showToast(`${enemyName} hazır! ⚓`);
       checkBothReady();
       break;
     case 'shot':
@@ -2424,8 +2576,14 @@ function handleMessage(raw) {
       myTurn = msg.hostStarts ? false : true; // guest için: host başlıyorsa sıra onda değil
       startGame();
       break;
-    case 'rematch':
-      handleRematch();
+    case 'rematch_request':
+      handleRematchRequest();
+      break;
+    case 'rematch_accept':
+      handleRematchAccept();
+      break;
+    case 'rematch_decline':
+      handleRematchDecline();
       break;
     case 'forfeit':
       // Rakip teslim oldu — biz kazandık
@@ -2539,6 +2697,55 @@ function startPlacement() {
   showScreen('place');
   // Yerleştirme sırasında da heartbeat çalışsın
   if (conn && conn.open) { startHeartbeat(); updateConnIndicator(true); }
+  startPlacementTimer();
+}
+
+function startPlacementTimer() {
+  stopPlacementTimer();
+  placementSecondsLeft = PLACEMENT_TIMEOUT;
+  const wrap = document.getElementById('placement-timer-wrap');
+  const val  = document.getElementById('placement-timer-val');
+  if (wrap) wrap.style.display = 'flex';
+  if (val)  { val.textContent = placementSecondsLeft; val.classList.remove('urgent'); }
+  placementTimerInterval = setInterval(() => {
+    placementSecondsLeft--;
+    if (val) {
+      val.textContent = placementSecondsLeft;
+      if (placementSecondsLeft <= 10) {
+        val.classList.add('urgent');
+        if (placementSecondsLeft <= 5 && soundEnabled) playTickSound();
+      } else {
+        val.classList.remove('urgent');
+      }
+    }
+    if (placementSecondsLeft <= 0) { stopPlacementTimer(); onPlacementTimeout(); }
+  }, 1000);
+}
+
+function stopPlacementTimer() {
+  if (placementTimerInterval) { clearInterval(placementTimerInterval); placementTimerInterval = null; }
+  const wrap = document.getElementById('placement-timer-wrap');
+  if (wrap) wrap.style.display = 'none';
+  const val = document.getElementById('placement-timer-val');
+  if (val) val.classList.remove('urgent');
+}
+
+function onPlacementTimeout() {
+  if (myReady) return;
+  showToast('Süre doldu! Gemiler otomatik yerleştiriliyor…');
+  autoPlace();
+  setTimeout(() => readyUp(), 300);
+}
+
+function playTickSound() {
+  try {
+    const ctx = getAudioCtx(); const t = ctx.currentTime;
+    const osc = ctx.createOscillator(); osc.type = 'sine'; osc.frequency.value = 880;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.15, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+    osc.connect(g); g.connect(ctx.destination);
+    osc.start(t); osc.stop(t + 0.08);
+  } catch(e) {}
 }
 
 // Yerleştirme tamamlanınca otomatik kaydet
@@ -2556,6 +2763,12 @@ function saveSessionIfActive() {
 
 // Sürükleme state
 let dragState = null;
+let placementTimerInterval = null;
+let placementSecondsLeft   = 45;
+const PLACEMENT_TIMEOUT    = 45;
+let placementTimerInterval = null;
+let placementSecondsLeft  = 45;
+const PLACEMENT_TIMEOUT   = 45;
 // {
 //   shipId, shipSize, origCells, origHoriz,
 //   dragOffsetCell: kaçıncı hücreden tutuldu (0-based),
@@ -2672,42 +2885,145 @@ function placeClick(r, c) {
   checkAllPlaced();
 }
 
-// ── YERLEŞİK GEMİ OVERLAY'İNE EVENT BAĞLA ──
-function attachShipOverlayEvents(overlayEl, shipId) {
-  let clickTimer = null;
-  let dragStarted = false;
-  let pointerDownPos = null;
+// ── YERLEŞİK GEMİ KONTROL PANELI ──
+let _activeControlShipId = null; // şu an kontrol paneli açık olan gemi
+let _controlEl = null;           // DOM'daki kontrol panel elementi
 
-  overlayEl.addEventListener('pointerdown', e => {
-    if (selectedShip) return; // yeni gemi seçiliyse overlaya müdahale etme
-    e.preventDefault();
-    dragStarted = false;
-    pointerDownPos = { x: e.clientX, y: e.clientY };
+function closeShipControls() {
+  if (_controlEl) { _controlEl.remove(); _controlEl = null; }
+  if (_activeControlShipId) {
+    // Glow kaldır
+    const gridId = 'place-grid-rows';
+    const cont = document.getElementById(gridId)?.closest('.grid-container');
+    if (cont) {
+      cont.querySelectorAll(`.ship-svg-overlay[data-ship-id="${_activeControlShipId}"]`)
+        .forEach(el => el.classList.remove('ship-selected-glow'));
+    }
+  }
+  _activeControlShipId = null;
+}
 
-    // Sürüklemeyi başlatmak için threshold (5px)
-    const onMove = ev => {
-      const dx = ev.clientX - pointerDownPos.x;
-      const dy = ev.clientY - pointerDownPos.y;
-      if (!dragStarted && Math.sqrt(dx*dx + dy*dy) > 5) {
-        dragStarted = true;
-        clearTimeout(clickTimer);
-        beginDragPlaced(shipId, e);
-      }
-    };
-    const onUp = ev => {
-      window.removeEventListener('pointermove', onMove);
-      window.removeEventListener('pointerup', onUp);
-      if (!dragStarted) {
-        // Tıklama → döndür
-        rotatePlacedShip(shipId);
-      }
-    };
-    window.addEventListener('pointermove', onMove);
-    window.addEventListener('pointerup', onUp);
+function openShipControls(shipId, overlayEl) {
+  // Başka biri açıksa kapat
+  if (_activeControlShipId === shipId) { closeShipControls(); return; }
+  closeShipControls();
+
+  _activeControlShipId = shipId;
+  overlayEl.classList.add('ship-selected-glow');
+
+  const cells  = shipsPlaced[shipId];
+  if (!cells || !cells.length) return;
+  const ship   = SHIPS_CONFIG.find(s => s.id === shipId);
+  const horiz  = cells[0].r === cells[cells.length-1].r;
+  const container = overlayEl.closest('.grid-container');
+  if (!container) return;
+
+  const cellPx = overlayEl.offsetWidth / (horiz ? ship.size : 1);
+
+  // Kontrol paneli elementi
+  const ctrl = document.createElement('div');
+  ctrl.className = 'ship-controls visible';
+  ctrl.dataset.shipId = shipId;
+  _controlEl = ctrl;
+
+  // Buton pozisyonlarını hesapla — overlay'in üzerine
+  const ox = overlayEl.offsetLeft;
+  const oy = overlayEl.offsetTop;
+  const ow = overlayEl.offsetWidth;
+  const oh = overlayEl.offsetHeight;
+  const btnR = 13; // buton yarıçapı
+
+  // SÜRÜKLE ikonu — geminin BAŞ tarafı (sol/üst)
+  const dragBtn = document.createElement('div');
+  dragBtn.className = 'ship-ctrl-btn ship-ctrl-drag';
+  dragBtn.title = 'Basılı tut ve sürükle';
+  dragBtn.innerHTML = '✥';
+  if (horiz) {
+    dragBtn.style.cssText = `left:${ox - btnR}px; top:${oy + oh/2 - btnR}px;`;
+  } else {
+    dragBtn.style.cssText = `left:${ox + ow/2 - btnR}px; top:${oy - btnR}px;`;
+  }
+
+  // DÖNDÜR ikonu — geminin KIÇI (sağ/alt)
+  const rotBtn = document.createElement('div');
+  rotBtn.className = 'ship-ctrl-btn ship-ctrl-rotate';
+  rotBtn.title = 'Tıkla: döndür';
+  rotBtn.innerHTML = '⟳';
+  if (horiz) {
+    rotBtn.style.cssText = `left:${ox + ow - btnR}px; top:${oy + oh/2 - btnR}px;`;
+  } else {
+    rotBtn.style.cssText = `left:${ox + ow/2 - btnR}px; top:${oy + oh - btnR}px;`;
+  }
+
+  // ONAYLA ikonu — geminin ORTASI
+  const confirmBtn = document.createElement('div');
+  confirmBtn.className = 'ship-ctrl-btn ship-ctrl-confirm';
+  confirmBtn.title = 'Konumu onayla';
+  confirmBtn.innerHTML = '✓';
+  confirmBtn.style.cssText = `left:${ox + ow/2 - btnR}px; top:${oy + oh/2 - btnR}px;`;
+
+  ctrl.appendChild(dragBtn);
+  ctrl.appendChild(rotBtn);
+  ctrl.appendChild(confirmBtn);
+  container.appendChild(ctrl);
+
+  // ── SÜRÜKLE BUTON EVENT'İ ──
+  dragBtn.addEventListener('pointerdown', e => {
+    e.preventDefault(); e.stopPropagation();
+    closeShipControls();
+    beginDragPlaced(shipId, e);
+  }, {passive:false});
+
+  // ── DÖNDÜR BUTON EVENT'İ ──
+  rotBtn.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); });
+  rotBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    closeShipControls();
+    rotatePlacedShip(shipId);
+    // Döndürme sonrası yeni overlay'e kontrol paneli aç
+    setTimeout(() => {
+      const cont = document.getElementById('place-grid-rows')?.closest('.grid-container');
+      if (!cont) return;
+      const newOv = cont.querySelector(`.ship-svg-overlay[data-ship-id="${shipId}"]`);
+      if (newOv) openShipControls(shipId, newOv);
+    }, 100);
   });
 
-  // Tooltip hint
-  overlayEl.title = 'Sürükle: taşı  |  Tıkla: döndür';
+  // ── ONAYLA BUTON EVENT'İ ──
+  confirmBtn.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); });
+  confirmBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    closeShipControls();
+    saveSessionIfActive();
+    showToast('Konum kaydedildi ✓');
+  });
+
+  // Dışarı tıklayınca kapat
+  setTimeout(() => {
+    document.addEventListener('pointerdown', _outsideClickHandler, {once:true, capture:true});
+  }, 50);
+}
+
+function _outsideClickHandler(e) {
+  if (_controlEl && !_controlEl.contains(e.target)) {
+    closeShipControls();
+  } else if (_controlEl) {
+    // Kontrol paneline tıklandı — yeniden dinle
+    setTimeout(() => {
+      document.addEventListener('pointerdown', _outsideClickHandler, {once:true, capture:true});
+    }, 50);
+  }
+}
+
+function attachShipOverlayEvents(overlayEl, shipId) {
+  overlayEl.title = 'Tıkla: taşı/döndür seçenekleri';
+
+  overlayEl.addEventListener('click', e => {
+    if (selectedShip) return; // yeni gemi yerleştirme modundaysa dokunma
+    if (isDraggingPlaced) return;
+    e.stopPropagation();
+    openShipControls(shipId, overlayEl);
+  });
 }
 
 // ── YERLEŞİK GEMİYİ DÖNDÜR ──
@@ -2879,12 +3195,14 @@ function handleDragMove(ev) {
   dragState._lastValid = valid;
 }
 
+let _lastDragShipId = null;
 function handleDragEnd(ev) {
   if (!dragState) { isDraggingPlaced = false; return; }
   clearPreview();
   clearPreviewOverlay();
 
   const { ship, offsetCell, horiz, origCells, origHoriz } = dragState;
+  _lastDragShipId = ship.id;
   const { row, col } = getGridCellFromPointer(ev.clientX, ev.clientY);
   const anchorR = horiz ? row         : row - offsetCell;
   const anchorC = horiz ? col - offsetCell : col;
@@ -2920,6 +3238,13 @@ function handleDragEnd(ev) {
   dragState = null;
   isDraggingPlaced = false;
   checkAllPlaced();
+  // Sürükleme bitti — yeni konumdaki overlay'e kontrol panelini aç
+  setTimeout(() => {
+    const cont = document.getElementById('place-grid-rows')?.closest('.grid-container');
+    if (!cont) return;
+    const ov = cont.querySelector(`.ship-svg-overlay[data-ship-id="${_lastDragShipId}"]`);
+    if (ov && !selectedShip) openShipControls(_lastDragShipId, ov);
+  }, 80);
 }
 
 function checkAllPlaced() {
@@ -2955,6 +3280,7 @@ function autoPlace() {
 }
 
 function clearBoard() {
+  closeShipControls();
   myBoard = emptyBoard();
   shipsPlaced = {};
   dragState = null;
@@ -2969,9 +3295,14 @@ function clearBoard() {
 
 function readyUp() {
   myReady = true;
+  stopPlacementTimer();
   document.getElementById('place-ready-section').style.display='none';
   document.getElementById('waiting-opponent').style.display='block';
-  saveSession(); // Hazır olunca kaydet
+  // Ready badge göster
+  document.getElementById('my-ready-badge').style.display = 'inline';
+  const eb = document.getElementById('enemy-ready-badge');
+  if (eb) { eb.style.display = 'inline'; eb.textContent = '⏳ RAKİP BEKLENİYOR'; eb.className = 'placement-ready-indicator waiting'; }
+  saveSession();
   sendMsg({type:'ready'});
   checkBothReady();
 }
@@ -2991,6 +3322,7 @@ function checkBothReady() {
 // GAME
 // ═══════════════════════════════════════════════════
 function startGame(restore=false) {
+  stopPlacementTimer();
   gameActive = true;
   if (!restore) {
     enemyBoard = emptyBoard();
@@ -3034,6 +3366,23 @@ function startGame(restore=false) {
   // Heartbeat başlat
   startHeartbeat();
   updateConnIndicator(true);
+}
+
+// ── TAHTA BLUR TOGGLE ──
+let boardBlurred = false;
+function toggleBoardBlur() {
+  boardBlurred = !boardBlurred;
+  const overlay = document.getElementById('board-blur-overlay');
+  const btn     = document.getElementById('blur-toggle-btn');
+  if (boardBlurred) {
+    overlay.classList.add('active');
+    btn.classList.add('active');
+    btn.innerHTML = '👁 GÖSTER';
+  } else {
+    overlay.classList.remove('active');
+    btn.classList.remove('active');
+    btn.innerHTML = '👁 GİZLE';
+  }
 }
 
 function updateTurnUI() {
@@ -3158,7 +3507,7 @@ function handleShotResult(msg) {
     enemyBoard[r][c]=3;
     if(el) { el.classList.add('miss'); animateMiss(el); }
     playMiss();
-    addLog(`Siz: ${COL_LABELS[c]}${r+1} — Iskalladı`, 'miss');
+    addLog(`Siz: ${COL_LABELS[c]}${r+1} — Iskaladı`, 'miss');
   }
 
   document.getElementById('my-sunk-count').textContent=enemySunkCount;
@@ -3217,12 +3566,60 @@ function endGame(won) {
   }, 300);
 }
 
-function rematch() {
-  sendMsg({type:'rematch'});
+// ── REMATCH SİSTEMİ ──
+let rematchRequested = false; // Ben istek yaptım mı
+
+function requestRematch() {
+  const btn = document.getElementById('rematch-btn');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner" style="width:16px;height:16px;border-width:2px"></span> Yanıt bekleniyor…';
+  }
+  rematchRequested = true;
+  sendMsg({type:'rematch_request'});
+}
+
+function acceptRematch() {
+  document.getElementById('rematch-modal').classList.remove('open');
+  sendMsg({type:'rematch_accept'});
+  rematchRequested = false;
   startPlacement();
 }
-function handleRematch() {
+
+function declineRematch() {
+  document.getElementById('rematch-modal').classList.remove('open');
+  sendMsg({type:'rematch_decline'});
+  rematchRequested = false;
+  showToast('Teklif reddedildi.');
+  setTimeout(() => goLobby(), 1200);
+}
+
+function handleRematchRequest() {
+  // Karşı taraf istek yaptı — modal aç
+  document.getElementById('rematch-modal-icon').textContent = '⚔️';
+  document.getElementById('rematch-modal-title').textContent = 'YENİDEN OYNA?';
+  document.getElementById('rematch-modal-desc').innerHTML = `<strong style="color:var(--gold-bright)">${enemyName}</strong> yeniden oynamak istiyor.<br>Kabul ediyor musunuz?`;
+  document.getElementById('rematch-modal-btns').style.display = 'flex';
+  document.getElementById('rematch-modal').classList.add('open');
+}
+
+function handleRematchAccept() {
+  // Karşı taraf kabul etti
+  document.getElementById('rematch-modal').classList.remove('open');
+  const btn = document.getElementById('rematch-btn');
+  if (btn) { btn.disabled = false; btn.innerHTML = '⚔️ TEKRAR OYNA'; }
+  rematchRequested = false;
+  showToast(`${enemyName} kabul etti! Yeni oyun başlıyor… ⚔️`);
   startPlacement();
+}
+
+function handleRematchDecline() {
+  document.getElementById('rematch-modal').classList.remove('open');
+  const btn = document.getElementById('rematch-btn');
+  if (btn) { btn.disabled = false; btn.innerHTML = '⚔️ TEKRAR OYNA'; }
+  rematchRequested = false;
+  showToast(`${enemyName} teklifi reddetti.`);
+  setTimeout(() => goLobby(), 2000);
 }
 // ═══════════════════════════════════════════════════
 // FORFEIT (HÜKMEN MAĞLUP) SİSTEMİ
@@ -3309,9 +3706,72 @@ function goLobby() {
 // ═══════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════
+// ── FAVICON & PWA ──
+(function initPWA() {
+  // SVG favicon — çapa ikonu
+  const svgFavicon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+    <rect width="64" height="64" rx="14" fill="#041428"/>
+    <circle cx="32" cy="14" r="6" fill="none" stroke="#c9a84c" stroke-width="3"/>
+    <line x1="32" y1="20" x2="32" y2="50" stroke="#c9a84c" stroke-width="3" stroke-linecap="round"/>
+    <path d="M16,42 Q32,54 48,42" fill="none" stroke="#c9a84c" stroke-width="3" stroke-linecap="round"/>
+    <line x1="22" y1="30" x2="42" y2="30" stroke="#c9a84c" stroke-width="3" stroke-linecap="round"/>
+    <line x1="16" y1="50" x2="24" y2="50" stroke="#c9a84c" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="40" y1="50" x2="48" y2="50" stroke="#c9a84c" stroke-width="2.5" stroke-linecap="round"/>
+  </svg>`;
+  const faviconUrl = 'data:image/svg+xml,' + encodeURIComponent(svgFavicon);
+  document.getElementById('pwa-favicon').href = faviconUrl;
+  document.getElementById('pwa-apple-icon').href = faviconUrl;
+
+  // PWA manifest — inline JSON blob
+  const manifest = {
+    name: 'Amiral Battı — Deniz Savaşı',
+    short_name: 'Amiral Battı',
+    description: 'Online 2 oyunculu Amiral Battı oyunu',
+    start_url: './',
+    display: 'standalone',
+    background_color: '#020b18',
+    theme_color: '#041428',
+    orientation: 'portrait-primary',
+    icons: [
+      { src: faviconUrl, sizes: '192x192', type: 'image/svg+xml', purpose: 'any maskable' },
+      { src: faviconUrl, sizes: '512x512', type: 'image/svg+xml', purpose: 'any maskable' }
+    ]
+  };
+  const manifestBlob = new Blob([JSON.stringify(manifest)], {type:'application/manifest+json'});
+  document.getElementById('pwa-manifest').href = URL.createObjectURL(manifestBlob);
+
+  // Service Worker kaydı
+  if ('serviceWorker' in navigator) {
+    // Inline SW — önbellek stratejisi
+    const swCode = `
+const CACHE = 'amiral-batti-v1';
+self.addEventListener('install', e => {
+  self.skipWaiting();
+  e.waitUntil(caches.open(CACHE).then(c => c.add('/')));
+});
+self.addEventListener('activate', e => {
+  e.waitUntil(clients.claim());
+});
+self.addEventListener('fetch', e => {
+  if (e.request.method !== 'GET') return;
+  e.respondWith(
+    caches.match(e.request).then(cached => {
+      return cached || fetch(e.request).then(resp => {
+        return caches.open(CACHE).then(cache => {
+          cache.put(e.request, resp.clone()); return resp;
+        });
+      }).catch(() => cached);
+    })
+  );
+});`;
+    const swBlob = new Blob([swCode], {type:'application/javascript'});
+    const swUrl  = URL.createObjectURL(swBlob);
+    navigator.serviceWorker.register(swUrl).catch(() => {});
+  }
+})();
+
 initTheme();
-fillSavedName();        // Kayıtlı adı doldur
-// Önce yenileme sonrası oturum kontrolü, yoksa davet linki kontrolü
+fillSavedName();
 if (!checkRestoredSession()) {
   checkInviteParam();
 }
@@ -3408,6 +3868,7 @@ function redrawAllOverlays() {
 }
 
 function redrawPlacementOverlays() {
+  closeShipControls(); // Kontrol panelini kapat
   removeAllOverlays('place-grid-rows');
   for (const [sid, cells] of Object.entries(shipsPlaced)) {
     if (!cells || !cells.length) continue;
@@ -3429,6 +3890,7 @@ function redrawGameOverlays() {
 // Esc ile sürüklemeyi / seçimi iptal et
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
+    if (_controlEl) { closeShipControls(); return; }
     if (dragState) {
       // Sürüklemeyi iptal et — eski konuma geri koy
       const { ship, origCells, origHoriz } = dragState;
