@@ -1461,22 +1461,31 @@ function buildShipPath(shipId, W, H, tint) {
 }
 
 function getShipSVG(shipId, cellCount, horizontal, cellPx, tint) {
+  // dW: geminin yatay genişliği (hücre sayısı × piksel)
+  // dH: tek hücre yüksekliği = cellPx
   const dW = cellCount * cellPx, dH = cellPx;
-  const body = buildShipPath(shipId, dW, dH, tint);
+
   if (horizontal) {
-    // overflow:hidden + clipPath ile taşmayı kesin kes
-    return `<svg xmlns="http://www.w3.org/2000/svg" width="${dW}" height="${dH}"
-      viewBox="0 0 ${dW} ${dH}" overflow="hidden">
-      <defs><clipPath id="ship_clip_h"><rect x="0" y="0" width="${dW}" height="${dH}"/></clipPath></defs>
-      <g clip-path="url(#ship_clip_h)">${body}</g>
-    </svg>`;
+    // Yatay gemi: dW × dH SVG, gemi sığacak şekilde çizilir
+    const body = buildShipPath(shipId, dW, dH, tint);
+    return `<svg xmlns="http://www.w3.org/2000/svg"
+      width="${dW}" height="${dH}"
+      viewBox="0 0 ${dW} ${dH}"
+      style="overflow:hidden;display:block;shape-rendering:geometricPrecision"
+    >${body}</svg>`;
   } else {
-    const rW = cellPx, rH = cellCount * cellPx;
-    return `<svg xmlns="http://www.w3.org/2000/svg" width="${rW}" height="${rH}"
-      viewBox="0 0 ${rW} ${rH}" overflow="hidden">
-      <defs><clipPath id="ship_clip_v"><rect x="0" y="0" width="${rW}" height="${rH}"/></clipPath></defs>
-      <g clip-path="url(#ship_clip_v)"
-        transform="translate(${rW},0) rotate(90) scale(${rW/dH},${rH/dW})">${buildShipPath(shipId, dW, dH, tint)}</g>
+    // Dikey gemi: SVG boyutu dH × dW (döndürülmüş)
+    // Strateji: gemi yatay (dW × dH) çizilir,
+    // sonra translate(0, dW) rotate(-90) ile dikey hale getirilir
+    // Sonuç: dH genişliğinde dW yüksekliğinde görüntü
+    const body = buildShipPath(shipId, dW, dH, tint);
+    return `<svg xmlns="http://www.w3.org/2000/svg"
+      width="${dH}" height="${dW}"
+      viewBox="0 0 ${dH} ${dW}"
+      style="overflow:hidden;display:block;shape-rendering:geometricPrecision">
+      <g transform="translate(0,${dW}) rotate(-90)">
+        ${body}
+      </g>
     </svg>`;
   }
 }
@@ -2782,7 +2791,7 @@ function updateTurnUI() {
   const enemyGrid = document.getElementById('enemy-grid-rows');
   if (myTurn) {
     dot.className='status-dot my-turn';
-    txt.textContent='SİZİN SIRA — Ateş edin!';
+    txt.textContent='🎯 SİZİN SIRA — Ateş edin!';
     enemyGrid.classList.remove('disabled');
     enemyGrid.removeAttribute('data-wait-msg');
   } else {
@@ -2854,8 +2863,13 @@ function handleIncomingShot(r,c) {
     setTimeout(()=>endGame(false),800);
     return;
   }
-  myTurn=true; updateTurnUI();
-  addLog(`${enemyName}: ${COL_LABELS[c]}${r+1} — ${hit?(sunkShipId?'BATTI! 💥':'İSABET! 🎯'):'ISKALADIM!'}`, hit?(sunkShipId?'sunk':'hit'):'miss');
+  // Kural: isabet → rakip devam eder, ıskala → sıra bize geçer
+  if (!hit) {
+    myTurn = true;
+    updateTurnUI();
+  }
+  // isabet olduysa rakip zaten devam ediyor (myTurn false kalmaya devam)
+  addLog(`${enemyName}: ${COL_LABELS[c]}${r+1} — ${hit?(sunkShipId?'BATTI! 💥':'İSABET! 🎯'):'ISKALADIM! Sıra sizde'}`, hit?(sunkShipId?'sunk':'hit'):'miss');
 }
 
 function handleShotResult(msg) {
@@ -2903,7 +2917,15 @@ function handleShotResult(msg) {
     setTimeout(()=>endGame(true),800);
     return;
   }
-  myTurn=false; updateTurnUI();
+  // Kural: isabet → ben devam ederim, ıskala → sıra rakibe geçer
+  if (hit) {
+    myTurn = true;
+    updateTurnUI();
+    addLog('İsabet! Tekrar ateş edebilirsiniz.', 'system');
+  } else {
+    myTurn = false;
+    updateTurnUI();
+  }
 }
 
 function addLog(text, type='') {
