@@ -710,6 +710,35 @@ body.light .attack-grid.disabled::after {
   gap: 0;
 }
 
+/* ── İSİM MODALI ── */
+#name-modal {
+  display: none; position: fixed; inset: 0; z-index: 600;
+  background: rgba(2,11,24,0.88); backdrop-filter: blur(10px);
+  align-items: center; justify-content: center;
+}
+#name-modal.open { display: flex; }
+.name-modal-box {
+  background: linear-gradient(135deg, rgba(10,48,96,0.97), rgba(4,20,40,0.99));
+  border: 1px solid rgba(201,168,76,0.5);
+  border-radius: 20px; padding: 40px 36px;
+  max-width: 380px; width: 90%; text-align: center;
+  box-shadow: 0 0 60px rgba(201,168,76,0.15), 0 24px 60px rgba(0,0,0,0.8);
+  animation: modalIn 0.35s cubic-bezier(0.34,1.56,0.64,1);
+}
+body.light .name-modal-box {
+  background: linear-gradient(135deg, rgba(255,255,255,0.97), rgba(230,244,253,0.99));
+  border-color: rgba(160,120,48,0.4);
+}
+.name-modal-icon { font-size: 3rem; margin-bottom: 12px; }
+.name-modal-title {
+  font-family: 'Cinzel Decorative', cursive; font-size: 1.2rem;
+  color: var(--gold-bright); letter-spacing: 2px; margin-bottom: 8px;
+}
+.name-modal-desc {
+  font-family: 'Share Tech Mono', monospace; font-size: 0.78rem;
+  color: var(--text-dim); margin-bottom: 24px; line-height: 1.6;
+}
+
 /* ── TEYIT MODALI ── */
 #confirm-modal {
   display: none;
@@ -814,8 +843,12 @@ body.light .attack-grid.disabled::after {
       <div class="card-title">ODA OLUŞTUR</div>
       <div class="card-desc">Yeni bir savaş odası aç ve rakibini davet et. Oda kodunu rakibinle paylaş.</div>
       <div class="input-group" style="margin-bottom:14px">
-        <div class="input-label">Komutan Adı</div>
-        <input class="input-field" id="create-name" placeholder="Adınızı girin..." maxlength="20">
+        <div class="input-label" style="display:flex;align-items:center;justify-content:space-between">
+          <span>Komutan Adı</span>
+          <span id="create-name-saved" style="display:none;color:var(--green-ready);font-size:0.65rem;letter-spacing:1px">● KAYDEDİLDİ</span>
+        </div>
+        <input class="input-field" id="create-name" placeholder="Adınızı girin..." maxlength="20"
+          oninput="onNameInput('create-name')">
       </div>
       <button class="btn btn-primary btn-full" onclick="createRoom()">
         <span>⚓</span> ODA OLUŞTUR
@@ -848,8 +881,12 @@ body.light .attack-grid.disabled::after {
       <div class="card-title">ODAYA KATIL</div>
       <div class="card-desc">Rakibinin oda kodunu gir ya da davet linkine tıkla. Komutan seni bekliyor!</div>
       <div class="input-group" style="margin-bottom:10px">
-        <div class="input-label">Komutan Adı</div>
-        <input class="input-field" id="join-name" placeholder="Adınızı girin..." maxlength="20">
+        <div class="input-label" style="display:flex;align-items:center;justify-content:space-between">
+          <span>Komutan Adı</span>
+          <span id="join-name-saved" style="display:none;color:var(--green-ready);font-size:0.65rem;letter-spacing:1px">● KAYDEDİLDİ</span>
+        </div>
+        <input class="input-field" id="join-name" placeholder="Adınızı girin..." maxlength="20"
+          oninput="onNameInput('join-name')">
       </div>
       <div class="input-group" style="margin-bottom:14px">
         <div class="input-label">Oda Kodu</div>
@@ -886,6 +923,13 @@ body.light .attack-grid.disabled::after {
         <tr><td colspan="5" style="text-align:center;color:var(--text-dim);padding:16px;font-size:0.75rem">Henüz kayıt yok</td></tr>
       </tbody>
     </table>
+  </div>
+
+  <!-- Kullanıcı bilgisi temizle -->
+  <div style="margin-top:8px;text-align:center">
+    <button class="btn btn-secondary btn-sm" onclick="clearUserData()" style="opacity:0.6;font-size:0.7rem">
+      🗑 Kullanıcı Bilgilerini Temizle
+    </button>
   </div>
 </div>
 
@@ -1057,6 +1101,23 @@ body.light .attack-grid.disabled::after {
 </div>
 
 </div><!-- #app -->
+
+<!-- İsim Modalı -->
+<div id="name-modal">
+  <div class="name-modal-box">
+    <div class="name-modal-icon">⚓</div>
+    <div class="name-modal-title">KOMUTAN ADI</div>
+    <div class="name-modal-desc">Savaşa katılmadan önce komutan adını belirle.<br>Bu ad kaydedilecek ve bir daha sorulmayacak.</div>
+    <div class="input-group" style="margin-bottom:16px;text-align:left">
+      <div class="input-label">Komutan Adı</div>
+      <input class="input-field" id="modal-name-input" placeholder="Adınızı girin..." maxlength="20"
+        onkeydown="if(event.key==='Enter') confirmNameModal()">
+    </div>
+    <button class="btn btn-primary btn-full" onclick="confirmNameModal()">
+      ⚔️ SAVAŞA GİR
+    </button>
+  </div>
+</div>
 
 <!-- Teyit Modalı -->
 <div id="confirm-modal">
@@ -1599,13 +1660,15 @@ function renderShipOverlay(gridRowsId, shipId, cells, horizontal, tint, extraCla
   const firstCell = getCellEl(gridRowsId, r0, c0);
   if (!firstCell) return null;
 
-  // Gerçek hücre boyutunu DOM'dan ölç — mobil/tablet/masaüstü fark etmez
-  const cellPx = firstCell.getBoundingClientRect().width;
-
-  const contRect = container.getBoundingClientRect();
-  const cellRect = firstCell.getBoundingClientRect();
-  const offsetX = cellRect.left - contRect.left;
-  const offsetY = cellRect.top  - contRect.top;
+  // offsetLeft/offsetTop zinciri ile container'a göre doğru pozisyon hesapla
+  const cellPx = firstCell.offsetWidth || firstCell.getBoundingClientRect().width;
+  // firstCell → offsetParent zincirini container'a kadar topla
+  let offsetX = 0, offsetY = 0, el = firstCell;
+  while (el && el !== container) {
+    offsetX += el.offsetLeft;
+    offsetY += el.offsetTop;
+    el = el.offsetParent;
+  }
 
   const W = horizontal ? size * cellPx : cellPx;
   const H = horizontal ? cellPx : size * cellPx;
@@ -1618,6 +1681,9 @@ function renderShipOverlay(gridRowsId, shipId, cells, horizontal, tint, extraCla
   img.className = 'ship-svg-overlay' + (extraClass ? ' ' + extraClass : '');
   img.dataset.shipId = shipId;
   img.dataset.gridId = gridRowsId;
+  // Hücre verilerini sakla — yeniden çizim için lazım
+  img.dataset.r0 = r0; img.dataset.c0 = c0;
+  img.dataset.horiz = horizontal ? '1' : '0';
   img.style.cssText = `left:${offsetX}px; top:${offsetY}px; width:${W}px; height:${H}px;`;
   img.src = url;
   img.addEventListener('load', () => URL.revokeObjectURL(url), {once:true});
@@ -1797,6 +1863,16 @@ function saveSession() {
     ts: Date.now()
   };
   localStorage.setItem('ab_session_' + sessionCode, JSON.stringify(state));
+  // Aktif oturum kodunu ayrıca kaydet — sayfa yenilenince bulunabilsin
+  localStorage.setItem('ab_active_session', sessionCode);
+}
+
+function clearActiveSession() {
+  localStorage.removeItem('ab_active_session');
+}
+
+function getActiveSessionCode() {
+  return localStorage.getItem('ab_active_session') || '';
 }
 
 function loadSession(code) {
@@ -1812,6 +1888,7 @@ function loadSession(code) {
 
 function clearSession() {
   if (sessionCode) localStorage.removeItem('ab_session_' + sessionCode);
+  clearActiveSession();
 }
 
 function startReconnectMode(reason, wasInGame) {
@@ -1957,6 +2034,7 @@ function createRoom() {
   const name = document.getElementById('create-name').value.trim();
   if (!name) { showToast('Komutan adı girin!'); return; }
   myName = name; isHost = true;
+  saveName(name); // Adı kaydet
 
   // Kısa oda kodu üret — bu aynı zamanda PeerJS ID olacak
   const shortCode = generateShortCode();
@@ -1999,6 +2077,7 @@ function joinRoom() {
   if (!name) { showToast('Komutan adı girin!'); return; }
   if (!code) { showToast('Oda kodu girin!'); return; }
   myName = name; isHost = false;
+  saveName(name); // Adı kaydet
 
   document.getElementById('join-status').style.display='block';
   document.getElementById('join-status-text').textContent='Bağlanılıyor…';
@@ -2023,9 +2102,9 @@ function joinRoom() {
 // ═══════════════════════════════════════════════════
 // HEARTBEAT SİSTEMİ
 // ═══════════════════════════════════════════════════
-const HB_INTERVAL    = 3000;  // Her 3 sn ping gönder
-const HB_TIMEOUT     = 9000;  // 9 sn cevap gelmezse kopuk say
-const REJOIN_TIMEOUT = 30;    // Kopunca 30 sn bekleme süresi
+const HB_INTERVAL    = 4000;  // Her 4 sn ping gönder
+const HB_TIMEOUT     = 15000; // 15 sn cevap gelmezse kopuk say (arka plan toleransı)
+const REJOIN_TIMEOUT = 120;   // Kopunca 120 sn bekleme süresi (arka plandan dönüş için)
 
 let hbSendTimer   = null;  // ping gönderme zamanlayıcısı
 let hbWatchTimer  = null;  // son pong'dan bu yana geçen süre
@@ -2131,27 +2210,188 @@ function shareInvite() {
 }
 
 // URL'de ?join=KOD varsa otomatik doldur
+// ═══════════════════════════════════════════════════
+// KULLANICI ADI YÖNETİMİ
+// ═══════════════════════════════════════════════════
+const USER_NAME_KEY = 'ab_username';
+
+function getSavedName() {
+  return localStorage.getItem(USER_NAME_KEY) || '';
+}
+
+function saveName(name) {
+  if (name) localStorage.setItem(USER_NAME_KEY, name);
+}
+
+function clearUserData() {
+  if (!confirm('Komutan adı ve tüm kullanıcı verileri silinecek. Emin misiniz?')) return;
+  localStorage.removeItem(USER_NAME_KEY);
+  // Turnuva tablosunu da temizle
+  localStorage.removeItem('ab_leaderboard');
+  document.getElementById('create-name').value = '';
+  document.getElementById('join-name').value = '';
+  document.getElementById('create-name-saved').style.display = 'none';
+  document.getElementById('join-name-saved').style.display = 'none';
+  renderLeaderboard('leaderboard-body');
+  showToast('Kullanıcı bilgileri temizlendi 🗑');
+}
+
+function onNameInput(fieldId) {
+  // Kullanıcı adı alanını düzenleyince kayıt badge'ini gizle
+  const badgeId = fieldId === 'create-name' ? 'create-name-saved' : 'join-name-saved';
+  document.getElementById(badgeId).style.display = 'none';
+  // Senkronize et — iki alan da aynı değeri göstersin
+  const val = document.getElementById(fieldId).value;
+  const otherId = fieldId === 'create-name' ? 'join-name' : 'create-name';
+  const otherBadge = otherId === 'create-name' ? 'create-name-saved' : 'join-name-saved';
+  document.getElementById(otherId).value = val;
+  document.getElementById(otherBadge).style.display = 'none';
+}
+
+function fillSavedName() {
+  const saved = getSavedName();
+  if (!saved) return;
+  document.getElementById('create-name').value = saved;
+  document.getElementById('join-name').value = saved;
+  document.getElementById('create-name-saved').style.display = 'inline';
+  document.getElementById('join-name-saved').style.display = 'inline';
+}
+
+// İsim modalı — davet linki ile gelip adı olmayan kullanıcı için
+let _pendingJoinCode = '';
+function openNameModal(joinCode) {
+  _pendingJoinCode = joinCode || '';
+  document.getElementById('name-modal').classList.add('open');
+  setTimeout(() => document.getElementById('modal-name-input').focus(), 100);
+}
+
+function confirmNameModal() {
+  const name = document.getElementById('modal-name-input').value.trim();
+  if (!name) { showToast('Komutan adı boş olamaz!'); return; }
+  saveName(name);
+  myName = name;
+  document.getElementById('create-name').value = name;
+  document.getElementById('join-name').value = name;
+  document.getElementById('create-name-saved').style.display = 'inline';
+  document.getElementById('join-name-saved').style.display = 'inline';
+  document.getElementById('name-modal').classList.remove('open');
+  // Bekleyen davet varsa direkt katıl
+  if (_pendingJoinCode) {
+    document.getElementById('join-code').value = _pendingJoinCode;
+    _pendingJoinCode = '';
+    joinRoom();
+  }
+}
+
+// ── SAYFA YENİLEME SONRASI OTURUM GERİ YÜKLEME ──
+function checkRestoredSession() {
+  // Davet linki varsa bu fonksiyon devreye girmez (checkInviteParam halleder)
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('join')) return false;
+
+  const activeCode = getActiveSessionCode();
+  if (!activeCode) return false;
+
+  const saved = loadSession(activeCode);
+  if (!saved) { clearActiveSession(); return false; }
+
+  // Oturum bulundu — kullanıcıya sor
+  const wasInGame = saved.gameActive;
+  const msg = wasInGame
+    ? `"${saved.myName}" adıyla aktif bir oyun bulundu (rakip: ${saved.enemyName}).
+Kaldığı yerden devam etmek ister misiniz?`
+    : `"${saved.myName}" adıyla bir gemi yerleştirme oturumu bulundu.
+Devam etmek ister misiniz?`;
+
+  if (!confirm(msg)) {
+    clearSession();
+    clearActiveSession();
+    return false;
+  }
+
+  // Oturumu geri yükle
+  sessionCode  = saved.sessionCode;
+  myName       = saved.myName;
+  enemyName    = saved.enemyName;
+  isHost       = saved.isHost;
+  myBoard      = JSON.parse(saved.myBoard);
+  shipsPlaced  = JSON.parse(saved.shipsPlaced);
+  enemyBoard   = JSON.parse(saved.enemyBoard);
+  myTurn       = saved.myTurn;
+  gameActive   = saved.gameActive;
+  myShotsFired = saved.myShotsFired || 0;
+  myHits       = saved.myHits || 0;
+  enemySunkCount = saved.enemySunkCount || 0;
+  mySunkCount    = saved.mySunkCount || 0;
+
+  // İsimleri doldur
+  document.getElementById('create-name').value = myName;
+  document.getElementById('join-name').value   = myName;
+
+  showToast('Oturum bulundu, rakibe bağlanılıyor… ⚓');
+
+  // Reconnect sistemiyle rakibe bağlan
+  beginListeningForReconnect();
+
+  // Kullanıcıya bekleme ekranı göster
+  showReconnectAfterRefresh(wasInGame);
+
+  return true; // işlendi
+}
+
+function showReconnectAfterRefresh(wasInGame) {
+  document.getElementById('reconnect-reason').textContent =
+    'Sayfa yenilendi. Rakiple yeniden bağlanılıyor…';
+  document.getElementById('reconnect-session-code').textContent = sessionCode;
+  document.getElementById('reconnect-dot').className = 'conn-dot connecting';
+  document.getElementById('reconnect-status-text').textContent = 'Rakip aranıyor…';
+
+  const countWrap = document.getElementById('reconnect-countdown-wrap');
+  countWrap.innerHTML = wasInGame
+    ? `Rakip <span id="reconnect-countdown">${REJOIN_TIMEOUT}</span>s içinde dönmezse <strong style="color:var(--gold-bright)">kazanırsınız!</strong>`
+    : `Rakip bekleniyor… <span id="reconnect-countdown">${REJOIN_TIMEOUT}</span>s`;
+
+  showScreen('reconnect');
+  reconnectCountdown = REJOIN_TIMEOUT;
+  updateReconnectCountdown(wasInGame);
+}
+
 function checkInviteParam() {
   const params = new URLSearchParams(window.location.search);
   const joinCode = params.get('join');
+
   if (joinCode) {
+    const code = joinCode.toUpperCase();
+    // URL'yi hemen temizle
+    window.history.replaceState({}, '', window.location.pathname);
+
     const codeField = document.getElementById('join-code');
     if (codeField) {
-      codeField.value = joinCode.toUpperCase();
+      codeField.value = code;
       codeField.readOnly = true;
       const badge = document.getElementById('join-code-auto-badge');
       if (badge) badge.style.display = 'block';
-      // "Odaya Katıl" kartını öne çıkar
-      showToast('Davet linki algılandı! Adınızı girin ve katılın 🚢');
-      // Join kartını hafifçe vurgula
       const joinCard = codeField.closest('.lobby-card');
       if (joinCard) {
         joinCard.style.borderColor = 'var(--gold-bright)';
         joinCard.style.boxShadow = '0 0 30px rgba(201,168,76,0.3)';
       }
     }
-    // URL'yi temizle (sayfa yenilenince tekrar katılmasın)
-    window.history.replaceState({}, '', window.location.pathname);
+
+    const savedName = getSavedName();
+    if (savedName) {
+      // Ad kayıtlı — direkt katıl
+      myName = savedName;
+      document.getElementById('join-name').value = savedName;
+      showToast(`Hoş geldin ${savedName}! Odaya bağlanılıyor… 🚢`);
+      setTimeout(() => joinRoom(), 600);
+    } else {
+      // Ad yok — modal aç
+      openNameModal(code);
+    }
+  } else {
+    // Normal giriş — adı doldur
+    fillSavedName();
   }
 }
 
@@ -2299,6 +2539,15 @@ function startPlacement() {
   showScreen('place');
   // Yerleştirme sırasında da heartbeat çalışsın
   if (conn && conn.open) { startHeartbeat(); updateConnIndicator(true); }
+}
+
+// Yerleştirme tamamlanınca otomatik kaydet
+function saveSessionIfActive() {
+  if (sessionCode && (gameActive ||
+    document.getElementById('screen-place')?.classList.contains('active') ||
+    document.getElementById('screen-game')?.classList.contains('active'))) {
+    saveSession();
+  }
 }
 
 // ═══════════════════════════════════════════════════
@@ -2702,6 +2951,7 @@ function autoPlace() {
     }
   }
   checkAllPlaced();
+  saveSessionIfActive(); // Otomatik yerleştirmeden sonra kaydet
 }
 
 function clearBoard() {
@@ -2721,6 +2971,7 @@ function readyUp() {
   myReady = true;
   document.getElementById('place-ready-section').style.display='none';
   document.getElementById('waiting-opponent').style.display='block';
+  saveSession(); // Hazır olunca kaydet
   sendMsg({type:'ready'});
   checkBothReady();
 }
@@ -3036,18 +3287,19 @@ function showForfeitResult(won, surrenderedName) {
 function goLobby() {
   stopHeartbeat();
   clearTimeout(reconnectTimer);
-  clearSession();
+  clearSession();       // Oturumu ve aktif oturum key'ini sil
+  clearActiveSession(); // Emin olmak için tekrar çağır
   forfeitInProgress = false;
   gameActive = false;
   if (peer) { try{peer.destroy();}catch{} peer=null; conn=null; }
   document.getElementById('room-code-section').style.display='none';
   document.getElementById('join-status').style.display='none';
-  document.getElementById('create-name').value='';
-  document.getElementById('join-name').value='';
   const jc = document.getElementById('join-code'); jc.value=''; jc.readOnly=false;
   const badge = document.getElementById('join-code-auto-badge'); if(badge) badge.style.display='none';
   const joinCard = jc.closest('.lobby-card');
   if(joinCard){joinCard.style.borderColor='';joinCard.style.boxShadow='';}
+  // Kayıtlı adı yeniden doldur
+  fillSavedName();
   // Zafer ışınlarını temizle
   document.querySelectorAll('.victory-rays').forEach(e=>e.remove());
   renderLeaderboard('leaderboard-body');
@@ -3058,8 +3310,121 @@ function goLobby() {
 // INIT
 // ═══════════════════════════════════════════════════
 initTheme();
-checkInviteParam();
+fillSavedName();        // Kayıtlı adı doldur
+// Önce yenileme sonrası oturum kontrolü, yoksa davet linki kontrolü
+if (!checkRestoredSession()) {
+  checkInviteParam();
+}
 renderLeaderboard('leaderboard-body');
+
+// ── EKRAN DÖNDÜRME / YENİDEN BOYUTLANDIRMA ──
+let _resizeTimer = null;
+function onViewportChange() {
+  clearTimeout(_resizeTimer);
+  _resizeTimer = setTimeout(() => { redrawAllOverlays(); }, 150);
+}
+window.addEventListener('resize', onViewportChange);
+window.addEventListener('orientationchange', () => { setTimeout(onViewportChange, 300); });
+
+// ── SAYFA GÖRÜNÜRLÜKİ (ARKA PLAN) ──
+let _hiddenAt = null;
+let _visibilityBanner = null;
+
+function showBgBanner() {
+  if (_visibilityBanner) return;
+  _visibilityBanner = document.createElement('div');
+  _visibilityBanner.id = 'bg-warning-banner';
+  _visibilityBanner.style.cssText = `
+    position:fixed;top:0;left:0;right:0;z-index:800;
+    background:linear-gradient(90deg,#e63946,#c0392b);
+    color:#fff;text-align:center;
+    font-family:'Cinzel',serif;font-size:0.8rem;letter-spacing:2px;
+    padding:10px 16px;
+    box-shadow:0 4px 20px rgba(230,57,70,0.5);
+    animation:slideDown 0.3s ease-out;
+  `;
+  _visibilityBanner.textContent = '⚠️ Oyun arka planda çalışmıyor! Bağlantı kopabilir. Lütfen bu sekmeye dönün.';
+  document.body.appendChild(_visibilityBanner);
+}
+
+function hideBgBanner() {
+  if (_visibilityBanner) { _visibilityBanner.remove(); _visibilityBanner = null; }
+}
+
+// ── SAYFA YENİLEME / KAPATMA UYARISI ──
+window.addEventListener('beforeunload', (e) => {
+  const inGame  = gameActive;
+  const inPlace = document.getElementById('screen-place')?.classList.contains('active');
+  if (inGame || inPlace) {
+    // Durumu kaydet
+    saveSession();
+    // Tarayıcı standart uyarısını göster
+    e.preventDefault();
+    e.returnValue = 'Oyun devam ediyor. Sayfayı yenilerseniz bağlantı kopabilir.';
+    return e.returnValue;
+  }
+});
+
+document.addEventListener('visibilitychange', () => {
+  const inGame  = gameActive;
+  const inPlace = document.getElementById('screen-place')?.classList.contains('active');
+
+  if (document.hidden) {
+    _hiddenAt = Date.now();
+    if (inGame || inPlace) {
+      // Heartbeat'i durdur — arka planda false alarm vermesin
+      stopHeartbeat();
+      showBgBanner();
+    }
+  } else {
+    // Öne geldi
+    hideBgBanner();
+    const hiddenMs = _hiddenAt ? Date.now() - _hiddenAt : 0;
+    _hiddenAt = null;
+
+    if (inGame || inPlace) {
+      if (conn && conn.open) {
+        // Bağlantı hâlâ açık — heartbeat'i yeniden başlat
+        startHeartbeat();
+        updateConnIndicator(true);
+        if (hiddenMs > 2000) showToast('Bağlantı kontrol ediliyor…');
+      } else {
+        // Bağlantı kopmuş — reconnect moduna gir
+        handleConnectionLost('Arka planda bağlantı koptu.');
+      }
+    }
+  }
+});
+
+function redrawAllOverlays() {
+  // Placement ekranı
+  if (document.getElementById('screen-place').classList.contains('active')) {
+    redrawPlacementOverlays();
+  }
+  // Oyun ekranı
+  if (document.getElementById('screen-game').classList.contains('active')) {
+    redrawGameOverlays();
+  }
+}
+
+function redrawPlacementOverlays() {
+  removeAllOverlays('place-grid-rows');
+  for (const [sid, cells] of Object.entries(shipsPlaced)) {
+    if (!cells || !cells.length) continue;
+    const horiz = cells[0].r === cells[cells.length - 1].r;
+    const ov = renderShipOverlay('place-grid-rows', sid, cells, horiz, 'normal', 'placed');
+    if (ov) attachShipOverlayEvents(ov, sid);
+  }
+}
+
+function redrawGameOverlays() {
+  removeAllOverlays('my-grid-rows');
+  for (const [sid, cells] of Object.entries(shipsPlaced)) {
+    if (!cells || !cells.length) continue;
+    const horiz = cells[0].r === cells[cells.length - 1].r;
+    renderShipOverlay('my-grid-rows', sid, cells, horiz, 'normal', '');
+  }
+}
 
 // Esc ile sürüklemeyi / seçimi iptal et
 document.addEventListener('keydown', e => {
