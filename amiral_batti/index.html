@@ -855,6 +855,58 @@ body.light .rematch-box {
 }
 .top-btn:hover { border-color:var(--foam); }
 
+/* ── GEMİ GİZLEME BUTONU ── */
+.btn-hide-ships {
+  background: rgba(10,48,96,0.7);
+  border: 1px solid rgba(77,184,232,0.25);
+  border-radius: 6px;
+  padding: 4px 10px;
+  color: var(--foam);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+.btn-hide-ships:hover { border-color: var(--foam); background: rgba(26,127,212,0.2); }
+.btn-hide-ships.hidden-mode {
+  background: rgba(201,168,76,0.15);
+  border-color: var(--gold);
+  color: var(--gold-bright);
+}
+
+/* ── KENDİ TAHTA GİZLEME OVERLAY ── */
+#my-grid-container { position: relative; }
+.my-board-hidden-overlay {
+  display: none;
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  background: rgba(2,11,24,0.55);
+  border-radius: 4px;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.my-board-hidden-overlay span {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.78rem;
+  color: var(--gold-bright);
+  letter-spacing: 2px;
+  text-align: center;
+  padding: 8px 16px;
+  background: rgba(4,20,40,0.75);
+  border: 1px solid rgba(201,168,76,0.3);
+  border-radius: 8px;
+}
+#my-grid-container.ships-hidden .ship-svg-overlay { opacity: 0 !important; transition: opacity 0.25s; }
+#my-grid-container.ships-hidden .cell.ship { background: transparent !important; border-color: var(--grid-line) !important; }
+#my-grid-container.ships-hidden .my-board-hidden-overlay { display: flex; }
+
 /* Screen shake */
 @keyframes screenShake {
   0%,100%{ transform:translate(0,0) rotate(0); }
@@ -1102,12 +1154,18 @@ body.light .rematch-box {
     <!-- Benim tablom -->
     <div class="board-section">
       <div class="board-label-row">
-        <div class="board-name mine">SİZİN SULARIINIZ</div>
-        <div class="ships-remaining" id="my-ships-left">Gemi: 5</div>
+        <div class="board-name mine">SİZİN SULARINIZ</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <button class="btn-hide-ships" id="btn-hide-ships" onclick="toggleMyBoardVisibility()" title="Gemileri gizle / göster">👁 GİZLE</button>
+          <div class="ships-remaining" id="my-ships-left">Gemi: 5</div>
+        </div>
       </div>
-      <div class="grid-container">
+      <div class="grid-container" id="my-grid-container">
         <div class="grid-letters" id="my-col-labels"></div>
         <div class="grid-rows" id="my-grid-rows"></div>
+        <div class="my-board-hidden-overlay" id="my-board-hidden-overlay">
+          <span>👁‍🗨 Gemilerin Görünümü Kapatıldı</span>
+        </div>
       </div>
     </div>
 
@@ -3193,6 +3251,13 @@ function startGame(restore=false) {
   buildGrid('my-grid-rows','my-col-labels', null, null, null);
   buildGrid('enemy-grid-rows','enemy-col-labels', attackCell, null, null);
 
+  // Gizleme durumunu sıfırla
+  myBoardHidden = false;
+  const hideContainer = document.getElementById('my-grid-container');
+  const hideBtn = document.getElementById('btn-hide-ships');
+  if (hideContainer) hideContainer.classList.remove('ships-hidden');
+  if (hideBtn) { hideBtn.classList.remove('hidden-mode'); hideBtn.textContent = '👁 GİZLE'; }
+
   // Render my ships — hücre rengi + SVG overlay
   for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) {
     if (myBoard[r][c]===1) { const el=getCellEl('my-grid-rows',r,c); if(el)el.classList.add('ship'); }
@@ -3301,7 +3366,7 @@ function handleIncomingShot(r,c) {
     updateTurnUI();
   }
   // isabet olduysa rakip zaten devam ediyor (myTurn false kalmaya devam)
-  addLog(`${enemyName}: ${COL_LABELS[c]}${r+1} — ${hit?(sunkShipId?'BATTI! 💥':'İSABET! 🎯'):'ISKALADIM! Sıra sizde'}`, hit?(sunkShipId?'sunk':'hit'):'miss');
+  addLog(`${enemyName}: ${COL_LABELS[c]}${r+1} — ${hit?(sunkShipId?'BATTI! 💥':'İSABET! 🎯'):'Iskaladı! Sıra sizde'}`, hit?(sunkShipId?'sunk':'hit'):'miss');
 }
 
 function handleShotResult(msg) {
@@ -3339,7 +3404,7 @@ function handleShotResult(msg) {
     enemyBoard[r][c]=3;
     if(el) { el.classList.add('miss'); animateMiss(el); }
     playMiss();
-    addLog(`Siz: ${COL_LABELS[c]}${r+1} — Iskalladı`, 'miss');
+    addLog(`Siz: ${COL_LABELS[c]}${r+1} — Iskaladı`, 'miss');
   }
 
   document.getElementById('my-sunk-count').textContent=enemySunkCount;
@@ -3360,6 +3425,25 @@ function handleShotResult(msg) {
   }
 }
 
+// ── KENDİ TAHTA GİZLEME ──
+let myBoardHidden = false;
+
+function toggleMyBoardVisibility() {
+  myBoardHidden = !myBoardHidden;
+  const container = document.getElementById('my-grid-container');
+  const btn = document.getElementById('btn-hide-ships');
+  if (!container || !btn) return;
+  if (myBoardHidden) {
+    container.classList.add('ships-hidden');
+    btn.classList.add('hidden-mode');
+    btn.textContent = '👁 GÖSTER';
+  } else {
+    container.classList.remove('ships-hidden');
+    btn.classList.remove('hidden-mode');
+    btn.textContent = '👁 GİZLE';
+  }
+}
+
 function addLog(text, type='') {
   const log = document.getElementById('battle-log');
   const entry = document.createElement('div');
@@ -3375,7 +3459,7 @@ function addLog(text, type='') {
 function endGame(won) {
   stopHeartbeat();
   const title=document.getElementById('result-title');
-  title.textContent = won ? '🏆 ZAFERSİNİZ!' : '⚓ BATTI…';
+  title.textContent = won ? '🏆 ZAFER SİZİN!' : '⚓ BATTI…';
   title.className = 'result-title '+(won?'win':'lose');
 
   const accuracy = myShotsFired>0?Math.round(myHits/myShotsFired*100):0;
