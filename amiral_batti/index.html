@@ -3736,12 +3736,11 @@ function goLobby() {
 // ═══════════════════════════════════════════════════
 // ── PWA — Service Worker kaydı ──
 (function initPWA() {
-  if ('serviceWorker' in navigator &&
-      (location.protocol === 'https:' || location.hostname === 'localhost')) {
-    navigator.serviceWorker.register('./sw.js').then(reg => {
-      console.log('SW kayıtlı:', reg.scope);
-    }).catch(err => {
-      console.warn('SW kayıt hatası:', err);
+  // Sadece gerçek web ortamında kaydet (chrome-extension, file:// değil)
+  const validOrigin = location.protocol === 'https:' || location.hostname === 'localhost';
+  if ('serviceWorker' in navigator && validOrigin) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').catch(() => {});
     });
   }
 })();
