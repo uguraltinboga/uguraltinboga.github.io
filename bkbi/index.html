@@ -1,0 +1,1729 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Bir Kelime Bir İşlem</title>
+<meta name="description" content="Türkçe kelime ve matematik yarışması">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎯</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+<style>
+:root {
+  --bg: #0a0a0f;
+  --bg2: #111118;
+  --bg3: #1a1a24;
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.14);
+  --accent: #e63946;
+  --accent2: #ff6b6b;
+  --gold: #ffd166;
+  --gold2: #ffba08;
+  --green: #06d6a0;
+  --blue: #118ab2;
+  --purple: #9b5de5;
+  --text: #f8f9fa;
+  --muted: #6c757d;
+  --muted2: #adb5bd;
+  --card: rgba(255,255,255,0.04);
+  --card2: rgba(255,255,255,0.07);
+  --r: 14px;
+  --r2: 20px;
+  --font-display: 'Syne', sans-serif;
+  --font-mono: 'Space Mono', monospace;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow-x: hidden; }
+body {
+  font-family: var(--font-display);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(ellipse 60% 40% at 15% 20%, rgba(230,57,70,0.06) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 50% at 85% 80%, rgba(17,138,178,0.06) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 60% at 50% 50%, rgba(155,93,229,0.04) 0%, transparent 70%);
+}
+
+/* ══════════════════ SCREENS ══════════════════ */
+.screen { display: none; position: relative; z-index: 1; min-height: 100vh; padding: 20px; }
+.screen.active { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+
+/* ══════════════════ LOGO ══════════════════ */
+.logo {
+  text-align: center;
+  margin-bottom: 32px;
+}
+.logo-text {
+  font-size: clamp(2rem, 7vw, 4rem);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -1px;
+  background: linear-gradient(135deg, #fff 0%, var(--gold) 40%, var(--accent) 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.logo-sub {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-top: 6px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+/* ══════════════════ CARDS ══════════════════ */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r2);
+  padding: 24px;
+}
+.card-title {
+  font-size: 0.7rem;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--muted);
+  margin-bottom: 16px;
+}
+
+/* ══════════════════ BUTTONS ══════════════════ */
+.btn {
+  border: none; cursor: pointer;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.95rem;
+  border-radius: var(--r);
+  padding: 13px 24px;
+  transition: all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  position: relative; overflow: hidden;
+  letter-spacing: 0.2px;
+}
+.btn::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: rgba(255,255,255,0);
+  transition: background 0.15s;
+}
+.btn:hover::after { background: rgba(255,255,255,0.06); }
+.btn:active { transform: scale(0.97); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent), #c1121f);
+  color: #fff;
+  box-shadow: 0 4px 24px rgba(230,57,70,0.35);
+}
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 30px rgba(230,57,70,0.45); }
+
+.btn-gold {
+  background: linear-gradient(135deg, var(--gold2), #e09a00);
+  color: #000;
+  box-shadow: 0 4px 24px rgba(255,186,8,0.3);
+}
+.btn-gold:hover { transform: translateY(-2px); }
+
+.btn-ghost {
+  background: var(--card2);
+  border: 1px solid var(--border2);
+  color: var(--text);
+}
+.btn-ghost:hover { border-color: rgba(255,255,255,0.25); }
+
+.btn-green {
+  background: linear-gradient(135deg, #06d6a0, #02a77a);
+  color: #000;
+  box-shadow: 0 4px 20px rgba(6,214,160,0.3);
+}
+.btn-green:hover { transform: translateY(-2px); }
+
+.btn-sm { padding: 8px 16px; font-size: 0.85rem; border-radius: 10px; }
+.btn-icon { width: 42px; height: 42px; padding: 0; border-radius: 12px; font-size: 1.1rem; }
+.w-full { width: 100%; }
+
+/* ══════════════════ INPUTS ══════════════════ */
+.input {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border2);
+  border-radius: var(--r);
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: 1rem;
+  padding: 13px 18px;
+  width: 100%;
+  transition: border-color 0.2s, background 0.2s;
+  outline: none;
+}
+.input:focus { border-color: var(--accent); background: rgba(255,255,255,0.08); }
+.input::placeholder { color: var(--muted); }
+.input-mono { font-family: var(--font-mono); letter-spacing: 4px; text-transform: uppercase; text-align: center; font-size: 1.4rem; }
+
+/* ══════════════════ SCREEN: HOME ══════════════════ */
+#screen-home .panels {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+  width: 100%; max-width: 680px;
+}
+@media(max-width:580px){ #screen-home .panels { grid-template-columns: 1fr; } }
+
+.home-hint {
+  margin-top: 20px;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--muted);
+  text-align: center;
+  letter-spacing: 1px;
+}
+
+/* ══════════════════ SCREEN: LOBBY ══════════════════ */
+#screen-lobby { gap: 20px; justify-content: flex-start; padding-top: 40px; }
+#screen-lobby .lobby-wrap { width: 100%; max-width: 760px; display: flex; flex-direction: column; gap: 16px; }
+
+.room-code-display {
+  display: flex; align-items: center; justify-content: center;
+  gap: 12px;
+  background: rgba(255,215,102,0.08);
+  border: 1px solid rgba(255,215,102,0.2);
+  border-radius: 50px;
+  padding: 10px 24px;
+  font-family: var(--font-mono);
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: 8px;
+}
+
+.lobby-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media(max-width:580px){ .lobby-grid { grid-template-columns: 1fr; } }
+
+.player-slot {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.player-slot:last-child { border-bottom: none; }
+.avatar {
+  width: 36px; height: 36px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 0.95rem; flex-shrink: 0;
+}
+.player-slot-name { flex: 1; font-weight: 700; font-size: 0.95rem; }
+.badge {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  padding: 3px 8px; border-radius: 20px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.badge-host { background: rgba(255,215,102,0.15); color: var(--gold); }
+.badge-you { background: rgba(17,138,178,0.2); color: #56ccf2; }
+.badge-ready { background: rgba(6,214,160,0.15); color: var(--green); }
+.badge-wait { background: rgba(255,255,255,0.05); color: var(--muted); }
+
+.setting-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 0; border-bottom: 1px solid var(--border); gap: 12px;
+}
+.setting-row:last-child { border-bottom: none; }
+.setting-label { font-size: 0.9rem; color: var(--muted2); }
+.setting-val {
+  font-family: var(--font-mono); font-weight: 700;
+  color: var(--gold); font-size: 1.1rem; min-width: 36px; text-align: center;
+}
+.stepper { display: flex; align-items: center; gap: 8px; }
+.stepper-btn {
+  width: 30px; height: 30px; border-radius: 8px;
+  background: var(--card2); border: 1px solid var(--border2);
+  color: var(--text); font-size: 1.1rem; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s;
+}
+.stepper-btn:hover { background: rgba(255,255,255,0.12); }
+
+/* ══════════════════ SCOREBOARD STRIP ══════════════════ */
+.scoreboard-strip {
+  display: flex; gap: 8px; overflow-x: auto;
+  padding: 0 0 4px; flex-shrink: 0;
+}
+.score-chip {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 14px; border-radius: 50px;
+  background: var(--card); border: 1px solid var(--border);
+  white-space: nowrap; flex-shrink: 0;
+  font-size: 0.85rem; transition: border-color 0.2s;
+}
+.score-chip.me { border-color: rgba(17,138,178,0.4); background: rgba(17,138,178,0.08); }
+.score-chip.leading { border-color: rgba(255,215,102,0.35); }
+.score-chip-name { font-weight: 700; }
+.score-chip-pts { font-family: var(--font-mono); font-weight: 700; color: var(--gold); }
+
+/* ══════════════════ SCREEN: GAME ══════════════════ */
+#screen-game {
+  justify-content: flex-start;
+  padding-top: 16px;
+  gap: 14px;
+}
+#screen-game .game-wrap { width: 100%; max-width: 860px; display: flex; flex-direction: column; gap: 14px; }
+
+.game-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.phase-label {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 14px; border-radius: 50px;
+  font-family: var(--font-mono); font-size: 0.78rem;
+  font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
+}
+.phase-word { background: rgba(155,93,229,0.15); color: #c084fc; border: 1px solid rgba(155,93,229,0.3); }
+.phase-number { background: rgba(17,138,178,0.15); color: #56ccf2; border: 1px solid rgba(17,138,178,0.3); }
+.phase-results { background: rgba(6,214,160,0.12); color: var(--green); border: 1px solid rgba(6,214,160,0.3); }
+.round-label { font-family: var(--font-mono); font-size: 0.78rem; color: var(--muted2); }
+
+/* ══════════════════ TIMER ══════════════════ */
+.timer-wrap { position: relative; width: 64px; height: 64px; flex-shrink: 0; }
+.timer-wrap svg { transform: rotate(-90deg); }
+.timer-track { fill: none; stroke: rgba(255,255,255,0.08); stroke-width: 5; }
+.timer-fill { fill: none; stroke-width: 5; stroke-linecap: round; transition: stroke-dashoffset 1s linear, stroke 0.4s; }
+.timer-num {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono); font-weight: 700; font-size: 1.05rem;
+}
+
+/* ══════════════════ QUESTION CARD ══════════════════ */
+.question-card { padding: 28px; }
+
+/* Word Phase */
+.letters-row {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  justify-content: center; margin: 20px 0;
+}
+.letter-tile {
+  width: 56px; height: 64px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.6rem; font-weight: 800;
+  cursor: pointer; user-select: none;
+  transition: all 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+  border: 2px solid transparent;
+  position: relative;
+}
+.letter-tile.vowel {
+  background: rgba(230,57,70,0.15);
+  border-color: rgba(230,57,70,0.35);
+}
+.letter-tile.consonant {
+  background: rgba(155,93,229,0.15);
+  border-color: rgba(155,93,229,0.35);
+}
+.letter-tile:hover:not(.used) { transform: translateY(-4px) scale(1.05); }
+.letter-tile.used { opacity: 0.22; transform: none !important; cursor: default; }
+.letter-tile.selected-anim {
+  animation: tileSelect 0.2s ease;
+}
+@keyframes tileSelect {
+  0% { transform: translateY(-4px) scale(1.1); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+.word-built {
+  min-height: 60px;
+  background: rgba(0,0,0,0.25);
+  border: 1px solid var(--border2);
+  border-radius: var(--r);
+  padding: 14px 20px;
+  font-family: var(--font-mono);
+  font-size: 1.5rem; font-weight: 700;
+  letter-spacing: 5px;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 12px;
+  transition: border-color 0.2s;
+}
+.word-built:empty::before { content: 'harflere tıkla...'; color: var(--muted); font-size: 0.9rem; letter-spacing: 1px; }
+.word-built.has-word { border-color: rgba(155,93,229,0.4); }
+
+.word-actions { display: flex; gap: 8px; }
+
+/* Number Phase */
+.target-box {
+  text-align: center; margin: 8px 0 20px;
+}
+.target-lbl { font-family: var(--font-mono); font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 4px; }
+.target-num {
+  font-family: var(--font-mono);
+  font-size: 3rem; font-weight: 700;
+  background: linear-gradient(135deg, var(--gold2), var(--gold));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.number-tiles { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 16px; }
+.num-tile {
+  min-width: 58px; padding: 12px 14px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono); font-size: 1.3rem; font-weight: 700;
+  cursor: pointer; user-select: none;
+  transition: all 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+  border: 2px solid transparent;
+}
+.num-tile.big {
+  background: rgba(255,186,8,0.15); border-color: rgba(255,186,8,0.35); color: var(--gold);
+}
+.num-tile.small {
+  background: rgba(17,138,178,0.15); border-color: rgba(17,138,178,0.35);
+}
+.num-tile:hover:not(.used) { transform: translateY(-3px) scale(1.05); }
+.num-tile.used { opacity: 0.2; transform: none !important; cursor: default; }
+.num-tile.active-sel { outline: 3px solid var(--accent); outline-offset: 2px; transform: translateY(-4px); }
+
+.ops-row { display: flex; gap: 8px; justify-content: center; margin-bottom: 12px; flex-wrap: wrap; }
+.op-btn {
+  width: 50px; height: 50px; border-radius: 12px;
+  background: var(--card2); border: 1px solid var(--border2);
+  color: var(--text); font-family: var(--font-mono); font-size: 1.3rem; font-weight: 700;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+}
+.op-btn:hover { background: rgba(255,255,255,0.12); transform: scale(1.08); }
+.op-btn.sel { background: rgba(230,57,70,0.25); border-color: var(--accent); }
+.op-btn.util { font-size: 1rem; }
+
+.calc-strip {
+  background: rgba(0,0,0,0.25);
+  border: 1px solid var(--border2);
+  border-radius: var(--r);
+  padding: 12px 18px;
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 8px; min-height: 54px;
+}
+.calc-expr { font-family: var(--font-mono); color: var(--muted2); font-size: 0.85rem; }
+.calc-result-val {
+  font-family: var(--font-mono); font-size: 1.5rem; font-weight: 700;
+  transition: color 0.3s;
+}
+.calc-result-val.exact { color: var(--green); }
+.calc-result-val.close { color: var(--gold); }
+.calc-result-val.far { color: var(--muted2); }
+
+.steps-log {
+  font-family: var(--font-mono); font-size: 0.78rem;
+  color: var(--muted); margin-bottom: 8px;
+  display: flex; flex-direction: column; gap: 2px;
+}
+
+.manual-row { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
+.manual-row .input { font-family: var(--font-mono); font-size: 1.2rem; text-align: center; }
+
+/* Submitted */
+.submitted-state {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 30px; gap: 12px;
+  animation: fadeUp 0.35s ease;
+}
+@keyframes fadeUp { from{opacity:0;transform:translateY(14px);} to{opacity:1;transform:translateY(0);} }
+.submitted-icon { font-size: 2.8rem; }
+.submitted-word { font-family: var(--font-mono); font-size: 1.3rem; font-weight: 700; letter-spacing: 4px; }
+.submitted-wait { font-size: 0.82rem; color: var(--muted); font-family: var(--font-mono); }
+
+/* ══════════════════ RESULTS ══════════════════ */
+.results-wrap { display: flex; flex-direction: column; gap: 8px; }
+.result-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 16px; border-radius: var(--r);
+  background: var(--card); border: 1px solid var(--border);
+  transition: border-color 0.2s;
+}
+.result-row.me { border-color: rgba(17,138,178,0.35); }
+.result-rank { font-size: 1.2rem; width: 28px; text-align: center; flex-shrink: 0; }
+.result-info { flex: 1; min-width: 0; }
+.result-name { font-weight: 700; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.result-answer { font-family: var(--font-mono); font-size: 0.75rem; color: var(--muted2); margin-top: 2px; }
+.result-pts {
+  font-family: var(--font-mono); font-weight: 700; font-size: 1rem;
+  padding: 4px 12px; border-radius: 20px; flex-shrink: 0;
+}
+.pts-hi { background: rgba(6,214,160,0.15); color: var(--green); }
+.pts-mid { background: rgba(255,215,102,0.15); color: var(--gold); }
+.pts-lo { background: rgba(255,255,255,0.05); color: var(--muted); }
+
+.computer-best {
+  margin-top: 14px; padding: 12px 16px;
+  background: rgba(6,214,160,0.06);
+  border: 1px solid rgba(6,214,160,0.18);
+  border-radius: var(--r);
+  font-size: 0.83rem; color: var(--green);
+  font-family: var(--font-mono);
+}
+.computer-best strong { color: #fff; }
+
+.next-hint { text-align: center; margin-top: 10px; font-size: 0.78rem; color: var(--muted); font-family: var(--font-mono); }
+.pulse { animation: pulseOp 1.8s infinite; }
+@keyframes pulseOp { 0%,100%{opacity:1;} 50%{opacity:0.45;} }
+
+/* ══════════════════ SCREEN: GAMEOVER ══════════════════ */
+#screen-gameover { gap: 24px; }
+.winner-card { text-align: center; }
+.winner-trophy { font-size: 4rem; margin-bottom: 8px; }
+.winner-name { font-size: 2.2rem; font-weight: 800; color: var(--gold); }
+.winner-score { font-family: var(--font-mono); color: var(--muted2); margin-top: 4px; }
+.final-list { width: 100%; max-width: 480px; }
+.final-row {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 0; border-bottom: 1px solid var(--border);
+}
+.final-row:last-child { border-bottom: none; }
+.final-rank { font-size: 1.3rem; width: 32px; }
+.final-name { flex: 1; font-weight: 700; }
+.final-pts { font-family: var(--font-mono); font-size: 1.2rem; font-weight: 700; color: var(--gold); }
+.go-actions { display: flex; gap: 12px; }
+
+/* ══════════════════ TOAST ══════════════════ */
+.toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  background: rgba(20,20,30,0.95); border: 1px solid var(--border2);
+  border-radius: var(--r); padding: 12px 24px;
+  font-size: 0.88rem; font-weight: 600; z-index: 9999;
+  backdrop-filter: blur(10px);
+  animation: toastIn 0.3s ease;
+  white-space: nowrap;
+}
+@keyframes toastIn { from{opacity:0;transform:translateX(-50%) translateY(16px);} to{opacity:1;transform:translateX(-50%) translateY(0);} }
+
+/* ══════════════════ AVATAR COLORS ══════════════════ */
+.av0 { background: rgba(230,57,70,0.25); color: #ff6b6b; }
+.av1 { background: rgba(17,138,178,0.25); color: #56ccf2; }
+.av2 { background: rgba(6,214,160,0.25); color: var(--green); }
+.av3 { background: rgba(255,186,8,0.25); color: var(--gold); }
+.av4 { background: rgba(155,93,229,0.25); color: #c084fc; }
+.av5 { background: rgba(245,101,101,0.2); color: #fc8181; }
+
+/* ══════════════════ UTILS ══════════════════ */
+.flex { display: flex; }
+.gap-2 { gap: 8px; }
+.gap-3 { gap: 12px; }
+.mt-2 { margin-top: 8px; }
+.mt-3 { margin-top: 12px; }
+.mt-4 { margin-top: 16px; }
+.text-muted { color: var(--muted); }
+.text-center { text-align: center; }
+.mono { font-family: var(--font-mono); }
+.hidden { display: none !important; }
+.spin { animation: spin 1.2s linear infinite; display: inline-block; }
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════ SCREEN: HOME ══════════════════ -->
+<div id="screen-home" class="screen active">
+  <div class="logo">
+    <div class="logo-text">Bir Kelime<br>Bir İşlem</div>
+    <div class="logo-sub">Kelime × Matematik Yarışması</div>
+  </div>
+
+  <div style="width:100%;max-width:680px;margin-bottom:16px;">
+    <input id="inp-name" class="input" placeholder="👤  Kullanıcı adın" maxlength="18" style="margin-bottom:12px;font-size:1.05rem;" />
+  </div>
+
+  <div class="panels" style="width:100%;max-width:680px;">
+    <div class="card">
+      <div class="card-title">🎮 Oda Oluştur</div>
+      <p style="color:var(--muted);font-size:0.88rem;margin-bottom:18px;line-height:1.5;">Yeni oyun odası aç, arkadaşlarını davet et.</p>
+      <button class="btn btn-primary w-full" onclick="createRoom()">Oda Oluştur</button>
+    </div>
+    <div class="card">
+      <div class="card-title">🔑 Odaya Katıl</div>
+      <input id="inp-code" class="input input-mono" placeholder="XXXX" maxlength="4" style="margin-bottom:12px;" />
+      <button class="btn btn-ghost w-full" onclick="joinRoom()">Katıl</button>
+    </div>
+  </div>
+
+  <div class="home-hint">Host tarayıcısı oyun sunucusu olarak çalışır · PeerJS P2P</div>
+</div>
+
+<!-- ══════════════════ SCREEN: LOBBY ══════════════════ -->
+<div id="screen-lobby" class="screen">
+  <div class="lobby-wrap">
+    <div style="text-align:center;">
+      <div style="font-size:1.4rem;font-weight:800;margin-bottom:10px;">🎮 Oyun Lobisi</div>
+      <div class="room-code-display">
+        <span id="lbl-code">----</span>
+        <button class="btn btn-sm btn-ghost" onclick="copyCode()" style="letter-spacing:0;padding:6px 12px;font-size:0.78rem;">📋 Kopyala</button>
+      </div>
+      <div style="color:var(--muted);font-size:0.8rem;margin-top:8px;font-family:var(--font-mono);">Bu kodu arkadaşlarınla paylaş</div>
+    </div>
+
+    <div class="lobby-grid">
+      <!-- Players -->
+      <div class="card">
+        <div class="card-title">👥 Oyuncular</div>
+        <div id="player-list"></div>
+      </div>
+      <!-- Settings -->
+      <div class="card">
+        <div class="card-title">⚙️ Ayarlar</div>
+        <div id="settings-panel">
+          <div class="setting-row">
+            <span class="setting-label">Tur sayısı</span>
+            <div class="stepper">
+              <button class="stepper-btn" id="btn-rounds-down" onclick="changeSetting('totalRounds',-1)">−</button>
+              <span class="setting-val" id="val-rounds">6</span>
+              <button class="stepper-btn" id="btn-rounds-up" onclick="changeSetting('totalRounds',1)">+</button>
+            </div>
+          </div>
+          <div class="setting-row">
+            <span class="setting-label">Kelime süresi (sn)</span>
+            <div class="stepper">
+              <button class="stepper-btn" id="btn-word-down" onclick="changeSetting('wordTime',-5)">−</button>
+              <span class="setting-val" id="val-word">30</span>
+              <button class="stepper-btn" id="btn-word-up" onclick="changeSetting('wordTime',5)">+</button>
+            </div>
+          </div>
+          <div class="setting-row">
+            <span class="setting-label">İşlem süresi (sn)</span>
+            <div class="stepper">
+              <button class="stepper-btn" id="btn-num-down" onclick="changeSetting('numTime',-5)">−</button>
+              <span class="setting-val" id="val-num">45</span>
+              <button class="stepper-btn" id="btn-num-up" onclick="changeSetting('numTime',5)">+</button>
+            </div>
+          </div>
+          <div style="margin-top:12px;padding:10px 14px;background:rgba(255,255,255,0.03);border-radius:10px;font-size:0.78rem;color:var(--muted);font-family:var(--font-mono);" id="lbl-duration">
+            ~12 dk
+          </div>
+        </div>
+        <div id="settings-locked" class="hidden" style="color:var(--muted);font-size:0.82rem;font-style:italic;margin-top:8px;">
+          Sadece host ayarlayabilir.
+        </div>
+      </div>
+    </div>
+
+    <div id="lobby-actions" style="display:flex;gap:10px;justify-content:flex-end;align-items:center;">
+      <span id="lbl-waiting" class="text-muted pulse mono" style="font-size:0.82rem;"></span>
+      <button id="btn-start" class="btn btn-green hidden" onclick="hostStartGame()">🎯 Oyunu Başlat</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ SCREEN: GAME ══════════════════ -->
+<div id="screen-game" class="screen">
+  <div class="game-wrap">
+    <!-- Header -->
+    <div class="game-header">
+      <div>
+        <div class="round-label" id="lbl-round">Tur 1/6</div>
+        <div id="lbl-phase" class="phase-label phase-word" style="margin-top:4px;">📝 Bir Kelime</div>
+      </div>
+      <div class="timer-wrap" id="timer-wrap">
+        <svg width="64" height="64" viewBox="0 0 64 64">
+          <circle class="timer-track" cx="32" cy="32" r="27"/>
+          <circle class="timer-fill" id="timer-ring" cx="32" cy="32" r="27"
+            stroke="#06d6a0"
+            stroke-dasharray="169.6"
+            stroke-dashoffset="0"/>
+        </svg>
+        <div class="timer-num" id="timer-num">30</div>
+      </div>
+    </div>
+
+    <!-- Scoreboard -->
+    <div class="scoreboard-strip" id="scoreboard"></div>
+
+    <!-- Question area -->
+    <div class="card question-card" id="question-card">
+      <!-- filled by JS -->
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ SCREEN: GAMEOVER ══════════════════ -->
+<div id="screen-gameover" class="screen">
+  <div class="winner-card">
+    <div class="winner-trophy">🏆</div>
+    <div class="winner-name" id="go-winner-name">---</div>
+    <div class="winner-score" id="go-winner-score"></div>
+  </div>
+  <div class="card final-list" id="go-final-list"></div>
+  <div class="go-actions">
+    <button class="btn btn-ghost" onclick="goHome()">🏠 Ana Sayfa</button>
+    <button class="btn btn-primary" onclick="goHome()">🔄 Tekrar Oyna</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// WORD LIST & LETTER POOL
+// ═══════════════════════════════════════════════════════════════
+const WORD_LIST = new Set([
+  "ada","ağa","ait","ala","ana","ara","arı","ata","bal","bar","baş","bay",
+  "bel","bez","bin","bir","bot","bul","cam","can","cep","cin","dal","dam",
+  "dar","dil","din","dip","diz","gel","gem","gir","göç","gök","göl","gör",
+  "göz","gün","güç","gül","hal","ham","han","has","hat","hep","her","his",
+  "hoş","hız","ile","ima","kak","kal","kam","kan","kar","kas","kay","kaz",
+  "kel","kep","keş","kez","kır","kil","kip","kir","köy","kul","kur","kuş",
+  "kız","küp","laf","mal","man","mat","may","men","mer","mil","mis","mit",
+  "mor","muz","nar","nat","naz","nem","net","oba","oda","oje","oku","oya",
+  "pak","pal","par","pas","pat","pek","pen","pir","pis","pul","sac","saf",
+  "sak","sal","san","sar","saç","say","sel","ses","set","sev","sır","sil",
+  "sin","sis","siz","sol","son","soy","söz","sul","sun","suç","şal","şan",
+  "şap","şef","şen","şey","şık","şiş","tak","tan","tar","taş","tat","tav",
+  "tay","tel","ten","ter","tez","tık","tıp","til","tip","tiz","tok","top",
+  "tor","toy","tun","tur","tüm","tür","tüy","var","ver","vur","yan","yar",
+  "yat","yay","yaz","yel","yer","yok","yol","yön","yük","yüz","zam","zan",
+  "zar","zat","zil","zor",
+  "adet","adil","adım","ağır","aile","akıl","alan","alev","alım","alın",
+  "amca","anne","arka","arpa","asıl","asil","atık","ayak","baca","bağ",
+  "bakan","bakım","bakır","bale","bana","bank","bant","beden","belde","belge",
+  "bile","bilgi","bilim","bilek","bitki","boğa","boğaz","boru","boyun",
+  "böcek","bölge","bölüm","bulut","burun","bütün","büyük","cami","cevap",
+  "ciğer","cila","daha","dakik","damak","damar","dans","dede","değer","demir",
+  "deniz","depo","ders","dert","dilek","diri","dişi","dizi","dönem","duman",
+  "durak","durum","duygu","dünya","düzen","eğer","eğim","ekim","eleman","emir",
+  "engel","erdem","erken","eşit","etken","etkin","evren","eylem","fark","fena",
+  "fert","fikir","fizik","gece","gelir","gene","geniş","gerçek","geri","gider",
+  "giyim","giysi","gizem","gizli","görev","görüş","güçlü","gülen","güven",
+  "güzel","haber","halk","hamur","hangi","hapis","hatta","hayat","hayal",
+  "hayır","hazır","hemen","hizmet","içeri","içten","ideal","iddia","ifade",
+  "ikram","inanç","insan","istek","işlem","kadar","kadeh","kafes","kalın",
+  "kanal","karar","karın","kasap","kasım","katar","kazan","kazık","keder",
+  "kenar","kepek","keten","keyif","kılık","kısım","kısır","kitap","kolay",
+  "komşu","konum","kopya","korku","kural","kurul","küçük","lazım","limon",
+  "meclis","merak","mesaj","metin","mezun","millet","müzik","nadir","namaz",
+  "neden","nesil","niyet","nokta","ocak","odak","oğul","okul","olası","omuz",
+  "orman","ortak","oynak","paket","panel","para","perde","petek","pilot","plan",
+  "polis","rapor","resim","rica","robot","roman","sabah","sakin","salon","sanat",
+  "saray","satır","savaş","seçim","sefer","senet","sergi","sevgi","sezon",
+  "sınav","sınır","sicil","sinir","sistem","sivil","siyah","sohbet","sokak",
+  "sonuç","sorun","söylem","sözlük","sultan","sunum","süreç","sürüm","şeker",
+  "şekil","şifre","şirket","takım","taraf","tarih","taşıt","tatil","tavan",
+  "teklif","temel","tepki","tercih","tesis","tutum","tuzak","türlü","umut",
+  "uyarı","uygun","uzman","ümit","üretim","üstün","vakit","vatan","vicdan",
+  "vizyon","yağmur","yakar","yakın","yaşam","yasal","yavaş","yazım","yazar",
+  "yetki","yoğun","yorum","yüzde","zaman","zarar","zarif","zaten","zayıf",
+  "zemin","zirve","zorlu",
+  "abluka","acele","acemi","adalet","ağırlık","akraba","aktarım","aktif",
+  "alkış","anlaşma","anlatım","anlayış","antik","arıtma","armağan","arşiv",
+  "asistan","atama","atılım","avantaj","ayrıntı","azınlık","bağımsız",
+  "bağlantı","banka","bardak","batarya","belirsiz","belirli","benzeri",
+  "beraber","bilgisayar","bilimsel","bilinç","birinci","birleşik","bulguları",
+  "buluşma","canlılık","cesaretli","cezaevi","cinayet","cömertlik","cumhuriyet",
+  "dayanışma","defalarca","değerli","değişim","değişken","demokrat","deneyim",
+  "devlet","dikkatli","dilbilim","doğrusal","doğrudan","dürüstlük","düşünce",
+  "düzeltme","edebiyat","ekonomik","egemenlik","eğitim","emekli","endişeli",
+  "engelli","etkileşim","etkinlik","evrensel","farklılık","felsefi","fiziksel",
+  "fotoğraf","gelenek","geliştirme","gerçeklik","girişim","güçlendirme",
+  "hakikat","hastalık","hikayesi","hissiyat","hukuki","huzurlu","ideoloji",
+  "ilerleme","iletişim","ilginç","insanlık","internet","işgücü","izlenim",
+  "kademeli","kahraman","kalıcılık","karakter","karmaşık","katılımcı",
+  "kavramsal","kazanım","kesinlik","kimliği","kişilik","korunmak","kullanıcı",
+  "kültürel","liderlik","lojistik","mahkeme","malzeme","mecburiyet","mekanizma",
+  "merkezi","mesleki","mimarlık","misyon","müdahale","müzakere","nitelik",
+  "olanaklı","öğrenim","öğretim","olumsuz","olumlu","ortaklık","öğrenci",
+  "özgürlük","pazarlama","piyasalar","planlama","politika","pratiklik","program",
+  "raporlama","rekabet","robotik","sahiplik","seçenek","serbest","seyirci",
+  "sonsuzluk","sorumlu","strateji","şeffaflık","şiddetli","şirketler","tarihsel",
+  "tasarım","tedbirli","teknoloji","teşekkür","tutarlılık","uluslararası",
+  "üniversite","üretkenlik","vatandaş","vilayet","yaratıcılık","yaşlılık",
+  "yenilikçi","yönetici","zamanında","zararlı","zekice","zorbalık",
+  "kara","kale","kari","kart","kasa","kaya","kafa","kaba","yurt","kurt",
+  "dere","deve","deva","dolu","mavi","mars","sarp","taze","tabi","bari",
+  "cari","fare","ince","ilik","ilim","imam","ikiz","ezan","uzak","uzun",
+  "ulus","ulvi","olay","olgu","oran","orak","ocak","yaka","baca","ceza",
+  "dava","faal","gaye","hata","iade","izin","koca","leke","mana","nane",
+  "olta","paha","rüya","sevk","tane","uğur","vade","yeni","zeki","arka",
+  "arzu","asma","avlu","balo","band","bant","belk","berk","best","biçim",
+  "boya","böğ","cilt","çile","dağ","dank","darp","dönüş","duvar","eba",
+  "etek","etli","evli","fadl","fani","fark","farz","fazla","fıkra",
+  "karar","kader","kaide","kabul","kadın","kafes","kağıt","kalan","kalıp",
+  "yalın","yaman","yarım","yasak","yatay","yazım","yemek","yetim","yıldız",
+  "araba","arama","arıza","arkadaş","asker","aslan","asıl","atama","atlas",
+  
+  "kalem","kanat","kenar","keten","kiler","kilim","kilit","lake","lale",
+  "lema","mekan","melek","meltem","miran","misal","mola","nalan","nane",
+  "narin","nesne","nikel","nisan","nitel","nizam","nükte","orak","oran",
+  "otel","palet","paten","pazar","peron","plaka","posta","radar","raket",
+  "rende","ringa","ruhsat","saban","sabun","sadık","sakal","sakız","salam",
+  "salgın","sanem","sanel","sarmal","savunma","seksen","selamet","selam",
+  "selin","senato","senet","senil","serin","servet","silah","sinema","siren",
+  "sivri","taban","tablo","tahmin","takma","talan","talep","tamir","tanık",
+  "tanım","tarla","tatmin","tavuk","tazmin","telin","temin","teori","termal",
+  "terminal","timsah","tiran","tokat","topal","toplu","totem","vagon","valiz",
+  "varlık","vatman","verim","verimli","vinç","yaban","yağlı","yakıt","yalan",
+  "yalın","yama","yanal","yaprak","yarım","yarın","yasak","yastık","yatak",
+  "yatırım","yavru","yazıt","yedek","yeniden","yeşil","yıkım","yılan","yılmaz"
+]);
+
+const LETTER_POOL = [
+  'A','A','A','A','A','A','A','A','A',
+  'E','E','E','E','E','E','E','E',
+  'İ','İ','İ','İ','İ','İ','İ',
+  'N','N','N','N','N','N',
+  'R','R','R','R','R','R',
+  'L','L','L','L','L','L',
+  'K','K','K','K','K',
+  'T','T','T','T','T',
+  'M','M','M','M',
+  'S','S','S','S',
+  'D','D','D','D',
+  'Y','Y','Y','Y',
+  'U','U','U','U',
+  'B','B','B',
+  'Ç','Ç','Ç',
+  'G','G','G',
+  'H','H','H',
+  'I','I','I',
+  'O','O','O',
+  'Ö','Ö',
+  'P','P',
+  'Ş','Ş','Ş',
+  'V','V',
+  'Z','Z','Z',
+  'F',
+  'Ü','Ü','Ü',
+  'C','C',
+  'Ğ','J',
+];
+const VOWELS = new Set(['A','E','İ','I','O','Ö','U','Ü']);
+const BIG_NUMBERS = [25,50,75,100];
+const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+
+// ═══════════════════════════════════════════════════════════════
+// GAME STATE
+// ═══════════════════════════════════════════════════════════════
+let peer, myPeerId, myName, roomCode;
+let isHost = false;
+let connections = {}; // peerId → conn
+let players = [];     // [{id, name, score, isHost}]
+let settings = { totalRounds:6, wordTime:30, numTime:45 };
+
+let gameState = 'lobby'; // lobby|word|number|results|gameover
+let currentRound = 0;
+let currentPhase = null; // 'word'|'number'
+let phaseQuestion = null;
+let answers = {};        // peerId → answer
+let timerInterval = null;
+let timeLeft = 0;
+
+// Local UI state
+let wordSelected = [];   // [{letter, origIdx}]
+let numAvail = [];       // [{value, id}]
+let numFirstIdx = null;
+let numSelOp = null;
+let numSteps = [];
+let numCurResult = null;
+let submitted = false;
+let answeredCount = 0;
+let phaseResult = null;
+
+// ═══════════════════════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════════════════════
+function genCode() {
+  let c='';
+  for(let i=0;i<4;i++) c+=CODE_CHARS[Math.floor(Math.random()*CODE_CHARS.length)];
+  return c;
+}
+function shuffle(a){ const b=[...a]; for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];} return b; }
+function avColor(i){ return 'av'+(i%6); }
+function getInitial(n){ return (n||'?')[0].toUpperCase(); }
+function showToast(msg, dur=2800){
+  let t=document.querySelector('.toast'); if(t) t.remove();
+  t=document.createElement('div'); t.className='toast'; t.textContent=msg;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(), dur);
+}
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PEERJS — CONNECTION
+// ═══════════════════════════════════════════════════════════════
+function initPeer(id){
+  return new Promise((res,rej)=>{
+    const p = id ? new Peer('bkbi-'+id) : new Peer();
+    p.on('open', peerId=>{ myPeerId=peerId; res(p); });
+    p.on('error', e=>{
+      if(e.type==='unavailable-id') rej(new Error('Oda kodu kullanımda.'));
+      else rej(e);
+    });
+  });
+}
+
+function attachConn(conn){
+  connections[conn.peer] = conn;
+  conn.on('data', d=>handleMsg(conn.peer, d));
+  conn.on('close', ()=>handleDisconnect(conn.peer));
+  conn.on('error', ()=>handleDisconnect(conn.peer));
+}
+
+function broadcast(msg, excludeId=null){
+  for(const [pid,c] of Object.entries(connections)){
+    if(pid!==excludeId) try{ c.send(msg); }catch(e){}
+  }
+}
+function sendTo(peerId, msg){ try{ connections[peerId]?.send(msg); }catch(e){} }
+
+// ═══════════════════════════════════════════════════════════════
+// CREATE ROOM (HOST)
+// ═══════════════════════════════════════════════════════════════
+async function createRoom(){
+  const name = document.getElementById('inp-name').value.trim();
+  if(!name){ showToast('⚠️ Kullanıcı adın gerekli!'); return; }
+  myName = name;
+  roomCode = genCode();
+  isHost = true;
+  try{
+    peer = await initPeer(roomCode);
+  } catch(e){
+    // If ID taken, try again with new code
+    roomCode = genCode();
+    try{ peer = await initPeer(roomCode); }
+    catch(e2){ showToast('❌ Bağlantı hatası: '+e2.message); return; }
+  }
+  players = [{ id:myPeerId, name:myName, score:0, isHost:true }];
+  peer.on('connection', conn=>{
+    conn.on('open',()=>{
+      attachConn(conn);
+      // send current state
+      conn.send({ type:'welcome', players, settings, roomCode });
+    });
+  });
+  enterLobby();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// JOIN ROOM (GUEST)
+// ═══════════════════════════════════════════════════════════════
+async function joinRoom(){
+  const name = document.getElementById('inp-name').value.trim();
+  const code = document.getElementById('inp-code').value.trim().toUpperCase();
+  if(!name){ showToast('⚠️ Kullanıcı adın gerekli!'); return; }
+  if(code.length!==4){ showToast('⚠️ 4 karakterli oda kodu gir!'); return; }
+  myName = name;
+  roomCode = code;
+  isHost = false;
+  try{
+    peer = await initPeer(null);
+  } catch(e){ showToast('❌ Bağlantı hatası'); return; }
+
+  const conn = peer.connect('bkbi-'+code, { reliable:true });
+  conn.on('open',()=>{
+    attachConn(conn);
+    conn.send({ type:'hello', name:myName, id:myPeerId });
+  });
+  conn.on('error', ()=>showToast('❌ Odaya bağlanılamadı.'));
+  peer.on('connection', c=>{ c.on('open',()=>attachConn(c)); });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MESSAGE HANDLER
+// ═══════════════════════════════════════════════════════════════
+function handleMsg(fromId, msg){
+  switch(msg.type){
+    case 'hello':
+      if(!isHost) return;
+      // New player joined
+      if(!players.find(p=>p.id===fromId)){
+        players.push({ id:fromId, name:msg.name, score:0, isHost:false });
+      }
+      broadcast({ type:'players_update', players });
+      renderLobby();
+      showToast('👋 '+msg.name+' katıldı!');
+      break;
+
+    case 'welcome':
+      // Guest received welcome from host
+      players = msg.players;
+      settings = msg.settings;
+      myPeerId = peer.id;
+      // Add self to players if not there
+      if(!players.find(p=>p.id===myPeerId)){
+        players.push({ id:myPeerId, name:myName, score:0, isHost:false });
+        // Tell host
+        const hostConn = Object.values(connections)[0];
+        if(hostConn) hostConn.send({ type:'hello', name:myName, id:myPeerId });
+      }
+      enterLobby();
+      break;
+
+    case 'players_update':
+      players = msg.players;
+      renderLobby();
+      break;
+
+    case 'settings_update':
+      settings = msg.settings;
+      renderSettings();
+      break;
+
+    case 'game_start':
+      settings = msg.settings;
+      players = msg.players;
+      currentRound = 0;
+      players.forEach(p=>p.score=0);
+      showScreen('screen-game');
+      break;
+
+    case 'phase_start':
+      startPhaseClient(msg);
+      break;
+
+    case 'submit_answer':
+      if(!isHost) return;
+      answers[fromId] = msg.answer;
+      answeredCount = Object.keys(answers).length;
+      broadcast({ type:'answer_count', count:answeredCount, total:players.length });
+      updateSubmittedWait();
+      // Check if all answered
+      if(answeredCount >= players.length) endPhase();
+      break;
+
+    case 'answer_count':
+      answeredCount = msg.count;
+      updateSubmittedWait();
+      break;
+
+    case 'phase_end':
+      phaseResult = msg.result;
+      players = msg.players;
+      showResults();
+      break;
+
+    case 'game_over':
+      players = msg.players;
+      showGameOver(msg.winner);
+      break;
+
+    case 'disconnect':
+      handleDisconnect(fromId);
+      break;
+  }
+}
+
+function handleDisconnect(pid){
+  const p = players.find(x=>x.id===pid);
+  if(p){ showToast('⚠️ '+p.name+' bağlantısı kesildi'); }
+  players = players.filter(x=>x.id!==pid);
+  delete connections[pid];
+  if(isHost){
+    broadcast({ type:'players_update', players });
+    renderLobby();
+    if(gameState!=='lobby' && Object.keys(connections).length===0){
+      // All left
+      showToast('Tüm oyuncular ayrıldı.');
+      setTimeout(goHome, 2000);
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// LOBBY
+// ═══════════════════════════════════════════════════════════════
+function enterLobby(){
+  showScreen('screen-lobby');
+  document.getElementById('lbl-code').textContent = roomCode;
+  renderLobby();
+  renderSettings();
+}
+
+function renderLobby(){
+  const list = document.getElementById('player-list');
+  list.innerHTML = players.map((p,i)=>`
+    <div class="player-slot">
+      <div class="avatar ${avColor(i)}">${getInitial(p.name)}</div>
+      <div class="player-slot-name">${p.name}</div>
+      ${p.isHost?'<span class="badge badge-host">👑 Host</span>':''}
+      ${p.id===myPeerId?'<span class="badge badge-you">Sen</span>':''}
+    </div>
+  `).join('');
+
+  const waiting = document.getElementById('lbl-waiting');
+  const startBtn = document.getElementById('btn-start');
+  if(isHost){
+    startBtn.classList.remove('hidden');
+    waiting.textContent = players.length < 2 ? 'En az 2 oyuncu gerekli...' : '';
+    startBtn.disabled = players.length < 2;
+  } else {
+    startBtn.classList.add('hidden');
+    waiting.textContent = 'Host oyunu başlatmasını bekliyor...';
+  }
+
+  // Settings editable only by host
+  const steppers = document.querySelectorAll('.stepper-btn');
+  steppers.forEach(b=>b.disabled=!isHost);
+  document.getElementById('settings-locked').classList.toggle('hidden', isHost);
+}
+
+function renderSettings(){
+  document.getElementById('val-rounds').textContent = settings.totalRounds;
+  document.getElementById('val-word').textContent = settings.wordTime;
+  document.getElementById('val-num').textContent = settings.numTime;
+  const mins = Math.round(settings.totalRounds*(settings.wordTime+settings.numTime+10)/60);
+  document.getElementById('lbl-duration').textContent = `~${mins} dakika · ${settings.totalRounds} kelime + ${settings.totalRounds} işlem`;
+}
+
+function changeSetting(key, delta){
+  if(!isHost) return;
+  const limits = { totalRounds:[2,10], wordTime:[15,60], numTime:[20,90] };
+  const [mn,mx] = limits[key];
+  settings[key] = Math.max(mn, Math.min(mx, settings[key]+delta));
+  renderSettings();
+  broadcast({ type:'settings_update', settings });
+}
+
+function copyCode(){
+  navigator.clipboard?.writeText(roomCode).then(()=>showToast('📋 Oda kodu kopyalandı: '+roomCode));
+}
+
+// ═══════════════════════════════════════════════════════════════
+// HOST: START GAME
+// ═══════════════════════════════════════════════════════════════
+function hostStartGame(){
+  if(!isHost || players.length<2) return;
+  players.forEach(p=>p.score=0);
+  currentRound=0; currentPhase=null;
+  broadcast({ type:'game_start', settings, players });
+  showScreen('screen-game');
+  setTimeout(()=>hostNextPhase(), 500);
+}
+
+function hostNextPhase(){
+  if(currentPhase===null || currentPhase==='number'){
+    currentRound++;
+    if(currentRound > settings.totalRounds){ hostEndGame(); return; }
+    currentPhase = 'word';
+    hostStartWord();
+  } else {
+    currentPhase = 'number';
+    hostStartNumber();
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// HOST: WORD PHASE
+// ═══════════════════════════════════════════════════════════════
+function hostStartWord(){
+  const letters = drawLetters();
+  const bestWord = findBestWord(letters);
+  phaseQuestion = { type:'word', letters, bestWord, round:currentRound };
+  answers = {}; answeredCount=0;
+  const msg = { type:'phase_start', ...phaseQuestion, totalRounds:settings.totalRounds, timeLimit:settings.wordTime };
+  broadcast(msg);
+  startPhaseClient(msg);
+  startTimer(settings.wordTime, ()=>{ if(isHost) endPhase(); });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// HOST: NUMBER PHASE
+// ═══════════════════════════════════════════════════════════════
+function hostStartNumber(){
+  const numbers = generateNumbers();
+  const target = 100+Math.floor(Math.random()*900);
+  const solution = solveNumbers(numbers, target);
+  phaseQuestion = { type:'number', numbers, target, solution, round:currentRound };
+  answers = {}; answeredCount=0;
+  const msg = { type:'phase_start', ...phaseQuestion, totalRounds:settings.totalRounds, timeLimit:settings.numTime };
+  broadcast(msg);
+  startPhaseClient(msg);
+  startTimer(settings.numTime, ()=>{ if(isHost) endPhase(); });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// HOST: END PHASE
+// ═══════════════════════════════════════════════════════════════
+function endPhase(){
+  stopTimer();
+  const result = { type:phaseQuestion.type, question:phaseQuestion, results:{} };
+
+  if(phaseQuestion.type==='word'){
+    let maxLen=0;
+    // Validate all answers
+    for(const p of players){
+      const w = answers[p.id]?.word||'';
+      const valid = w ? isValidWord(w, phaseQuestion.letters) : false;
+      const len = valid ? w.length : 0;
+      result.results[p.id] = { word:w, valid, length:len, points:len };
+      if(len>maxLen) maxLen=len;
+      p.score += len;
+    }
+  } else {
+    for(const p of players){
+      const val = answers[p.id]?.value ?? null;
+      const pts = calcNumberScore(val, phaseQuestion.target);
+      result.results[p.id] = { value:val, diff:val!==null?Math.abs(val-phaseQuestion.target):null, points:pts };
+      p.score += pts;
+    }
+  }
+
+  phaseResult = result;
+  const msg = { type:'phase_end', result, players };
+  broadcast(msg);
+  showResults();
+  setTimeout(()=>{ if(isHost) hostNextPhase(); }, 6000);
+}
+
+function hostEndGame(){
+  stopTimer();
+  const sorted=[...players].sort((a,b)=>b.score-a.score);
+  const winner=sorted[0];
+  const msg = { type:'game_over', players, winner };
+  broadcast(msg);
+  showGameOver(winner);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CLIENT: PHASE START (both host and guests)
+// ═══════════════════════════════════════════════════════════════
+function startPhaseClient(msg){
+  phaseQuestion = msg;
+  currentRound = msg.round;
+  submitted = false;
+  answeredCount = 0;
+  wordSelected = [];
+  numAvail = [];
+  numFirstIdx = null;
+  numSelOp = null;
+  numSteps = [];
+  numCurResult = null;
+  gameState = msg.type;
+
+  // Update header
+  document.getElementById('lbl-round').textContent = `Tur ${msg.round}/${msg.totalRounds}`;
+  const phaseLbl = document.getElementById('lbl-phase');
+  if(msg.type==='word'){
+    phaseLbl.className='phase-label phase-word';
+    phaseLbl.textContent='📝 Bir Kelime';
+  } else {
+    phaseLbl.className='phase-label phase-number';
+    phaseLbl.textContent='🔢 Bir İşlem';
+  }
+
+  renderScoreboard();
+
+  if(msg.type==='word') renderWordPhase(msg.letters);
+  else renderNumberPhase(msg.numbers, msg.target);
+
+  if(!isHost) startTimer(msg.timeLimit, ()=>{
+    if(!submitted){ submitAnswer(); }
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// WORD PHASE UI
+// ═══════════════════════════════════════════════════════════════
+function renderWordPhase(letters){
+  wordSelected=[];
+  const card = document.getElementById('question-card');
+  card.innerHTML=`
+    <div style="color:var(--muted);font-size:0.82rem;text-align:center;margin-bottom:4px;font-family:var(--font-mono);">
+      En uzun Türkçe kelimeyi bul — harflere tıkla
+    </div>
+    <div class="letters-row" id="letters-row">
+      ${letters.map((l,i)=>`
+        <div class="letter-tile ${VOWELS.has(l)?'vowel':'consonant'}" id="tile-${i}" onclick="clickLetter('${l}',${i})">
+          ${l}
+        </div>
+      `).join('')}
+    </div>
+    <div class="word-built" id="word-built"></div>
+    <div class="word-actions">
+      <button class="btn btn-ghost btn-sm" onclick="wordUndo()">⌫ Sil</button>
+      <button class="btn btn-ghost btn-sm" onclick="wordClear()">✖ Temizle</button>
+      <button class="btn btn-primary" style="flex:1" id="btn-word-submit" onclick="submitAnswer()" disabled>
+        ✅ Gönder
+      </button>
+    </div>
+  `;
+}
+
+function clickLetter(letter, idx){
+  if(submitted) return;
+  if(wordSelected.some(s=>s.origIdx===idx)) return;
+  wordSelected.push({ letter, origIdx:idx });
+  document.getElementById('tile-'+idx).classList.add('used','selected-anim');
+  updateWordDisplay();
+}
+
+function wordUndo(){
+  if(!wordSelected.length || submitted) return;
+  const last=wordSelected.pop();
+  document.getElementById('tile-'+last.origIdx)?.classList.remove('used','selected-anim');
+  updateWordDisplay();
+}
+
+function wordClear(){
+  if(submitted) return;
+  wordSelected.forEach(s=>document.getElementById('tile-'+s.origIdx)?.classList.remove('used','selected-anim'));
+  wordSelected=[];
+  updateWordDisplay();
+}
+
+function updateWordDisplay(){
+  const w = wordSelected.map(s=>s.letter).join('');
+  const el = document.getElementById('word-built');
+  if(el){ el.textContent=w; el.classList.toggle('has-word',w.length>0); }
+  const btn=document.getElementById('btn-word-submit');
+  if(btn) btn.disabled=!w;
+  if(btn&&w) btn.textContent=`✅ Gönder (${w.length} harf)`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// NUMBER PHASE UI
+// ═══════════════════════════════════════════════════════════════
+function renderNumberPhase(numbers, target){
+  numAvail = numbers.map((v,i)=>({ value:v, id:i }));
+  numFirstIdx=null; numSelOp=null; numSteps=[]; numCurResult=null;
+  const card = document.getElementById('question-card');
+  card.innerHTML = buildNumberHTML(numbers, target);
+}
+
+function buildNumberHTML(numbers, target){
+  return `
+    <div class="target-box">
+      <div class="target-lbl">Hedef Sayı</div>
+      <div class="target-num">${target}</div>
+    </div>
+    <div class="number-tiles" id="num-tiles">${renderNumTiles()}</div>
+    <div class="ops-row">
+      ${['+','−','×','÷'].map((op,i)=>`
+        <button class="op-btn" id="op-${i}" onclick="clickOp(${i})">${op}</button>
+      `).join('')}
+      <button class="op-btn util" onclick="numUndo()" title="Geri al">↩</button>
+      <button class="op-btn util" onclick="numReset()" title="Sıfırla">🔄</button>
+    </div>
+    <div class="steps-log" id="steps-log"></div>
+    <div class="calc-strip">
+      <span class="calc-expr" id="calc-expr">sayılara tıkla...</span>
+      <span class="calc-result-val far" id="calc-result">—</span>
+    </div>
+    <div class="manual-row hidden" id="manual-row">
+      <input class="input" type="number" id="inp-manual" placeholder="Sonucu yaz" style="font-family:var(--font-mono);text-align:center;font-size:1.2rem;"/>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:10px;">
+      <button class="btn btn-ghost btn-sm" onclick="toggleManual()">⌨ Elle giriş</button>
+      <button class="btn btn-primary" style="flex:1" id="btn-num-submit" onclick="submitAnswer()">
+        ✅ Gönder
+      </button>
+    </div>
+  `;
+}
+
+function renderNumTiles(){
+  return numAvail.map((n,i)=>`
+    <div class="num-tile ${BIG_NUMBERS.includes(n.value)?'big':'small'} ${numFirstIdx===i?'active-sel':''}"
+      id="ntile-${n.id}" onclick="clickNum(${i})">
+      ${n.value}
+    </div>
+  `).join('');
+}
+
+function refreshNumTiles(){
+  const c=document.getElementById('num-tiles');
+  if(c) c.innerHTML=renderNumTiles();
+}
+
+function clickNum(idx){
+  if(submitted||numAvail[idx]===undefined) return;
+  if(numFirstIdx===null){
+    numFirstIdx=idx;
+    refreshNumTiles();
+  } else if(numFirstIdx===idx){
+    numFirstIdx=null;
+    refreshNumTiles();
+  } else if(numSelOp!==null){
+    const ops=['+','−','×','÷'];
+    const a=numAvail[numFirstIdx].value;
+    const b=numAvail[idx].value;
+    const opSym=ops[numSelOp];
+    let result=null, desc='';
+    if(opSym==='+'){result=a+b;desc=`${a} + ${b} = ${result}`;}
+    else if(opSym==='−'){result=a-b;desc=`${a} − ${b} = ${result}`;}
+    else if(opSym==='×'){result=a*b;desc=`${a} × ${b} = ${result}`;}
+    else if(opSym==='÷'){
+      if(b!==0&&a%b===0){result=a/b;desc=`${a} ÷ ${b} = ${result}`;}
+      else{showToast('⚠️ Tam bölünme gerekli'); return;}
+    }
+    if(result===null||result<=0){showToast('⚠️ Geçersiz işlem'); return;}
+    numSteps.push(desc);
+    numAvail=numAvail.filter((_,i)=>i!==numFirstIdx&&i!==idx);
+    numAvail.push({value:result,id:Date.now()});
+    numCurResult=result;
+    numFirstIdx=null; numSelOp=null;
+    refreshNumTiles();
+    updateOps();
+    updateCalcStrip(result);
+    updateSteps();
+  }
+}
+
+function clickOp(i){
+  if(submitted) return;
+  numSelOp = numSelOp===i ? null : i;
+  updateOps();
+}
+
+function updateOps(){
+  [0,1,2,3].forEach(i=>{
+    const b=document.getElementById('op-'+i);
+    if(b) b.classList.toggle('sel', numSelOp===i);
+  });
+}
+
+function updateCalcStrip(result){
+  const el=document.getElementById('calc-result');
+  if(!el) return;
+  el.textContent=result;
+  const diff=Math.abs(result-phaseQuestion.target);
+  el.className='calc-result-val '+(diff===0?'exact':diff<=15?'close':'far');
+}
+
+function updateSteps(){
+  const el=document.getElementById('steps-log');
+  if(el) el.innerHTML=numSteps.map(s=>`<div>• ${s}</div>`).join('');
+}
+
+function numUndo(){
+  if(!numSteps.length||submitted) return;
+  const prev=numSteps.slice(0,-1);
+  numAvail=phaseQuestion.numbers.map((v,i)=>({value:v,id:i}));
+  numCurResult=null;
+  const opMap={'+':'+','−':'-','×':'*','÷':'/'};
+  // Re-apply prev steps
+  for(const step of prev){
+    const m=step.match(/(\d+) ([+\-×÷]) (\d+) = (\d+)/);
+    if(!m) continue;
+    const [,as,op,bs,rs]=[...m];
+    const a=+as,b=+bs,r=+rs;
+    const ai=numAvail.findIndex(x=>x.value===a);
+    const bi=numAvail.findIndex((x,i)=>x.value===b&&i!==ai);
+    if(ai===-1||bi===-1) continue;
+    numAvail=numAvail.filter((_,i)=>i!==ai&&i!==bi);
+    numAvail.push({value:r,id:Date.now()+Math.random()});
+    numCurResult=r;
+  }
+  numSteps=prev; numFirstIdx=null; numSelOp=null;
+  refreshNumTiles(); updateOps(); updateSteps();
+  if(numCurResult!==null) updateCalcStrip(numCurResult);
+  else { const el=document.getElementById('calc-result'); if(el){el.textContent='—';el.className='calc-result-val far';} }
+}
+
+function numReset(){
+  if(submitted) return;
+  numAvail=phaseQuestion.numbers.map((v,i)=>({value:v,id:i}));
+  numFirstIdx=null; numSelOp=null; numSteps=[]; numCurResult=null;
+  refreshNumTiles(); updateOps(); updateSteps();
+  const el=document.getElementById('calc-result'); if(el){el.textContent='—';el.className='calc-result-val far';}
+}
+
+function toggleManual(){
+  const row=document.getElementById('manual-row');
+  if(row) row.classList.toggle('hidden');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SUBMIT ANSWER
+// ═══════════════════════════════════════════════════════════════
+function submitAnswer(){
+  if(submitted) return;
+  submitted=true;
+  let answer;
+  if(phaseQuestion.type==='word'){
+    const w=wordSelected.map(s=>s.letter).join('');
+    answer={ word:w };
+  } else {
+    const manual=document.getElementById('inp-manual');
+    const val = manual&&!document.getElementById('manual-row').classList.contains('hidden')&&manual.value
+      ? parseInt(manual.value) : numCurResult;
+    answer={ value: val };
+  }
+
+  if(isHost){
+    answers[myPeerId]=answer;
+    answeredCount=Object.keys(answers).length;
+    broadcast({ type:'answer_count', count:answeredCount, total:players.length });
+    if(answeredCount>=players.length) endPhase();
+  } else {
+    const hostConn=Object.values(connections)[0];
+    if(hostConn) hostConn.send({ type:'submit_answer', answer });
+  }
+
+  showSubmittedState(answer);
+}
+
+function showSubmittedState(answer){
+  const disp = phaseQuestion.type==='word'
+    ? `"${answer.word||'(boş)'}"` 
+    : `${answer.value??'(boş)'}`;
+  document.getElementById('question-card').innerHTML=`
+    <div class="submitted-state">
+      <div class="submitted-icon">✅</div>
+      <div class="submitted-word">${disp}</div>
+      <div class="submitted-wait pulse" id="wait-lbl">Diğer oyuncular bekleniyor... (${answeredCount}/${players.length})</div>
+    </div>
+  `;
+}
+
+function updateSubmittedWait(){
+  const el=document.getElementById('wait-lbl');
+  if(el) el.textContent=`Diğer oyuncular bekleniyor... (${answeredCount}/${players.length})`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SHOW RESULTS
+// ═══════════════════════════════════════════════════════════════
+function showResults(){
+  stopTimer();
+  const phaseLbl=document.getElementById('lbl-phase');
+  phaseLbl.className='phase-label phase-results';
+  phaseLbl.textContent='📊 Sonuçlar';
+  gameState='results';
+  renderScoreboard();
+
+  const sorted=[...players].sort((a,b)=>{
+    const pa=phaseResult.results[a.id]?.points??0;
+    const pb=phaseResult.results[b.id]?.points??0;
+    return pb-pa;
+  });
+  const medals=['🥇','🥈','🥉'];
+
+  const card=document.getElementById('question-card');
+  let html=`<div class="results-wrap">`;
+  sorted.forEach((p,i)=>{
+    const r=phaseResult.results[p.id];
+    const pts=r?.points??0;
+    const isMe=p.id===myPeerId;
+    const ptsClass=pts>=7?'pts-hi':pts>=3?'pts-mid':'pts-lo';
+    let answerText='cevap vermedi';
+    if(phaseResult.type==='word'){
+      if(r?.word) answerText=r.valid?`"${r.word}" ✓ — ${r.length} harf`:`"${r.word}" ✗ geçersiz`;
+    } else {
+      if(r?.value!==null&&r?.value!==undefined)
+        answerText=`${r.value} ${r.diff===0?'🎯':`(${r.diff} fark)`}`;
+    }
+    html+=`
+      <div class="result-row ${isMe?'me':''}">
+        <div class="result-rank">${medals[i]||`${i+1}.`}</div>
+        <div class="avatar ${avColor(players.indexOf(p))}">${getInitial(p.name)}</div>
+        <div class="result-info">
+          <div class="result-name">${p.name}${isMe?' <span style="color:var(--blue);font-size:0.72rem;">(sen)</span>':''}</div>
+          <div class="result-answer">${answerText}</div>
+        </div>
+        <div class="result-pts ${ptsClass}">+${pts}</div>
+      </div>`;
+  });
+  html+=`</div>`;
+
+  // Computer hint
+  if(phaseResult.type==='word'&&phaseResult.question?.bestWord){
+    html+=`<div class="computer-best">💡 En uzun kelime: <strong>${phaseResult.question.bestWord}</strong> (${phaseResult.question.bestWord.length} harf)</div>`;
+  }
+  if(phaseResult.type==='number'&&phaseResult.question?.solution){
+    const sol=phaseResult.question.solution;
+    html+=`<div class="computer-best">💡 Bilgisayar: <strong>${sol.value}</strong>${sol.steps?.length?'<br>'+sol.steps.slice(0,3).map(s=>`• ${s}`).join('<br>'):''}
+    </div>`;
+  }
+
+  html+=`<div class="next-hint pulse" id="next-hint">
+    ${currentRound<settings.totalRounds||currentPhase==='word'?'Sonraki tur 6 saniye içinde...':'Oyun bitiyor...'}
+  </div>`;
+
+  card.innerHTML=html;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SCOREBOARD
+// ═══════════════════════════════════════════════════════════════
+function renderScoreboard(){
+  const strip=document.getElementById('scoreboard');
+  const sorted=[...players].sort((a,b)=>b.score-a.score);
+  strip.innerHTML=sorted.map((p,i)=>`
+    <div class="score-chip ${p.id===myPeerId?'me':''} ${i===0?'leading':''}">
+      <div class="avatar ${avColor(players.indexOf(p))}" style="width:24px;height:24px;border-radius:7px;font-size:0.72rem;">${getInitial(p.name)}</div>
+      <span class="score-chip-name">${p.name}</span>
+      <span class="score-chip-pts">${p.score}</span>
+    </div>
+  `).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// GAME OVER
+// ═══════════════════════════════════════════════════════════════
+function showGameOver(winner){
+  stopTimer();
+  showScreen('screen-gameover');
+  document.getElementById('go-winner-name').textContent=winner.name;
+  document.getElementById('go-winner-score').textContent=winner.id===myPeerId?'🎉 Tebrikler, kazandın!':winner.score+' puan';
+  document.querySelector('.winner-trophy').textContent=winner.id===myPeerId?'🏆':'🎮';
+
+  const sorted=[...players].sort((a,b)=>b.score-a.score);
+  const medals=['🥇','🥈','🥉'];
+  const list=document.getElementById('go-final-list');
+  list.innerHTML='<div class="card-title" style="margin-bottom:12px;">🏅 Final Sıralaması</div>'+
+    sorted.map((p,i)=>`
+      <div class="final-row">
+        <div class="final-rank">${medals[i]||`${i+1}.`}</div>
+        <div class="avatar ${avColor(players.indexOf(p))}">${getInitial(p.name)}</div>
+        <div class="final-name">${p.name}${p.id===myPeerId?' <span style="color:var(--blue);font-size:0.75rem;">(sen)</span>':''}</div>
+        <div class="final-pts">${p.score}</div>
+      </div>
+    `).join('');
+}
+
+function goHome(){
+  if(peer) try{ peer.destroy(); }catch(e){}
+  peer=null; connections={}; players=[]; isHost=false;
+  gameState='lobby';
+  showScreen('screen-home');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TIMER
+// ═══════════════════════════════════════════════════════════════
+const CIRC=2*Math.PI*27;
+function startTimer(duration, onExpire){
+  stopTimer();
+  timeLeft=duration;
+  updateTimer(duration, duration);
+  timerInterval=setInterval(()=>{
+    timeLeft--;
+    updateTimer(timeLeft, duration);
+    if(timeLeft<=0){ stopTimer(); onExpire?.(); }
+  }, 1000);
+}
+function stopTimer(){ clearInterval(timerInterval); timerInterval=null; }
+function updateTimer(t, total){
+  const pct=t/total;
+  const offset=CIRC*(1-pct);
+  const color=pct>0.5?'#06d6a0':pct>0.25?'#ffd166':'#e63946';
+  const ring=document.getElementById('timer-ring');
+  const num=document.getElementById('timer-num');
+  if(ring){ ring.style.strokeDashoffset=offset; ring.style.stroke=color; }
+  if(num){ num.textContent=t; num.style.color=color; }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// WORD LOGIC
+// ═══════════════════════════════════════════════════════════════
+function drawLetters(count=9){
+  const vowelPool=LETTER_POOL.filter(l=>VOWELS.has(l));
+  const consPool=LETTER_POOL.filter(l=>!VOWELS.has(l));
+  const vCount=3+Math.floor(Math.random()*3); // 3,4,5
+  const cCount=count-vCount;
+  const res=[];
+  const sv=shuffle(vowelPool), sc=shuffle(consPool);
+  for(let i=0;i<vCount;i++) res.push(sv[i%sv.length]);
+  for(let i=0;i<cCount;i++) res.push(sc[i%sc.length]);
+  return shuffle(res);
+}
+
+function isValidWord(word, letters){
+  if(!word) return false;
+  const upper=word.toUpperCase();
+  const avail=[...letters];
+  for(const ch of upper){
+    const idx=avail.indexOf(ch);
+    if(idx===-1) return false;
+    avail.splice(idx,1);
+  }
+  return WORD_LIST.has(word.toLowerCase());
+}
+
+function findBestWord(letters){
+  let best='';
+  for(const w of WORD_LIST){
+    if(isValidWord(w,letters)&&w.length>best.length) best=w;
+  }
+  return best;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// NUMBER LOGIC
+// ═══════════════════════════════════════════════════════════════
+function generateNumbers(){
+  const bigShuf=shuffle([...BIG_NUMBERS]);
+  const smallPool=shuffle([1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10]);
+  const bigCount=Math.floor(Math.random()*3);
+  const res=[];
+  for(let i=0;i<bigCount;i++) res.push(bigShuf[i]);
+  for(let i=0;i<6-bigCount;i++) res.push(smallPool[i]);
+  return res;
+}
+
+function solveNumbers(numbers, target){
+  let best=null, bestDiff=Infinity;
+  function bt(nums, steps){
+    for(const n of nums){
+      const d=Math.abs(n.value-target);
+      if(d<bestDiff){ bestDiff=d; best={value:n.value,steps:[...steps,...n.steps]}; }
+    }
+    if(bestDiff===0) return;
+    for(let i=0;i<nums.length;i++){
+      for(let j=0;j<nums.length;j++){
+        if(i===j) continue;
+        const a=nums[i],b=nums[j];
+        const rest=nums.filter((_,k)=>k!==i&&k!==j);
+        const ops=[
+          {value:a.value+b.value,desc:`${a.value} + ${b.value} = ${a.value+b.value}`},
+          {value:a.value-b.value,desc:`${a.value} − ${b.value} = ${a.value-b.value}`},
+          {value:a.value*b.value,desc:`${a.value} × ${b.value} = ${a.value*b.value}`},
+        ];
+        if(b.value!==0&&a.value%b.value===0)
+          ops.push({value:a.value/b.value,desc:`${a.value} ÷ ${b.value} = ${a.value/b.value}`});
+        for(const op of ops){
+          if(op.value<=0) continue;
+          bt([...rest,{value:op.value,steps:[...a.steps,...b.steps,op.desc]}], steps);
+          if(bestDiff===0) return;
+        }
+      }
+    }
+  }
+  bt(numbers.map(n=>({value:n,steps:[]})),[]);
+  return best;
+}
+
+function calcNumberScore(val, target, max=10){
+  if(val===null||val===undefined||isNaN(val)) return 0;
+  const d=Math.abs(val-target);
+  if(d===0) return max;
+  if(d<=5) return Math.round(max*0.7);
+  if(d<=10) return Math.round(max*0.5);
+  if(d<=25) return Math.round(max*0.3);
+  return 0;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// KEYBOARD SHORTCUTS
+// ═══════════════════════════════════════════════════════════════
+document.addEventListener('keydown', e=>{
+  if(e.key==='Enter'){
+    const home=document.getElementById('screen-home');
+    if(home.classList.contains('active')) createRoom();
+  }
+  if(e.key==='Backspace'&&gameState==='word'&&!submitted){
+    e.preventDefault(); wordUndo();
+  }
+  if(e.key==='Escape'&&gameState==='word'&&!submitted) wordClear();
+});
+
+document.getElementById('inp-code').addEventListener('keydown', e=>{
+  if(e.key==='Enter') joinRoom();
+});
+document.getElementById('inp-name').addEventListener('keydown', e=>{
+  if(e.key==='Enter'){
+    const code=document.getElementById('inp-code').value.trim();
+    if(code) joinRoom(); else createRoom();
+  }
+});
+
+// URL param — otomatik oda kodu doldur
+(()=>{
+  const u=new URLSearchParams(location.search);
+  const c=u.get('join')||u.get('code');
+  if(c){ document.getElementById('inp-code').value=c.toUpperCase(); }
+})();
+</script>
+</body>
+</html>
