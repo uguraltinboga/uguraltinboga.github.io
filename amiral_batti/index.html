@@ -928,6 +928,20 @@ body.light .rematch-box {
   .grid-row-num { width:22px; }
   .lobby-cards { gap:16px; }
   .boards-layout { gap:16px; }
+/* ── VERSİYON ETİKETİ ── */
+.version-tag {
+  position: fixed;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.6rem;
+  color: rgba(77,184,232,0.3);
+  letter-spacing: 2px;
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+  z-index: 1;
 }
 </style>
 </head>
@@ -967,7 +981,7 @@ body.light .rematch-box {
           <span id="create-name-saved" style="display:none;color:var(--green-ready);font-size:0.65rem;letter-spacing:1px">● KAYDEDİLDİ</span>
         </div>
         <input class="input-field" id="create-name" placeholder="Adınızı girin..." maxlength="20"
-          oninput="onNameInput('create-name')">
+          oninput="this.value=this.value.toUpperCase();onNameInput('create-name')">
       </div>
       <button class="btn btn-primary btn-full" onclick="createRoom()">
         <span>⚓</span> ODA OLUŞTUR
@@ -1005,12 +1019,13 @@ body.light .rematch-box {
           <span id="join-name-saved" style="display:none;color:var(--green-ready);font-size:0.65rem;letter-spacing:1px">● KAYDEDİLDİ</span>
         </div>
         <input class="input-field" id="join-name" placeholder="Adınızı girin..." maxlength="20"
-          oninput="onNameInput('join-name')">
+          oninput="this.value=this.value.toUpperCase();onNameInput('join-name')">
       </div>
       <div class="input-group" style="margin-bottom:14px">
         <div class="input-label">Oda Kodu</div>
         <div style="position:relative">
-          <input class="input-field" id="join-code" placeholder="Oda kodunu girin..." maxlength="40">
+          <input class="input-field" id="join-code" placeholder="Oda kodunu girin..." maxlength="6"
+            oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'')">
           <div id="join-code-auto-badge" style="display:none;position:absolute;right:10px;top:50%;transform:translateY(-50%);background:var(--green-ready);color:#000;font-size:0.6rem;font-family:'Share Tech Mono',monospace;padding:2px 6px;border-radius:4px;letter-spacing:1px">OTOMATİK</div>
         </div>
       </div>
@@ -1258,6 +1273,7 @@ body.light .rematch-box {
     <div class="input-group" style="margin-bottom:16px;text-align:left">
       <div class="input-label">Komutan Adı</div>
       <input class="input-field" id="modal-name-input" placeholder="Adınızı girin..." maxlength="20"
+        oninput="this.value=this.value.toUpperCase()"
         onkeydown="if(event.key==='Enter') confirmNameModal()">
     </div>
     <button class="btn btn-primary btn-full" onclick="confirmNameModal()">
@@ -1978,14 +1994,14 @@ function getCellEl(rowsId, r, c) {
 // KISA KOD ÜRETECİ
 // ═══════════════════════════════════════════════════
 // PeerJS'in uzun UUID'si yerine 6 haneli okunabilir kod üret
-// Format: ABC-123  (3 harf + 3 rakam)
+// Format: ABC123  (3 harf + 3 rakam, tiresiz)
 function generateShortCode() {
   const letters = 'ABCDEFGHJKLMNPQRSTUVWXYZ'; // I,O yok (karışmasın)
   const digits  = '23456789';                  // 0,1 yok
   let l = '', d = '';
   for (let i=0;i<3;i++) l += letters[Math.floor(Math.random()*letters.length)];
   for (let i=0;i<3;i++) d += digits[Math.floor(Math.random()*digits.length)];
-  return l + '-' + d;
+  return l + d;
 }
 
 // ═══════════════════════════════════════════════════
@@ -2091,8 +2107,8 @@ function updateReconnectCountdown(wasInGame) {
 // Peer ID olarak sessionCode + kendi rolünü kullanır → sabit, tahmin edilebilir
 function getReconnectPeerId(role) {
   // role: 'host' veya 'guest'
-  // sessionCode: "ABC-123" → "AB123host" gibi temiz bir ID
-  return sessionCode.replace('-','') + role;
+  // sessionCode: "ABC123" → "ABC123host"
+  return sessionCode + role;
 }
 
 function beginListeningForReconnect() {
@@ -3768,5 +3784,6 @@ document.addEventListener('keydown', e => {
   }
 });
 </script>
+<div class="version-tag">v20260526.1</div>
 </body>
 </html>

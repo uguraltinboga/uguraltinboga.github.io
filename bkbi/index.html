@@ -4,657 +4,706 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Bir Kelime Bir İşlem</title>
-<meta name="description" content="Türkçe kelime ve matematik yarışması">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎯</text></svg>">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 <style>
+/* ═══════════════════════════════════════════
+   TRT RETRO THEME — Orijinal yarışma estetiği
+   ═══════════════════════════════════════════ */
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@400;600;700;800&display=swap');
+
 :root {
-  --bg: #0a0a0f;
-  --bg2: #111118;
-  --bg3: #1a1a24;
-  --border: rgba(255,255,255,0.08);
-  --border2: rgba(255,255,255,0.14);
-  --accent: #e63946;
-  --accent2: #ff6b6b;
-  --gold: #ffd166;
-  --gold2: #ffba08;
-  --green: #06d6a0;
-  --blue: #118ab2;
-  --purple: #9b5de5;
-  --text: #f8f9fa;
-  --muted: #6c757d;
-  --muted2: #adb5bd;
-  --card: rgba(255,255,255,0.04);
-  --card2: rgba(255,255,255,0.07);
-  --r: 14px;
-  --r2: 20px;
-  --font-display: 'Syne', sans-serif;
-  --font-mono: 'Space Mono', monospace;
+  /* TRT Orijinal Renkler */
+  --trt-bg:       #0077aa;   /* Ana turkuaz arka plan */
+  --trt-dark:     #005580;   /* Koyu mavi panel */
+  --trt-darker:   #003d5c;   /* Daha koyu panel */
+  --trt-tile:     #006699;   /* Harf/sayı kutu */
+  --trt-tile-lit: #008ec4;   /* Aktif kutu */
+  --trt-cyan:     #00e5ff;   /* Parlak cyan - harfler */
+  --trt-cyan2:    #40f0ff;   /* Daha parlak */
+  --trt-orange:   #ff6600;   /* Turuncu vurgu */
+  --trt-orange2:  #ff8833;   /* Açık turuncu */
+  --trt-yellow:   #ffdd00;   /* Sarı */
+  --trt-green:    #00ff88;   /* Yeşil onay */
+  --trt-red:      #ff3333;   /* Kırmızı hata */
+  --trt-white:    #ffffff;
+  --trt-glow:     0 0 12px rgba(0,229,255,0.6), 0 0 24px rgba(0,229,255,0.3);
+  --trt-glow-o:   0 0 12px rgba(255,102,0,0.7), 0 0 24px rgba(255,102,0,0.4);
+  --font-display: 'Orbitron', monospace;
+  --font-body:    'Exo 2', sans-serif;
 }
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; overflow-x: hidden; }
+
 body {
-  font-family: var(--font-display);
-  background: var(--bg);
-  color: var(--text);
+  font-family: var(--font-body);
+  background: var(--trt-bg);
+  background-image:
+    radial-gradient(circle at 15% 25%, rgba(0,180,255,0.15) 0%, transparent 45%),
+    radial-gradient(circle at 85% 75%, rgba(0,80,140,0.2) 0%, transparent 45%);
+  color: var(--trt-white);
   min-height: 100vh;
+  user-select: none;
 }
+
+/* Puzzle piece background pattern — TRT stüdyo duvarı */
 body::before {
   content: '';
   position: fixed; inset: 0; z-index: 0; pointer-events: none;
-  background:
-    radial-gradient(ellipse 60% 40% at 15% 20%, rgba(230,57,70,0.06) 0%, transparent 60%),
-    radial-gradient(ellipse 50% 50% at 85% 80%, rgba(17,138,178,0.06) 0%, transparent 60%),
-    radial-gradient(ellipse 40% 60% at 50% 50%, rgba(155,93,229,0.04) 0%, transparent 70%);
+  opacity: 0.06;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Crect x='10' y='10' width='24' height='24' rx='4' fill='none' stroke='white' stroke-width='2'/%3E%3Crect x='46' y='10' width='24' height='24' rx='4' fill='none' stroke='white' stroke-width='2'/%3E%3Crect x='10' y='46' width='24' height='24' rx='4' fill='none' stroke='white' stroke-width='2'/%3E%3Crect x='46' y='46' width='24' height='24' rx='4' fill='none' stroke='white' stroke-width='2'/%3E%3C/svg%3E");
 }
 
-/* ══════════════════ SCREENS ══════════════════ */
-.screen { display: none; position: relative; z-index: 1; min-height: 100vh; padding: 20px; }
-.screen.active { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+/* ══ SCREENS ══ */
+.screen { display: none; position: relative; z-index: 1; min-height: 100vh; flex-direction: column; align-items: center; justify-content: center; padding: 16px; }
+.screen.active { display: flex; }
 
-/* ══════════════════ LOGO ══════════════════ */
-.logo {
-  text-align: center;
-  margin-bottom: 32px;
+/* ══ TRT HEADER BAND ══ */
+.trt-header {
+  background: var(--trt-darker);
+  border-bottom: 3px solid var(--trt-cyan);
+  padding: 12px 24px;
+  display: flex; align-items: center; justify-content: space-between;
+  width: 100%; position: relative;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
 }
-.logo-text {
-  font-size: clamp(2rem, 7vw, 4rem);
-  font-weight: 800;
+.trt-logo {
+  font-family: var(--font-display);
+  font-size: clamp(1rem, 3vw, 1.4rem);
+  font-weight: 900;
+  color: var(--trt-cyan);
+  text-shadow: var(--trt-glow);
+  letter-spacing: 2px;
   line-height: 1.1;
-  letter-spacing: -1px;
-  background: linear-gradient(135deg, #fff 0%, var(--gold) 40%, var(--accent) 100%);
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-  background-clip: text;
 }
-.logo-sub {
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  color: var(--muted);
-  margin-top: 6px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
+.trt-logo span { color: var(--trt-orange); text-shadow: var(--trt-glow-o); }
+
+/* ══ SCOREBOARD BAR (orijinal gibi, alttan) ══ */
+.score-bar {
+  background: var(--trt-darker);
+  border: 2px solid var(--trt-dark);
+  border-radius: 6px;
+  display: flex; align-items: center;
+  overflow: hidden;
+  box-shadow: inset 0 2px 8px rgba(0,0,0,0.4);
+}
+.score-cell {
+  padding: 8px 20px;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--trt-cyan);
+  text-shadow: var(--trt-glow);
+  border-right: 2px solid var(--trt-dark);
+  text-align: center;
+  min-width: 80px;
+}
+.score-cell:last-child { border-right: none; }
+.score-cell.name { font-size: 0.75rem; color: var(--trt-orange); text-shadow: var(--trt-glow-o); letter-spacing: 1px; min-width: 120px; }
+.score-cell.pts { font-size: 1.4rem; }
+
+/* ══ TRT TILE (harf/sayı kutusu) ══ */
+.trt-tile {
+  background: var(--trt-tile);
+  border: 3px solid var(--trt-tile-lit);
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--trt-cyan);
+  text-shadow: var(--trt-glow);
+  box-shadow: inset 0 2px 6px rgba(0,0,0,0.3), 0 2px 8px rgba(0,0,0,0.3);
+  transition: all 0.15s;
+  position: relative;
+  overflow: hidden;
+}
+.trt-tile::after {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 40%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.08) 0%, transparent 100%);
+}
+.trt-tile.letter-tile { width: 62px; height: 68px; font-size: 1.7rem; cursor: pointer; }
+.trt-tile.letter-tile:hover:not(.used) { background: var(--trt-tile-lit); transform: translateY(-3px); box-shadow: var(--trt-glow), inset 0 2px 6px rgba(0,0,0,0.3); }
+.trt-tile.letter-tile.used { opacity: 0.25; transform: none !important; cursor: default; }
+.trt-tile.letter-tile.joker { border-color: var(--trt-orange); color: var(--trt-orange); text-shadow: var(--trt-glow-o); }
+.trt-tile.letter-tile.reveal { animation: tileReveal 0.4s cubic-bezier(0.34,1.56,0.64,1); }
+@keyframes tileReveal {
+  0% { transform: rotateY(90deg) scale(0.5); opacity: 0; }
+  100% { transform: rotateY(0) scale(1); opacity: 1; }
+}
+.trt-tile.num-tile { min-width: 72px; height: 72px; font-size: 1.6rem; padding: 0 12px; cursor: pointer; }
+.trt-tile.num-tile.big { border-color: var(--trt-orange); color: var(--trt-orange); text-shadow: var(--trt-glow-o); }
+.trt-tile.num-tile:hover:not(.used) { background: var(--trt-tile-lit); transform: translateY(-3px); }
+.trt-tile.num-tile.used { opacity: 0.2; transform: none !important; cursor: default; }
+.trt-tile.num-tile.active-sel { border-color: var(--trt-yellow); color: var(--trt-yellow); transform: translateY(-5px); box-shadow: 0 0 16px var(--trt-yellow); }
+.trt-tile.num-tile.scroll-anim { animation: numScroll 2s ease-out forwards; }
+@keyframes numScroll {
+  0%   { transform: translateY(-20px); opacity: 0; }
+  15%  { transform: translateY(0); opacity: 1; }
+  85%  { transform: translateY(0); opacity: 1; }
+  100% { transform: translateY(0); opacity: 1; }
 }
 
-/* ══════════════════ CARDS ══════════════════ */
-.card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--r2);
-  padding: 24px;
+/* ══ WORD DISPLAY BAND (alt bant — SEMAVER gibi) ══ */
+.word-band {
+  background: var(--trt-darker);
+  border: 3px solid var(--trt-tile-lit);
+  border-radius: 6px;
+  padding: 10px 24px;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--trt-cyan);
+  text-shadow: var(--trt-glow);
+  letter-spacing: 6px;
+  min-height: 62px;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: inset 0 2px 10px rgba(0,0,0,0.4);
+  transition: all 0.2s;
 }
-.card-title {
-  font-size: 0.7rem;
-  font-family: var(--font-mono);
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  color: var(--muted);
-  margin-bottom: 16px;
-}
+.word-band.empty { color: rgba(0,229,255,0.25); font-size: 1rem; letter-spacing: 2px; }
 
-/* ══════════════════ BUTTONS ══════════════════ */
+/* ══ BUTTONS ══ */
 .btn {
   border: none; cursor: pointer;
-  font-family: var(--font-display);
-  font-weight: 700;
+  font-family: var(--font-body);
+  font-weight: 800;
+  border-radius: 6px;
+  padding: 12px 22px;
   font-size: 0.95rem;
-  border-radius: var(--r);
-  padding: 13px 24px;
-  transition: all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
-  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  position: relative; overflow: hidden;
-  letter-spacing: 0.2px;
+  transition: all 0.15s;
+  position: relative;
+  letter-spacing: 0.5px;
 }
-.btn::after {
-  content: '';
-  position: absolute; inset: 0;
-  background: rgba(255,255,255,0);
-  transition: background 0.15s;
-}
-.btn:hover::after { background: rgba(255,255,255,0.06); }
-.btn:active { transform: scale(0.97); }
-.btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
+.btn:hover { transform: translateY(-2px); }
+.btn:active { transform: scale(0.96); }
+.btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none !important; }
 
-.btn-primary {
-  background: linear-gradient(135deg, var(--accent), #c1121f);
-  color: #fff;
-  box-shadow: 0 4px 24px rgba(230,57,70,0.35);
+.btn-trt {
+  background: linear-gradient(135deg, var(--trt-tile-lit), var(--trt-dark));
+  color: var(--trt-cyan);
+  border: 2px solid var(--trt-tile-lit);
+  text-shadow: var(--trt-glow);
 }
-.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 30px rgba(230,57,70,0.45); }
+.btn-trt:hover { border-color: var(--trt-cyan); box-shadow: var(--trt-glow); }
 
-.btn-gold {
-  background: linear-gradient(135deg, var(--gold2), #e09a00);
-  color: #000;
-  box-shadow: 0 4px 24px rgba(255,186,8,0.3);
+.btn-orange {
+  background: linear-gradient(135deg, var(--trt-orange), #cc4400);
+  color: white;
+  border: 2px solid var(--trt-orange2);
+  box-shadow: var(--trt-glow-o);
 }
-.btn-gold:hover { transform: translateY(-2px); }
-
-.btn-ghost {
-  background: var(--card2);
-  border: 1px solid var(--border2);
-  color: var(--text);
-}
-.btn-ghost:hover { border-color: rgba(255,255,255,0.25); }
+.btn-orange:hover { background: linear-gradient(135deg, var(--trt-orange2), var(--trt-orange)); }
 
 .btn-green {
-  background: linear-gradient(135deg, #06d6a0, #02a77a);
-  color: #000;
-  box-shadow: 0 4px 20px rgba(6,214,160,0.3);
+  background: linear-gradient(135deg, #00aa55, #006633);
+  color: var(--trt-green);
+  border: 2px solid var(--trt-green);
+  text-shadow: 0 0 8px var(--trt-green);
 }
-.btn-green:hover { transform: translateY(-2px); }
 
-.btn-sm { padding: 8px 16px; font-size: 0.85rem; border-radius: 10px; }
-.btn-icon { width: 42px; height: 42px; padding: 0; border-radius: 12px; font-size: 1.1rem; }
+.btn-ghost {
+  background: rgba(0,0,0,0.25);
+  color: rgba(255,255,255,0.7);
+  border: 1px solid rgba(255,255,255,0.2);
+}
+.btn-ghost:hover { border-color: rgba(255,255,255,0.4); color: white; }
+
+.btn-choice {
+  background: var(--trt-tile);
+  border: 2px solid var(--trt-tile-lit);
+  color: var(--trt-cyan);
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  padding: 12px 16px;
+  text-shadow: var(--trt-glow);
+  min-width: 70px;
+}
+.btn-choice:hover { background: var(--trt-tile-lit); border-color: var(--trt-cyan); box-shadow: var(--trt-glow); }
+.btn-choice.selected { background: var(--trt-orange); border-color: var(--trt-orange2); color: white; text-shadow: var(--trt-glow-o); box-shadow: var(--trt-glow-o); }
+.btn-choice.vowel-btn { border-color: var(--trt-orange); color: var(--trt-orange); text-shadow: var(--trt-glow-o); }
+.btn-choice.vowel-btn:hover { background: var(--trt-orange); color: white; }
 .w-full { width: 100%; }
 
-/* ══════════════════ INPUTS ══════════════════ */
-.input {
-  background: rgba(255,255,255,0.05);
-  border: 1px solid var(--border2);
-  border-radius: var(--r);
-  color: var(--text);
+/* ══ PANEL ══ */
+.panel {
+  background: var(--trt-darker);
+  border: 2px solid var(--trt-tile-lit);
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: inset 0 2px 10px rgba(0,0,0,0.3), 0 4px 20px rgba(0,0,0,0.3);
+}
+.panel-title {
+  font-family: var(--font-display);
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  color: var(--trt-orange);
+  text-shadow: var(--trt-glow-o);
+  margin-bottom: 14px;
+}
+
+/* ══ INPUT ══ */
+.input-trt {
+  background: var(--trt-tile);
+  border: 2px solid var(--trt-tile-lit);
+  border-radius: 6px;
+  color: var(--trt-cyan);
   font-family: var(--font-display);
   font-size: 1rem;
-  padding: 13px 18px;
+  padding: 12px 16px;
   width: 100%;
-  transition: border-color 0.2s, background 0.2s;
   outline: none;
+  text-shadow: var(--trt-glow);
+  transition: border-color 0.2s;
 }
-.input:focus { border-color: var(--accent); background: rgba(255,255,255,0.08); }
-.input::placeholder { color: var(--muted); }
-.input-mono { font-family: var(--font-mono); letter-spacing: 4px; text-transform: uppercase; text-align: center; font-size: 1.4rem; }
+.input-trt:focus { border-color: var(--trt-cyan); box-shadow: var(--trt-glow); }
+.input-trt::placeholder { color: rgba(0,229,255,0.3); }
+.input-trt.center { text-align: center; font-size: 1.4rem; letter-spacing: 4px; }
 
-/* ══════════════════ SCREEN: HOME ══════════════════ */
-#screen-home .panels {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
-  width: 100%; max-width: 680px;
-}
-@media(max-width:580px){ #screen-home .panels { grid-template-columns: 1fr; } }
-
-.home-hint {
-  margin-top: 20px;
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  color: var(--muted);
-  text-align: center;
-  letter-spacing: 1px;
-}
-
-/* ══════════════════ SCREEN: LOBBY ══════════════════ */
-#screen-lobby { gap: 20px; justify-content: flex-start; padding-top: 40px; }
-#screen-lobby .lobby-wrap { width: 100%; max-width: 760px; display: flex; flex-direction: column; gap: 16px; }
-
-.room-code-display {
-  display: flex; align-items: center; justify-content: center;
-  gap: 12px;
-  background: rgba(255,215,102,0.08);
-  border: 1px solid rgba(255,215,102,0.2);
-  border-radius: 50px;
-  padding: 10px 24px;
-  font-family: var(--font-mono);
-  font-size: 1.8rem;
-  font-weight: 700;
-  color: var(--gold);
-  letter-spacing: 8px;
-}
-
-.lobby-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-@media(max-width:580px){ .lobby-grid { grid-template-columns: 1fr; } }
-
-.player-slot {
-  display: flex; align-items: center; gap: 12px;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--border);
-}
-.player-slot:last-child { border-bottom: none; }
-.avatar {
-  width: 36px; height: 36px; border-radius: 10px;
-  display: flex; align-items: center; justify-content: center;
-  font-weight: 800; font-size: 0.95rem; flex-shrink: 0;
-}
-.player-slot-name { flex: 1; font-weight: 700; font-size: 0.95rem; }
-.badge {
-  font-family: var(--font-mono);
-  font-size: 0.65rem;
-  padding: 3px 8px; border-radius: 20px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-}
-.badge-host { background: rgba(255,215,102,0.15); color: var(--gold); }
-.badge-you { background: rgba(17,138,178,0.2); color: #56ccf2; }
-.badge-ready { background: rgba(6,214,160,0.15); color: var(--green); }
-.badge-wait { background: rgba(255,255,255,0.05); color: var(--muted); }
-
-.setting-row {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 12px 0; border-bottom: 1px solid var(--border); gap: 12px;
-}
-.setting-row:last-child { border-bottom: none; }
-.setting-label { font-size: 0.9rem; color: var(--muted2); }
-.setting-val {
-  font-family: var(--font-mono); font-weight: 700;
-  color: var(--gold); font-size: 1.1rem; min-width: 36px; text-align: center;
-}
-.stepper { display: flex; align-items: center; gap: 8px; }
-.stepper-btn {
-  width: 30px; height: 30px; border-radius: 8px;
-  background: var(--card2); border: 1px solid var(--border2);
-  color: var(--text); font-size: 1.1rem; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  transition: background 0.15s;
-}
-.stepper-btn:hover { background: rgba(255,255,255,0.12); }
-
-/* ══════════════════ SCOREBOARD STRIP ══════════════════ */
-.scoreboard-strip {
-  display: flex; gap: 8px; overflow-x: auto;
-  padding: 0 0 4px; flex-shrink: 0;
-}
-.score-chip {
-  display: flex; align-items: center; gap: 8px;
-  padding: 7px 14px; border-radius: 50px;
-  background: var(--card); border: 1px solid var(--border);
-  white-space: nowrap; flex-shrink: 0;
-  font-size: 0.85rem; transition: border-color 0.2s;
-}
-.score-chip.me { border-color: rgba(17,138,178,0.4); background: rgba(17,138,178,0.08); }
-.score-chip.leading { border-color: rgba(255,215,102,0.35); }
-.score-chip-name { font-weight: 700; }
-.score-chip-pts { font-family: var(--font-mono); font-weight: 700; color: var(--gold); }
-
-/* ══════════════════ SCREEN: GAME ══════════════════ */
-#screen-game {
-  justify-content: flex-start;
-  padding-top: 16px;
-  gap: 14px;
-}
-#screen-game .game-wrap { width: 100%; max-width: 860px; display: flex; flex-direction: column; gap: 14px; }
-
-.game-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.phase-label {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 5px 14px; border-radius: 50px;
-  font-family: var(--font-mono); font-size: 0.78rem;
-  font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
-}
-.phase-word { background: rgba(155,93,229,0.15); color: #c084fc; border: 1px solid rgba(155,93,229,0.3); }
-.phase-number { background: rgba(17,138,178,0.15); color: #56ccf2; border: 1px solid rgba(17,138,178,0.3); }
-.phase-results { background: rgba(6,214,160,0.12); color: var(--green); border: 1px solid rgba(6,214,160,0.3); }
-.round-label { font-family: var(--font-mono); font-size: 0.78rem; color: var(--muted2); }
-
-/* ══════════════════ TIMER ══════════════════ */
-.timer-wrap { position: relative; width: 64px; height: 64px; flex-shrink: 0; }
+/* ══ TIMER RING ══ */
+.timer-wrap { position: relative; width: 72px; height: 72px; flex-shrink: 0; }
 .timer-wrap svg { transform: rotate(-90deg); }
-.timer-track { fill: none; stroke: rgba(255,255,255,0.08); stroke-width: 5; }
-.timer-fill { fill: none; stroke-width: 5; stroke-linecap: round; transition: stroke-dashoffset 1s linear, stroke 0.4s; }
+.timer-track { fill: none; stroke: rgba(0,150,200,0.3); stroke-width: 6; }
+.timer-fill { fill: none; stroke-width: 6; stroke-linecap: round; transition: stroke-dashoffset 1s linear, stroke 0.4s; }
 .timer-num {
   position: absolute; inset: 0;
   display: flex; align-items: center; justify-content: center;
-  font-family: var(--font-mono); font-weight: 700; font-size: 1.05rem;
+  font-family: var(--font-display); font-weight: 700; font-size: 1.1rem;
+  color: var(--trt-cyan); text-shadow: var(--trt-glow);
 }
 
-/* ══════════════════ QUESTION CARD ══════════════════ */
-.question-card { padding: 28px; }
-
-/* Word Phase */
-.letters-row {
-  display: flex; flex-wrap: wrap; gap: 8px;
-  justify-content: center; margin: 20px 0;
+/* ══ PLAYER SLOT ══ */
+.player-slot {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 14px;
+  background: var(--trt-tile);
+  border: 1px solid var(--trt-tile-lit);
+  border-radius: 6px;
+  margin-bottom: 8px;
 }
-.letter-tile {
-  width: 56px; height: 64px; border-radius: 12px;
+.player-slot:last-child { margin-bottom: 0; }
+.p-initial {
+  width: 36px; height: 36px; border-radius: 8px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 1.6rem; font-weight: 800;
-  cursor: pointer; user-select: none;
-  transition: all 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
-  border: 2px solid transparent;
-  position: relative;
+  font-weight: 800; font-size: 0.9rem; flex-shrink: 0;
 }
-.letter-tile.vowel {
-  background: rgba(230,57,70,0.15);
-  border-color: rgba(230,57,70,0.35);
+.p-name { flex: 1; font-weight: 700; font-size: 0.92rem; }
+.badge {
+  font-size: 0.62rem; padding: 3px 8px; border-radius: 20px;
+  font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;
 }
-.letter-tile.consonant {
-  background: rgba(155,93,229,0.15);
-  border-color: rgba(155,93,229,0.35);
-}
-.letter-tile:hover:not(.used) { transform: translateY(-4px) scale(1.05); }
-.letter-tile.used { opacity: 0.22; transform: none !important; cursor: default; }
-.letter-tile.selected-anim {
-  animation: tileSelect 0.2s ease;
-}
-@keyframes tileSelect {
-  0% { transform: translateY(-4px) scale(1.1); }
-  100% { transform: translateY(0) scale(1); }
+.badge-host { background: rgba(255,102,0,0.2); color: var(--trt-orange); border: 1px solid var(--trt-orange); }
+.badge-you  { background: rgba(0,229,255,0.1); color: var(--trt-cyan); border: 1px solid var(--trt-cyan); }
+
+.av0 { background: rgba(255,102,0,0.3); color: var(--trt-orange); }
+.av1 { background: rgba(0,229,255,0.2); color: var(--trt-cyan); }
+.av2 { background: rgba(0,255,136,0.2); color: var(--trt-green); }
+.av3 { background: rgba(255,221,0,0.2); color: var(--trt-yellow); }
+.av4 { background: rgba(200,100,255,0.2); color: #cc66ff; }
+.av5 { background: rgba(255,80,80,0.2); color: #ff6666; }
+
+/* ══ ROOM CODE ══ */
+.room-code-badge {
+  display: inline-flex; align-items: center; gap: 10px;
+  background: var(--trt-tile);
+  border: 2px solid var(--trt-orange);
+  border-radius: 8px;
+  padding: 10px 24px;
+  font-family: var(--font-display);
+  font-size: 2rem; font-weight: 900;
+  color: var(--trt-orange);
+  text-shadow: var(--trt-glow-o);
+  letter-spacing: 8px;
 }
 
-.word-built {
-  min-height: 60px;
-  background: rgba(0,0,0,0.25);
-  border: 1px solid var(--border2);
-  border-radius: var(--r);
-  padding: 14px 20px;
-  font-family: var(--font-mono);
-  font-size: 1.5rem; font-weight: 700;
-  letter-spacing: 5px;
+/* ══ SETTING ROW ══ */
+.setting-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 0; border-bottom: 1px solid rgba(0,150,200,0.2); gap: 12px;
+}
+.setting-row:last-child { border-bottom: none; }
+.setting-label { font-size: 0.88rem; color: rgba(255,255,255,0.7); }
+.setting-val { font-family: var(--font-display); font-weight: 700; color: var(--trt-orange); font-size: 1.1rem; min-width: 36px; text-align: center; }
+.stepper { display: flex; align-items: center; gap: 6px; }
+.stepper-btn {
+  width: 28px; height: 28px; border-radius: 6px;
+  background: var(--trt-tile); border: 1px solid var(--trt-tile-lit);
+  color: var(--trt-cyan); font-size: 1.1rem; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
-  margin-bottom: 12px;
-  transition: border-color 0.2s;
+  transition: background 0.15s;
 }
-.word-built:empty::before { content: 'harflere tıkla...'; color: var(--muted); font-size: 0.9rem; letter-spacing: 1px; }
-.word-built.has-word { border-color: rgba(155,93,229,0.4); }
+.stepper-btn:hover { background: var(--trt-tile-lit); }
 
-.word-actions { display: flex; gap: 8px; }
-
-/* Number Phase */
-.target-box {
-  text-align: center; margin: 8px 0 20px;
-}
-.target-lbl { font-family: var(--font-mono); font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 4px; }
-.target-num {
-  font-family: var(--font-mono);
-  font-size: 3rem; font-weight: 700;
-  background: linear-gradient(135deg, var(--gold2), var(--gold));
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-}
-.number-tiles { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 16px; }
-.num-tile {
-  min-width: 58px; padding: 12px 14px; border-radius: 12px;
-  display: flex; align-items: center; justify-content: center;
-  font-family: var(--font-mono); font-size: 1.3rem; font-weight: 700;
-  cursor: pointer; user-select: none;
-  transition: all 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
-  border: 2px solid transparent;
-}
-.num-tile.big {
-  background: rgba(255,186,8,0.15); border-color: rgba(255,186,8,0.35); color: var(--gold);
-}
-.num-tile.small {
-  background: rgba(17,138,178,0.15); border-color: rgba(17,138,178,0.35);
-}
-.num-tile:hover:not(.used) { transform: translateY(-3px) scale(1.05); }
-.num-tile.used { opacity: 0.2; transform: none !important; cursor: default; }
-.num-tile.active-sel { outline: 3px solid var(--accent); outline-offset: 2px; transform: translateY(-4px); }
-
-.ops-row { display: flex; gap: 8px; justify-content: center; margin-bottom: 12px; flex-wrap: wrap; }
+/* ══ OP BUTTONS ══ */
 .op-btn {
-  width: 50px; height: 50px; border-radius: 12px;
-  background: var(--card2); border: 1px solid var(--border2);
-  color: var(--text); font-family: var(--font-mono); font-size: 1.3rem; font-weight: 700;
+  width: 52px; height: 52px; border-radius: 8px;
+  background: var(--trt-tile); border: 2px solid var(--trt-tile-lit);
+  color: var(--trt-cyan); font-family: var(--font-display); font-size: 1.3rem; font-weight: 700;
   cursor: pointer; display: flex; align-items: center; justify-content: center;
-  transition: all 0.15s;
+  transition: all 0.15s; text-shadow: var(--trt-glow);
 }
-.op-btn:hover { background: rgba(255,255,255,0.12); transform: scale(1.08); }
-.op-btn.sel { background: rgba(230,57,70,0.25); border-color: var(--accent); }
-.op-btn.util { font-size: 1rem; }
+.op-btn:hover { background: var(--trt-tile-lit); transform: scale(1.08); }
+.op-btn.sel { background: var(--trt-orange); border-color: var(--trt-orange2); color: white; text-shadow: var(--trt-glow-o); }
+.op-btn.util { font-size: 0.9rem; }
 
+/* ══ CALC STRIP ══ */
 .calc-strip {
-  background: rgba(0,0,0,0.25);
-  border: 1px solid var(--border2);
-  border-radius: var(--r);
+  background: var(--trt-tile);
+  border: 2px solid var(--trt-tile-lit);
+  border-radius: 6px;
   padding: 12px 18px;
   display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 8px; min-height: 54px;
+  min-height: 54px;
 }
-.calc-expr { font-family: var(--font-mono); color: var(--muted2); font-size: 0.85rem; }
-.calc-result-val {
-  font-family: var(--font-mono); font-size: 1.5rem; font-weight: 700;
-  transition: color 0.3s;
-}
-.calc-result-val.exact { color: var(--green); }
-.calc-result-val.close { color: var(--gold); }
-.calc-result-val.far { color: var(--muted2); }
+.calc-expr { font-family: var(--font-display); color: rgba(0,229,255,0.5); font-size: 0.75rem; }
+.calc-result-val { font-family: var(--font-display); font-size: 1.5rem; font-weight: 700; transition: color 0.3s; }
+.exact { color: var(--trt-green); text-shadow: 0 0 12px var(--trt-green); }
+.close { color: var(--trt-yellow); text-shadow: 0 0 12px var(--trt-yellow); }
+.far   { color: rgba(0,229,255,0.5); }
 
-.steps-log {
-  font-family: var(--font-mono); font-size: 0.78rem;
-  color: var(--muted); margin-bottom: 8px;
-  display: flex; flex-direction: column; gap: 2px;
-}
+/* ══ STEPS LOG ══ */
+.steps-log { font-family: var(--font-display); font-size: 0.72rem; color: rgba(0,229,255,0.5); display: flex; flex-direction: column; gap: 2px; margin: 8px 0; }
 
-.manual-row { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
-.manual-row .input { font-family: var(--font-mono); font-size: 1.2rem; text-align: center; }
-
-/* Submitted */
-.submitted-state {
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  padding: 30px; gap: 12px;
-  animation: fadeUp 0.35s ease;
-}
-@keyframes fadeUp { from{opacity:0;transform:translateY(14px);} to{opacity:1;transform:translateY(0);} }
-.submitted-icon { font-size: 2.8rem; }
-.submitted-word { font-family: var(--font-mono); font-size: 1.3rem; font-weight: 700; letter-spacing: 4px; }
-.submitted-wait { font-size: 0.82rem; color: var(--muted); font-family: var(--font-mono); }
-
-/* ══════════════════ RESULTS ══════════════════ */
-.results-wrap { display: flex; flex-direction: column; gap: 8px; }
+/* ══ RESULT ROW ══ */
 .result-row {
   display: flex; align-items: center; gap: 12px;
-  padding: 12px 16px; border-radius: var(--r);
-  background: var(--card); border: 1px solid var(--border);
-  transition: border-color 0.2s;
+  padding: 12px 14px; border-radius: 6px;
+  background: var(--trt-tile); border: 1px solid var(--trt-tile-lit);
+  margin-bottom: 8px;
 }
-.result-row.me { border-color: rgba(17,138,178,0.35); }
-.result-rank { font-size: 1.2rem; width: 28px; text-align: center; flex-shrink: 0; }
+.result-row.me { border-color: var(--trt-orange); background: rgba(255,102,0,0.12); }
+.result-rank { font-size: 1.2rem; width: 28px; text-align: center; }
 .result-info { flex: 1; min-width: 0; }
-.result-name { font-weight: 700; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.result-answer { font-family: var(--font-mono); font-size: 0.75rem; color: var(--muted2); margin-top: 2px; }
-.result-pts {
-  font-family: var(--font-mono); font-weight: 700; font-size: 1rem;
-  padding: 4px 12px; border-radius: 20px; flex-shrink: 0;
+.result-name { font-weight: 700; font-size: 0.88rem; }
+.result-answer { font-family: var(--font-display); font-size: 0.72rem; color: rgba(0,229,255,0.6); margin-top: 2px; }
+.result-pts { font-family: var(--font-display); font-weight: 700; font-size: 1rem; padding: 4px 12px; border-radius: 4px; }
+.pts-hi  { background: rgba(0,255,136,0.15); color: var(--trt-green); border: 1px solid var(--trt-green); }
+.pts-mid { background: rgba(255,221,0,0.12); color: var(--trt-yellow); border: 1px solid var(--trt-yellow); }
+.pts-lo  { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.4); border: 1px solid rgba(255,255,255,0.1); }
+
+/* ══ COMPUTER HINT ══ */
+.computer-hint {
+  margin-top: 12px; padding: 10px 14px;
+  background: rgba(0,255,136,0.06);
+  border: 1px solid rgba(0,255,136,0.25);
+  border-radius: 6px;
+  font-family: var(--font-display); font-size: 0.75rem; color: var(--trt-green);
+  line-height: 1.6;
 }
-.pts-hi { background: rgba(6,214,160,0.15); color: var(--green); }
-.pts-mid { background: rgba(255,215,102,0.15); color: var(--gold); }
-.pts-lo { background: rgba(255,255,255,0.05); color: var(--muted); }
+.computer-hint strong { color: white; }
 
-.computer-best {
-  margin-top: 14px; padding: 12px 16px;
-  background: rgba(6,214,160,0.06);
-  border: 1px solid rgba(6,214,160,0.18);
-  border-radius: var(--r);
-  font-size: 0.83rem; color: var(--green);
-  font-family: var(--font-mono);
-}
-.computer-best strong { color: #fff; }
+/* ══ ANIMATIONS ══ */
+.slide-up { animation: slideUp 0.4s cubic-bezier(0.34,1.56,0.64,1); }
+@keyframes slideUp { from{opacity:0;transform:translateY(20px);} to{opacity:1;transform:translateY(0);} }
+.fade-in { animation: fadeIn 0.35s ease; }
+@keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
+.pulse { animation: pulse 1.8s infinite; }
+@keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.45;} }
 
-.next-hint { text-align: center; margin-top: 10px; font-size: 0.78rem; color: var(--muted); font-family: var(--font-mono); }
-.pulse { animation: pulseOp 1.8s infinite; }
-@keyframes pulseOp { 0%,100%{opacity:1;} 50%{opacity:0.45;} }
-
-/* ══════════════════ SCREEN: GAMEOVER ══════════════════ */
-#screen-gameover { gap: 24px; }
-.winner-card { text-align: center; }
-.winner-trophy { font-size: 4rem; margin-bottom: 8px; }
-.winner-name { font-size: 2.2rem; font-weight: 800; color: var(--gold); }
-.winner-score { font-family: var(--font-mono); color: var(--muted2); margin-top: 4px; }
-.final-list { width: 100%; max-width: 480px; }
-.final-row {
-  display: flex; align-items: center; gap: 14px;
-  padding: 14px 0; border-bottom: 1px solid var(--border);
-}
-.final-row:last-child { border-bottom: none; }
-.final-rank { font-size: 1.3rem; width: 32px; }
-.final-name { flex: 1; font-weight: 700; }
-.final-pts { font-family: var(--font-mono); font-size: 1.2rem; font-weight: 700; color: var(--gold); }
-.go-actions { display: flex; gap: 12px; }
-
-/* ══════════════════ TOAST ══════════════════ */
+/* ══ TOAST ══ */
 .toast {
   position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
-  background: rgba(20,20,30,0.95); border: 1px solid var(--border2);
-  border-radius: var(--r); padding: 12px 24px;
-  font-size: 0.88rem; font-weight: 600; z-index: 9999;
-  backdrop-filter: blur(10px);
+  background: var(--trt-darker); border: 2px solid var(--trt-orange);
+  border-radius: 8px; padding: 12px 24px;
+  font-family: var(--font-display); font-size: 0.85rem; color: var(--trt-orange);
+  text-shadow: var(--trt-glow-o); z-index: 9999;
   animation: toastIn 0.3s ease;
-  white-space: nowrap;
+  white-space: nowrap; box-shadow: var(--trt-glow-o);
 }
 @keyframes toastIn { from{opacity:0;transform:translateX(-50%) translateY(16px);} to{opacity:1;transform:translateX(-50%) translateY(0);} }
 
-/* ══════════════════ AVATAR COLORS ══════════════════ */
-.av0 { background: rgba(230,57,70,0.25); color: #ff6b6b; }
-.av1 { background: rgba(17,138,178,0.25); color: #56ccf2; }
-.av2 { background: rgba(6,214,160,0.25); color: var(--green); }
-.av3 { background: rgba(255,186,8,0.25); color: var(--gold); }
-.av4 { background: rgba(155,93,229,0.25); color: #c084fc; }
-.av5 { background: rgba(245,101,101,0.2); color: #fc8181; }
+/* ══ SUBMITTED STATE ══ */
+.submitted-state {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 30px; gap: 14px; animation: slideUp 0.35s ease;
+}
+.sub-icon { font-size: 3rem; }
+.sub-word { font-family: var(--font-display); font-size: 1.4rem; color: var(--trt-cyan); text-shadow: var(--trt-glow); letter-spacing: 4px; }
+.sub-wait { font-size: 0.8rem; color: rgba(255,255,255,0.5); font-family: var(--font-display); }
 
-/* ══════════════════ UTILS ══════════════════ */
-.flex { display: flex; }
-.gap-2 { gap: 8px; }
-.gap-3 { gap: 12px; }
-.mt-2 { margin-top: 8px; }
-.mt-3 { margin-top: 12px; }
-.mt-4 { margin-top: 16px; }
-.text-muted { color: var(--muted); }
-.text-center { text-align: center; }
-.mono { font-family: var(--font-mono); }
-.hidden { display: none !important; }
-.spin { animation: spin 1.2s linear infinite; display: inline-block; }
-@keyframes spin { to { transform: rotate(360deg); } }
+/* ══ SELECTION PHASE UI ══ */
+.selection-phase {
+  display: flex; flex-direction: column; align-items: center; gap: 16px;
+  padding: 20px; animation: fadeIn 0.3s ease;
+}
+.sel-instruction {
+  font-family: var(--font-display); font-size: 0.8rem; color: rgba(255,255,255,0.7);
+  text-transform: uppercase; letter-spacing: 2px; text-align: center;
+}
+.sel-progress {
+  display: flex; gap: 8px; justify-content: center;
+}
+.sel-dot {
+  width: 12px; height: 12px; border-radius: 50%;
+  border: 2px solid rgba(0,229,255,0.4);
+  transition: all 0.3s;
+}
+.sel-dot.done { background: var(--trt-cyan); border-color: var(--trt-cyan); box-shadow: var(--trt-glow); }
+.sel-dot.current { border-color: var(--trt-orange); animation: pulse 1s infinite; }
+
+/* ══ WORD COUNT SELECTION ══ */
+.wcount-grid {
+  display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
+}
+.wcount-btn {
+  width: 60px; height: 60px; border-radius: 8px;
+  background: var(--trt-tile); border: 2px solid var(--trt-tile-lit);
+  color: var(--trt-cyan); font-family: var(--font-display); font-size: 1.4rem; font-weight: 700;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s; text-shadow: var(--trt-glow);
+}
+.wcount-btn:hover { background: var(--trt-tile-lit); border-color: var(--trt-cyan); transform: scale(1.08); box-shadow: var(--trt-glow); }
+.wcount-btn.no-answer { width: 120px; font-size: 0.75rem; letter-spacing: 1px; border-color: rgba(255,255,255,0.2); color: rgba(255,255,255,0.5); }
+.countdown-bar {
+  height: 4px; background: rgba(0,229,255,0.2); border-radius: 2px; overflow: hidden;
+  width: 100%; max-width: 400px;
+}
+.countdown-fill { height: 100%; background: var(--trt-cyan); transition: width 1s linear; box-shadow: var(--trt-glow); }
+.countdown-fill.urgent { background: var(--trt-orange); box-shadow: var(--trt-glow-o); }
+
+/* ══ HOME SCREEN ══ */
+#screen-home { gap: 24px; }
+.home-logo {
+  text-align: center;
+  padding: 20px 0;
+}
+.home-logo-text {
+  font-family: var(--font-display);
+  font-size: clamp(1.8rem, 6vw, 3.2rem);
+  font-weight: 900;
+  line-height: 1.1;
+  color: var(--trt-cyan);
+  text-shadow: var(--trt-glow);
+  letter-spacing: -1px;
+}
+.home-logo-text .accent { color: var(--trt-orange); text-shadow: var(--trt-glow-o); }
+.home-logo-sub {
+  font-family: var(--font-display); font-size: 0.7rem;
+  color: rgba(0,229,255,0.5); letter-spacing: 4px; text-transform: uppercase;
+  margin-top: 8px;
+}
+.home-panels {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 14px; width: 100%; max-width: 640px;
+}
+@media(max-width:560px){ .home-panels { grid-template-columns: 1fr; } }
+
+/* ══ LOBBY ══ */
+#screen-lobby { justify-content: flex-start; padding-top: 24px; gap: 16px; }
+.lobby-wrap { width: 100%; max-width: 740px; display: flex; flex-direction: column; gap: 14px; }
+.lobby-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media(max-width:560px){ .lobby-grid { grid-template-columns: 1fr; } }
+
+/* ══ GAME SCREEN ══ */
+#screen-game { justify-content: flex-start; padding-top: 12px; gap: 12px; }
+.game-wrap { width: 100%; max-width: 860px; display: flex; flex-direction: column; gap: 12px; }
+.game-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.phase-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 14px; border-radius: 4px;
+  font-family: var(--font-display); font-size: 0.7rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 2px;
+}
+.pb-word   { background: rgba(155,0,255,0.2); color: #cc66ff; border: 1px solid rgba(155,0,255,0.4); }
+.pb-number { background: rgba(255,102,0,0.15); color: var(--trt-orange); border: 1px solid rgba(255,102,0,0.4); text-shadow: var(--trt-glow-o); }
+.pb-result { background: rgba(0,255,136,0.12); color: var(--trt-green); border: 1px solid rgba(0,255,136,0.3); }
+.pb-select { background: rgba(255,221,0,0.12); color: var(--trt-yellow); border: 1px solid rgba(255,221,0,0.3); }
+.round-lbl { font-family: var(--font-display); font-size: 0.72rem; color: rgba(0,229,255,0.6); }
+
+/* Main tiles row — orijinal alt bant gibi */
+.tiles-band {
+  background: var(--trt-dark);
+  border: 3px solid var(--trt-tile-lit);
+  border-radius: 8px;
+  padding: 16px 20px;
+  box-shadow: inset 0 2px 12px rgba(0,0,0,0.4);
+}
+.tiles-row {
+  display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;
+  align-items: center;
+}
+
+/* Target / score display */
+.target-band {
+  display: flex; align-items: center; justify-content: center; gap: 24px;
+  padding: 12px 20px;
+  background: var(--trt-dark);
+  border: 3px solid var(--trt-tile-lit);
+  border-radius: 8px;
+}
+.target-big {
+  font-family: var(--font-display); font-size: 2.8rem; font-weight: 900;
+  color: var(--trt-cyan); text-shadow: var(--trt-glow);
+  letter-spacing: 4px;
+}
+.target-lbl { font-family: var(--font-display); font-size: 0.65rem; color: rgba(0,229,255,0.5); text-transform: uppercase; letter-spacing: 2px; text-align: center; margin-bottom: 4px; }
+
+/* Scoreboard strip */
+.score-strip {
+  display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px;
+}
+.sc-chip {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 14px;
+  background: var(--trt-tile); border: 1px solid var(--trt-tile-lit);
+  border-radius: 4px; white-space: nowrap; flex-shrink: 0;
+  font-size: 0.85rem;
+}
+.sc-chip.me { border-color: var(--trt-orange); background: rgba(255,102,0,0.1); }
+.sc-chip.lead { border-color: var(--trt-cyan); }
+.sc-name { font-weight: 700; }
+.sc-pts { font-family: var(--font-display); font-weight: 700; color: var(--trt-orange); }
+
+/* gameover */
+#screen-gameover { gap: 24px; }
+.go-trophy { font-size: 4.5rem; text-align: center; }
+.go-winner-name { font-family: var(--font-display); font-size: 2rem; font-weight: 900; color: var(--trt-orange); text-shadow: var(--trt-glow-o); text-align: center; }
+.go-winner-sub  { text-align: center; color: rgba(255,255,255,0.6); margin-top: 4px; font-size: 0.85rem; }
+.final-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid rgba(0,150,200,0.2); }
+.final-row:last-child { border-bottom: none; }
+.final-rank { font-size: 1.3rem; width: 32px; }
+.final-name { flex: 1; font-weight: 700; }
+.final-pts { font-family: var(--font-display); font-size: 1.2rem; font-weight: 700; color: var(--trt-orange); text-shadow: var(--trt-glow-o); }
+.go-actions { display: flex; gap: 12px; }
+
+/* utils */
+.flex { display: flex; } .gap-2{gap:8px;} .gap-3{gap:12px;}
+.mt-2{margin-top:8px;} .mt-3{margin-top:12px;} .mt-4{margin-top:16px;}
+.text-center{text-align:center;}
+.hidden{display:none!important;}
 </style>
 </head>
 <body>
 
-<!-- ══════════════════ SCREEN: HOME ══════════════════ -->
+<!-- ══════════════ SCREEN: HOME ══════════════ -->
 <div id="screen-home" class="screen active">
-  <div class="logo">
-    <div class="logo-text">Bir Kelime<br>Bir İşlem</div>
-    <div class="logo-sub">Kelime × Matematik Yarışması</div>
+  <div class="home-logo">
+    <div class="home-logo-text">Bir <span class="accent">Kelime</span><br>Bir <span class="accent">İşlem</span></div>
+    <div class="home-logo-sub">Kelime × Matematik Yarışması</div>
   </div>
 
-  <div style="width:100%;max-width:680px;margin-bottom:16px;">
-    <input id="inp-name" class="input" placeholder="👤  Kullanıcı adın" maxlength="18" style="margin-bottom:12px;font-size:1.05rem;" />
+  <div style="width:100%;max-width:640px;">
+    <input id="inp-name" class="input-trt" placeholder="Kullanıcı adın..." maxlength="18"
+      style="margin-bottom:12px;font-size:1.05rem;text-align:center;" />
   </div>
 
-  <div class="panels" style="width:100%;max-width:680px;">
-    <div class="card">
-      <div class="card-title">🎮 Oda Oluştur</div>
-      <p style="color:var(--muted);font-size:0.88rem;margin-bottom:18px;line-height:1.5;">Yeni oyun odası aç, arkadaşlarını davet et.</p>
-      <button class="btn btn-primary w-full" onclick="createRoom()">Oda Oluştur</button>
+  <div class="home-panels">
+    <div class="panel">
+      <div class="panel-title">🎮 Oda Oluştur</div>
+      <p style="color:rgba(255,255,255,0.6);font-size:0.85rem;margin-bottom:16px;line-height:1.5;">
+        Yeni oyun odası aç, arkadaşlarını davet et. Host olarak oyunu yönetirsin.
+      </p>
+      <button class="btn btn-orange w-full" onclick="createRoom()">Oda Oluştur</button>
     </div>
-    <div class="card">
-      <div class="card-title">🔑 Odaya Katıl</div>
-      <input id="inp-code" class="input input-mono" placeholder="XXXX" maxlength="4" style="margin-bottom:12px;" />
-      <button class="btn btn-ghost w-full" onclick="joinRoom()">Katıl</button>
+    <div class="panel">
+      <div class="panel-title">🔑 Odaya Katıl</div>
+      <input id="inp-code" class="input-trt center" placeholder="XXXX" maxlength="4" style="margin-bottom:12px;" />
+      <button class="btn btn-trt w-full" onclick="joinRoom()">Katıl</button>
     </div>
   </div>
 
-  <div class="home-hint">Host tarayıcısı oyun sunucusu olarak çalışır · PeerJS P2P</div>
+  <div style="font-family:var(--font-display);font-size:0.65rem;color:rgba(0,229,255,0.35);text-align:center;letter-spacing:2px;">
+    P2P · PEERJS · TEK DOSYA · NETLIFY READY
+  </div>
 </div>
 
-<!-- ══════════════════ SCREEN: LOBBY ══════════════════ -->
+<!-- ══════════════ SCREEN: LOBBY ══════════════ -->
 <div id="screen-lobby" class="screen">
   <div class="lobby-wrap">
-    <div style="text-align:center;">
-      <div style="font-size:1.4rem;font-weight:800;margin-bottom:10px;">🎮 Oyun Lobisi</div>
-      <div class="room-code-display">
-        <span id="lbl-code">----</span>
-        <button class="btn btn-sm btn-ghost" onclick="copyCode()" style="letter-spacing:0;padding:6px 12px;font-size:0.78rem;">📋 Kopyala</button>
+    <div class="trt-header" style="border-radius:8px 8px 0 0;">
+      <div class="trt-logo">BİR KELIME <span>BİR İŞLEM</span></div>
+      <div style="text-align:right;">
+        <div style="font-size:0.65rem;color:rgba(255,255,255,0.5);margin-bottom:4px;font-family:var(--font-display);letter-spacing:1px;">ODA KODU</div>
+        <div class="room-code-badge" style="padding:6px 16px;font-size:1.3rem;letter-spacing:6px;">
+          <span id="lbl-code">----</span>
+          <button class="btn btn-ghost" onclick="copyCode()" style="font-size:0.72rem;padding:4px 10px;letter-spacing:0;">📋</button>
+        </div>
       </div>
-      <div style="color:var(--muted);font-size:0.8rem;margin-top:8px;font-family:var(--font-mono);">Bu kodu arkadaşlarınla paylaş</div>
     </div>
 
     <div class="lobby-grid">
-      <!-- Players -->
-      <div class="card">
-        <div class="card-title">👥 Oyuncular</div>
+      <div class="panel">
+        <div class="panel-title">👥 Oyuncular</div>
         <div id="player-list"></div>
+        <div id="lobby-hint" style="font-size:0.78rem;color:rgba(255,255,255,0.4);margin-top:12px;font-family:var(--font-display);"></div>
       </div>
-      <!-- Settings -->
-      <div class="card">
-        <div class="card-title">⚙️ Ayarlar</div>
+      <div class="panel">
+        <div class="panel-title">⚙️ Oyun Ayarları</div>
         <div id="settings-panel">
           <div class="setting-row">
             <span class="setting-label">Tur sayısı</span>
             <div class="stepper">
-              <button class="stepper-btn" id="btn-rounds-down" onclick="changeSetting('totalRounds',-1)">−</button>
-              <span class="setting-val" id="val-rounds">6</span>
-              <button class="stepper-btn" id="btn-rounds-up" onclick="changeSetting('totalRounds',1)">+</button>
+              <button class="stepper-btn" onclick="chgSet('rounds',-1)">−</button>
+              <span class="setting-val" id="sv-rounds">4</span>
+              <button class="stepper-btn" onclick="chgSet('rounds',1)">+</button>
             </div>
           </div>
           <div class="setting-row">
-            <span class="setting-label">Kelime süresi (sn)</span>
+            <span class="setting-label">Oyun süresi (sn)</span>
             <div class="stepper">
-              <button class="stepper-btn" id="btn-word-down" onclick="changeSetting('wordTime',-5)">−</button>
-              <span class="setting-val" id="val-word">30</span>
-              <button class="stepper-btn" id="btn-word-up" onclick="changeSetting('wordTime',5)">+</button>
+              <button class="stepper-btn" onclick="chgSet('gameTime',-5)">−</button>
+              <span class="setting-val" id="sv-gameTime">45</span>
+              <button class="stepper-btn" onclick="chgSet('gameTime',5)">+</button>
             </div>
           </div>
-          <div class="setting-row">
-            <span class="setting-label">İşlem süresi (sn)</span>
-            <div class="stepper">
-              <button class="stepper-btn" id="btn-num-down" onclick="changeSetting('numTime',-5)">−</button>
-              <span class="setting-val" id="val-num">45</span>
-              <button class="stepper-btn" id="btn-num-up" onclick="changeSetting('numTime',5)">+</button>
-            </div>
-          </div>
-          <div style="margin-top:12px;padding:10px 14px;background:rgba(255,255,255,0.03);border-radius:10px;font-size:0.78rem;color:var(--muted);font-family:var(--font-mono);" id="lbl-duration">
-            ~12 dk
-          </div>
+          <div id="settings-note" style="margin-top:10px;padding:8px 12px;background:rgba(0,0,0,0.2);border-radius:6px;font-size:0.74rem;color:rgba(0,229,255,0.5);font-family:var(--font-display);"></div>
         </div>
-        <div id="settings-locked" class="hidden" style="color:var(--muted);font-size:0.82rem;font-style:italic;margin-top:8px;">
-          Sadece host ayarlayabilir.
-        </div>
+        <div id="settings-locked" class="hidden" style="color:rgba(255,255,255,0.4);font-size:0.8rem;margin-top:8px;font-style:italic;">Sadece host ayarlayabilir.</div>
       </div>
     </div>
 
-    <div id="lobby-actions" style="display:flex;gap:10px;justify-content:flex-end;align-items:center;">
-      <span id="lbl-waiting" class="text-muted pulse mono" style="font-size:0.82rem;"></span>
-      <button id="btn-start" class="btn btn-green hidden" onclick="hostStartGame()">🎯 Oyunu Başlat</button>
+    <div style="display:flex;gap:10px;justify-content:flex-end;align-items:center;">
+      <span id="lbl-waiting" class="pulse" style="font-family:var(--font-display);font-size:0.78rem;color:rgba(255,255,255,0.45);"></span>
+      <button id="btn-start" class="btn btn-green hidden" onclick="hostStart()">🎯 Oyunu Başlat</button>
     </div>
   </div>
 </div>
 
-<!-- ══════════════════ SCREEN: GAME ══════════════════ -->
+<!-- ══════════════ SCREEN: GAME ══════════════ -->
 <div id="screen-game" class="screen">
   <div class="game-wrap">
-    <!-- Header -->
     <div class="game-header">
       <div>
-        <div class="round-label" id="lbl-round">Tur 1/6</div>
-        <div id="lbl-phase" class="phase-label phase-word" style="margin-top:4px;">📝 Bir Kelime</div>
+        <div class="round-lbl" id="lbl-round">Tur 1/4</div>
+        <div id="lbl-phase" class="phase-badge pb-word" style="margin-top:4px;">📝 BİR KELIME</div>
       </div>
       <div class="timer-wrap" id="timer-wrap">
-        <svg width="64" height="64" viewBox="0 0 64 64">
-          <circle class="timer-track" cx="32" cy="32" r="27"/>
-          <circle class="timer-fill" id="timer-ring" cx="32" cy="32" r="27"
-            stroke="#06d6a0"
-            stroke-dasharray="169.6"
-            stroke-dashoffset="0"/>
+        <svg width="72" height="72" viewBox="0 0 72 72">
+          <circle class="timer-track" cx="36" cy="36" r="30"/>
+          <circle class="timer-fill" id="timer-ring" cx="36" cy="36" r="30"
+            stroke="#00e5ff" stroke-dasharray="188.5" stroke-dashoffset="0"/>
         </svg>
-        <div class="timer-num" id="timer-num">30</div>
+        <div class="timer-num" id="timer-num">45</div>
       </div>
     </div>
 
-    <!-- Scoreboard -->
-    <div class="scoreboard-strip" id="scoreboard"></div>
-
-    <!-- Question area -->
-    <div class="card question-card" id="question-card">
-      <!-- filled by JS -->
-    </div>
+    <div class="score-strip" id="scoreboard"></div>
+    <div id="question-area"></div>
   </div>
 </div>
 
-<!-- ══════════════════ SCREEN: GAMEOVER ══════════════════ -->
+<!-- ══════════════ SCREEN: GAMEOVER ══════════════ -->
 <div id="screen-gameover" class="screen">
-  <div class="winner-card">
-    <div class="winner-trophy">🏆</div>
-    <div class="winner-name" id="go-winner-name">---</div>
-    <div class="winner-score" id="go-winner-score"></div>
+  <div class="go-trophy" id="go-trophy">🏆</div>
+  <div class="go-winner-name" id="go-wname">---</div>
+  <div class="go-winner-sub" id="go-wsub"></div>
+  <div class="panel" style="width:100%;max-width:480px;margin-top:8px;">
+    <div class="panel-title">🏅 FİNAL SIRALAMA</div>
+    <div id="go-list"></div>
   </div>
-  <div class="card final-list" id="go-final-list"></div>
   <div class="go-actions">
     <button class="btn btn-ghost" onclick="goHome()">🏠 Ana Sayfa</button>
-    <button class="btn btn-primary" onclick="goHome()">🔄 Tekrar Oyna</button>
+    <button class="btn btn-orange" onclick="goHome()">🔄 Tekrar Oyna</button>
   </div>
 </div>
 
 <script>
-// ═══════════════════════════════════════════════════════════════
-// WORD LIST & LETTER POOL
-// ═══════════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════
+   WORD LIST — 856+ Türkçe kelime
+   ═══════════════════════════════════════════════════ */
 const WORD_LIST = new Set([
   "ada","ağa","ait","ala","ana","ara","arı","ata","bal","bar","baş","bay",
   "bel","bez","bin","bir","bot","bul","cam","can","cep","cin","dal","dam",
@@ -682,661 +731,966 @@ const WORD_LIST = new Set([
   "durak","durum","duygu","dünya","düzen","eğer","eğim","ekim","eleman","emir",
   "engel","erdem","erken","eşit","etken","etkin","evren","eylem","fark","fena",
   "fert","fikir","fizik","gece","gelir","gene","geniş","gerçek","geri","gider",
-  "giyim","giysi","gizem","gizli","görev","görüş","güçlü","gülen","güven",
-  "güzel","haber","halk","hamur","hangi","hapis","hatta","hayat","hayal",
-  "hayır","hazır","hemen","hizmet","içeri","içten","ideal","iddia","ifade",
-  "ikram","inanç","insan","istek","işlem","kadar","kadeh","kafes","kalın",
-  "kanal","karar","karın","kasap","kasım","katar","kazan","kazık","keder",
-  "kenar","kepek","keten","keyif","kılık","kısım","kısır","kitap","kolay",
-  "komşu","konum","kopya","korku","kural","kurul","küçük","lazım","limon",
-  "meclis","merak","mesaj","metin","mezun","millet","müzik","nadir","namaz",
-  "neden","nesil","niyet","nokta","ocak","odak","oğul","okul","olası","omuz",
-  "orman","ortak","oynak","paket","panel","para","perde","petek","pilot","plan",
-  "polis","rapor","resim","rica","robot","roman","sabah","sakin","salon","sanat",
-  "saray","satır","savaş","seçim","sefer","senet","sergi","sevgi","sezon",
-  "sınav","sınır","sicil","sinir","sistem","sivil","siyah","sohbet","sokak",
-  "sonuç","sorun","söylem","sözlük","sultan","sunum","süreç","sürüm","şeker",
-  "şekil","şifre","şirket","takım","taraf","tarih","taşıt","tatil","tavan",
-  "teklif","temel","tepki","tercih","tesis","tutum","tuzak","türlü","umut",
-  "uyarı","uygun","uzman","ümit","üretim","üstün","vakit","vatan","vicdan",
-  "vizyon","yağmur","yakar","yakın","yaşam","yasal","yavaş","yazım","yazar",
-  "yetki","yoğun","yorum","yüzde","zaman","zarar","zarif","zaten","zayıf",
-  "zemin","zirve","zorlu",
-  "abluka","acele","acemi","adalet","ağırlık","akraba","aktarım","aktif",
-  "alkış","anlaşma","anlatım","anlayış","antik","arıtma","armağan","arşiv",
-  "asistan","atama","atılım","avantaj","ayrıntı","azınlık","bağımsız",
-  "bağlantı","banka","bardak","batarya","belirsiz","belirli","benzeri",
-  "beraber","bilgisayar","bilimsel","bilinç","birinci","birleşik","bulguları",
-  "buluşma","canlılık","cesaretli","cezaevi","cinayet","cömertlik","cumhuriyet",
+  "giyim","giysi","gizem","gizli","görev","görüş","güçlü","güven","güzel",
+  "haber","halk","hamur","hangi","hapis","hatta","hayat","hayal","hayır",
+  "hazır","hemen","hizmet","içeri","içten","ideal","iddia","ifade","ikram",
+  "inanç","insan","istek","işlem","kadar","kadeh","kafes","kalın","kanal",
+  "karar","karın","kasap","kasım","katar","kazan","kazık","keder","kenar",
+  "kepek","keten","keyif","kılık","kısım","kısır","kitap","kolay","komşu",
+  "konum","kopya","korku","kural","kurul","küçük","lazım","limon","meclis",
+  "merak","mesaj","metin","mezun","millet","müzik","nadir","namaz","neden",
+  "nesil","niyet","nokta","ocak","odak","oğul","okul","olası","omuz","orman",
+  "ortak","oynak","paket","panel","para","perde","petek","pilot","plan",
+  "polis","rapor","resim","rica","robot","roman","sabah","sakin","salon",
+  "sanat","saray","satır","savaş","seçim","sefer","senet","sergi","sevgi",
+  "sezon","sınav","sınır","sicil","sinir","sistem","sivil","siyah","sohbet",
+  "sokak","sonuç","sorun","söylem","sözlük","sultan","sunum","süreç","sürüm",
+  "şeker","şekil","şifre","şirket","takım","taraf","tarih","taşıt","tatil",
+  "tavan","teklif","temel","tepki","tercih","tesis","tutum","tuzak","türlü",
+  "umut","uyarı","uygun","uzman","ümit","üretim","üstün","vakit","vatan",
+  "vicdan","vizyon","yağmur","yakar","yakın","yaşam","yasal","yavaş","yazım",
+  "yazar","yetki","yoğun","yorum","yüzde","zaman","zarar","zarif","zaten",
+  "zayıf","zemin","zirve","zorlu","kara","kale","kart","kasa","kaya","kafa",
+  "kaba","yurt","kurt","dere","deve","deva","dolu","mavi","mars","sarp",
+  "taze","tabi","bari","cari","fare","ince","ilik","ilim","imam","ikiz",
+  "ezan","uzak","uzun","ulus","olay","olgu","oran","orak","yaka","baca",
+  "ceza","dava","gaye","hata","iade","izin","koca","leke","mana","nane",
+  "olta","rüya","sevk","tane","uğur","vade","yeni","zeki","arzu","asma",
+  "avlu","balo","boya","cilt","etüt","fadl","fani","karar","kader","kaide",
+  "kabul","kadın","kafes","kağıt","kalan","kalıp","yalın","yaman","yarım",
+  "yasak","yatay","yazım","yemek","yetim","araba","arama","arıza","asker",
+  "aslan","atlas","abluka","acele","acemi","adalet","ağırlık","akraba",
+  "aktarım","aktif","alkış","anlaşma","anlatım","anlayış","antik","arıtma",
+  "armağan","arşiv","asistan","atama","atılım","avantaj","ayrıntı","azınlık",
+  "bağımsız","bağlantı","banka","bardak","batarya","belirsiz","belirli",
+  "benzeri","beraber","bilgisayar","bilimsel","bilinç","birinci","birleşik",
+  "canlılık","cesaretli","cezaevi","cinayet","cömertlik","cumhuriyet",
   "dayanışma","defalarca","değerli","değişim","değişken","demokrat","deneyim",
   "devlet","dikkatli","dilbilim","doğrusal","doğrudan","dürüstlük","düşünce",
   "düzeltme","edebiyat","ekonomik","egemenlik","eğitim","emekli","endişeli",
-  "engelli","etkileşim","etkinlik","evrensel","farklılık","felsefi","fiziksel",
-  "fotoğraf","gelenek","geliştirme","gerçeklik","girişim","güçlendirme",
-  "hakikat","hastalık","hikayesi","hissiyat","hukuki","huzurlu","ideoloji",
-  "ilerleme","iletişim","ilginç","insanlık","internet","işgücü","izlenim",
-  "kademeli","kahraman","kalıcılık","karakter","karmaşık","katılımcı",
-  "kavramsal","kazanım","kesinlik","kimliği","kişilik","korunmak","kullanıcı",
-  "kültürel","liderlik","lojistik","mahkeme","malzeme","mecburiyet","mekanizma",
-  "merkezi","mesleki","mimarlık","misyon","müdahale","müzakere","nitelik",
-  "olanaklı","öğrenim","öğretim","olumsuz","olumlu","ortaklık","öğrenci",
-  "özgürlük","pazarlama","piyasalar","planlama","politika","pratiklik","program",
-  "raporlama","rekabet","robotik","sahiplik","seçenek","serbest","seyirci",
-  "sonsuzluk","sorumlu","strateji","şeffaflık","şiddetli","şirketler","tarihsel",
-  "tasarım","tedbirli","teknoloji","teşekkür","tutarlılık","uluslararası",
-  "üniversite","üretkenlik","vatandaş","vilayet","yaratıcılık","yaşlılık",
-  "yenilikçi","yönetici","zamanında","zararlı","zekice","zorbalık",
-  "kara","kale","kari","kart","kasa","kaya","kafa","kaba","yurt","kurt",
-  "dere","deve","deva","dolu","mavi","mars","sarp","taze","tabi","bari",
-  "cari","fare","ince","ilik","ilim","imam","ikiz","ezan","uzak","uzun",
-  "ulus","ulvi","olay","olgu","oran","orak","ocak","yaka","baca","ceza",
-  "dava","faal","gaye","hata","iade","izin","koca","leke","mana","nane",
-  "olta","paha","rüya","sevk","tane","uğur","vade","yeni","zeki","arka",
-  "arzu","asma","avlu","balo","band","bant","belk","berk","best","biçim",
-  "boya","böğ","cilt","çile","dağ","dank","darp","dönüş","duvar","eba",
-  "etek","etli","evli","fadl","fani","fark","farz","fazla","fıkra",
-  "karar","kader","kaide","kabul","kadın","kafes","kağıt","kalan","kalıp",
-  "yalın","yaman","yarım","yasak","yatay","yazım","yemek","yetim","yıldız",
-  "araba","arama","arıza","arkadaş","asker","aslan","asıl","atama","atlas",
-  
-  "kalem","kanat","kenar","keten","kiler","kilim","kilit","lake","lale",
-  "lema","mekan","melek","meltem","miran","misal","mola","nalan","nane",
-  "narin","nesne","nikel","nisan","nitel","nizam","nükte","orak","oran",
-  "otel","palet","paten","pazar","peron","plaka","posta","radar","raket",
-  "rende","ringa","ruhsat","saban","sabun","sadık","sakal","sakız","salam",
-  "salgın","sanem","sanel","sarmal","savunma","seksen","selamet","selam",
+  "engelli","etkileşim","etkinlik","evrensel","farklılık","fiziksel","fotoğraf",
+  "gelenek","geliştirme","gerçeklik","girişim","güçlendirme","hakikat",
+  "hastalık","hikayesi","hissiyat","hukuki","huzurlu","ideoloji","ilerleme",
+  "iletişim","ilginç","insanlık","internet","işgücü","izlenim","kademeli",
+  "kahraman","kalıcılık","karakter","karmaşık","katılımcı","kavramsal",
+  "kazanım","kesinlik","kişilik","korunmak","kullanıcı","kültürel","liderlik",
+  "lojistik","mahkeme","malzeme","mecburiyet","mekanizma","merkezi","mesleki",
+  "mimarlık","misyon","müdahale","müzakere","nitelik","olanaklı","öğrenim",
+  "öğretim","olumsuz","olumlu","ortaklık","öğrenci","özgürlük","pazarlama",
+  "piyasalar","planlama","politika","pratiklik","program","raporlama","rekabet",
+  "robotik","sahiplik","seçenek","serbest","seyirci","sonsuzluk","sorumlu",
+  "strateji","şeffaflık","şiddetli","şirketler","tarihsel","tasarım","tedbirli",
+  "teknoloji","teşekkür","tutarlılık","uluslararası","üniversite","üretkenlik",
+  "vatandaş","vilayet","yaratıcılık","yaşlılık","yenilikçi","yönetici",
+  "zamanında","zararlı","zekice","zorbalık","kalem","kanat","keten","kiler",
+  "kilim","kilit","lake","lale","mekan","melek","meltem","misal","mola",
+  "nalan","nane","narin","nesne","nikel","nisan","nitel","nizam","nükte",
+  "radar","raket","rende","ringa","ruhsat","saban","sabun","sadık","sakal",
+  "sakız","salam","salgın","sarmal","savunma","seksen","selamet","selam",
   "selin","senato","senet","senil","serin","servet","silah","sinema","siren",
   "sivri","taban","tablo","tahmin","takma","talan","talep","tamir","tanık",
   "tanım","tarla","tatmin","tavuk","tazmin","telin","temin","teori","termal",
   "terminal","timsah","tiran","tokat","topal","toplu","totem","vagon","valiz",
   "varlık","vatman","verim","verimli","vinç","yaban","yağlı","yakıt","yalan",
   "yalın","yama","yanal","yaprak","yarım","yarın","yasak","yastık","yatak",
-  "yatırım","yavru","yazıt","yedek","yeniden","yeşil","yıkım","yılan","yılmaz"
+  "yatırım","yavru","yazıt","yedek","yeniden","yeşil","yıkım","yılan","yılmaz",
+  "semaver","akar","alay","alaz","alca","alçak","altın","ambar","amblem",
+  "amele","amiral","ampul","anbar","ankraj","anot","antre","apış","apraz",
+  "asistan","atalet","ataman","ateş","atlas","avize","azap","azık","badem",
+  "bahar","bahçe","bakal","balık","baraj","barem","baret","baron","basın",
+  "basmak","baskı","batar","bayrak","bebek","beyan","bıçak","bidon","bilge",
+  "birim","biyol","bocuk","bodrum","bölüm","börek","bozuk","bölüm","bükme",
+  "büro","cadde","çanak","çarşı","çatal","çelik","çevre","çıkış","çilek",
+  "çimen","çocuk","çözüm","çukur","dalga","dalyan","damla","darbe","desen",
+  "detay","devir","dikiş","direk","dolap","dolgu","dönüş","döşem","duvar",
+  "ekran","elmas","emsal","emzik","enfes","epope","eroin","etnik","evrak",
+  "fatura","fayans","fazla","fener","ferah","ferdi","fesat","feza","fidan",
+  "filiz","final","fırça","fırtın","firma","flama","flüt","fobik","fotoğ",
+  "füze","garip","gazete","gedik","gelişim","genel","geniş","gergi","gezgin",
+  "girift","gliserin","gonca","görkem","gözcü","grafi","grup","gübre","güdük",
+  "gümbür","gümüş","güneş","gündem","güverte","halat","halter","hamle",
+  "hapishane","harita","hasret","hasta","havuz","hayvan","helva","heran",
+  "hercai","herkes","hipnoz","horoz","hortum","hovarda","hulasa","hurma",
+  "hüzün","ırmak","ışıltı","içgüdü","ihraç","ihtiram","ihtiyaç","iktidar",
+  "ilahi","ilçe","ileri","ilerle","ilişki","ilmek","imaj","imece","imtihan",
+  "imza","indirim","inkâr","inleme","insan","ipek","iplik","irmik","iskele",
+  "israf","isyan","itiraf","ivme","izleme","izmir","izolasyon","kadife",
+  "kadro","kaftan","kale","kalıntı","kamera","kampanya","kargo","karma",
+  "karpuz","kavga","kavram","kaynak","kazanma","kelam","kelime","kemik",
+  "keman","kepçe","kerem","kerpiç","keşif","kıdem","kıymet","kıyı","kibrit",
+  "kilise","kireç","kiraz","kısmet","kıvılcım","klima","kolye","komite",
+  "kontrol","kopuş","kovan","kozmik","kucak","kutsal","kürek","kütük",
+  "lanet","lastik","liman","lisan","liste","lütuf","mabed","macera","madde",
+  "maden","mahalle","mahkum","mahsul","makas","makine","makyaj","marka",
+  "masal","maden","medya","mekan","mercan","mercek","mesafe","meslek","meta",
+  "mevsim","milyon","miras","model","motif","müdür","nalbur","namus","nefes",
+  "nehir","nesne","nihai","nişan","norm","numara","ödeme","ödül","örgü",
+  "örnek","öykü","özel","özlem","pabuç","pamuk","patlak","patron","pergel",
+  "peruk","pervan","pilot","pişman","plazma","portakal","posta","pratik",
+  "prova","rakam","reklam","remzi","renk","resmi","rıhtım","ritim","roman",
+  "röntgen","rüzgar","sabır","safra","sahne","sahte","sakal","sanayi","sanık",
+  "savaşçı","saydam","seçkin","selektör","sembol","senfoni","serbest","serüven",
+  "sezgi","sınıf","siper","slogan","soğuk","sokak","soru","spektrum","spiker",
+  "statü","strateji","şablon","şantaj","şapka","şarkı","şebeke","şehit",
+  "şiddet","şikayet","şimşek","şişman","şube","tahrik","taktik","takva","tamam",
+  "tamlama","tapınak","taraf","tarim","tarla","taşkın","tavsiye","tebrik",
+  "teknik","teklif","tempo","teori","tercüme","terhis","tersane","tırnakç",
+  "tiyatro","topçu","toprak","trafo","tuğla","turizm","tutku","tüketim",
+  "uçurum","ulak","ulema","ulusal","umman","uyarı","uyum","uzlaşı","uzlet",
+  "üretim","üslup","üzüm","vahşet","vapur","varlık","vatansever","vergi",
+  "verimli","vezne","yargı","yatırım","yazılım","yemin","yenilik","yetişkin",
+  "yıkılış","yoğurt","yönetici","yükleme","yüzleşme","zafer","zakkum",
+  "zekat","zencirek","zevk","zikir","zimmet","zincir","zorunlu"
 ]);
 
-const LETTER_POOL = [
-  'A','A','A','A','A','A','A','A','A',
-  'E','E','E','E','E','E','E','E',
-  'İ','İ','İ','İ','İ','İ','İ',
-  'N','N','N','N','N','N',
-  'R','R','R','R','R','R',
-  'L','L','L','L','L','L',
-  'K','K','K','K','K',
-  'T','T','T','T','T',
-  'M','M','M','M',
-  'S','S','S','S',
-  'D','D','D','D',
-  'Y','Y','Y','Y',
-  'U','U','U','U',
-  'B','B','B',
-  'Ç','Ç','Ç',
-  'G','G','G',
-  'H','H','H',
-  'I','I','I',
-  'O','O','O',
-  'Ö','Ö',
-  'P','P',
-  'Ş','Ş','Ş',
-  'V','V',
-  'Z','Z','Z',
-  'F',
-  'Ü','Ü','Ü',
-  'C','C',
-  'Ğ','J',
-];
+/* ═══════════════════════════════════════════════════
+   LETTER POOLS
+   ═══════════════════════════════════════════════════ */
 const VOWELS = new Set(['A','E','İ','I','O','Ö','U','Ü']);
-const BIG_NUMBERS = [25,50,75,100];
+const VOWEL_POOL = ['A','A','A','A','A','A','A','E','E','E','E','E','E','İ','İ','İ','İ','İ','İ','I','I','I','O','O','O','Ö','Ö','U','U','U','Ü','Ü','Ü'];
+const CONS_POOL  = ['B','B','B','C','C','Ç','Ç','Ç','D','D','D','D','F','G','G','G','Ğ','H','H','H','J','K','K','K','K','K','L','L','L','L','L','M','M','M','M','N','N','N','N','N','P','P','R','R','R','R','R','S','S','S','S','Ş','Ş','Ş','T','T','T','T','T','V','V','Y','Y','Y','Y','Z','Z','Z'];
+const BIG_NUMS   = [25,50,75,100];
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
-// ═══════════════════════════════════════════════════════════════
-// GAME STATE
-// ═══════════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════
+   GAME STATE
+   ═══════════════════════════════════════════════════ */
 let peer, myPeerId, myName, roomCode;
 let isHost = false;
-let connections = {}; // peerId → conn
-let players = [];     // [{id, name, score, isHost}]
-let settings = { totalRounds:6, wordTime:30, numTime:45 };
+let connections = {};
+let players    = [];
+let settings   = { rounds:4, gameTime:45 };
 
-let gameState = 'lobby'; // lobby|word|number|results|gameover
-let currentRound = 0;
-let currentPhase = null; // 'word'|'number'
-let phaseQuestion = null;
-let answers = {};        // peerId → answer
-let timerInterval = null;
-let timeLeft = 0;
+// Phase flow state
+let gameState  = 'lobby';
+let curRound   = 0;
+let curPhase   = null; // 'word_pick'|'word_play'|'word_count'|'word_entry'|'word_results'|'num_pick'|'num_play'|'num_count'|'num_entry'|'num_results'
+let phaseQ     = null;
+let answers    = {};
+let timerIntvl = null;
+let timeLeft   = 0;
 
 // Local UI state
-let wordSelected = [];   // [{letter, origIdx}]
-let numAvail = [];       // [{value, id}]
-let numFirstIdx = null;
-let numSelOp = null;
-let numSteps = [];
-let numCurResult = null;
-let submitted = false;
-let answeredCount = 0;
-let phaseResult = null;
+let wordLetters    = [];   // final 8 letters + joker slot
+let wordSelected   = [];   // {letter, origIdx, isJoker}
+let jokerUsed      = false;
+let jokerLetter    = '';
+let numAvail       = [];
+let numFirstIdx    = null;
+let numSelOp       = null;
+let numSteps       = [];
+let numCurResult   = null;
+let submitted      = false;
+let answeredCount  = 0;
+let myCountChoice  = null; // word count / num proximity chosen
+let phaseResult    = null;
+let selPickIdx     = 0;    // current letter pick index (0-7)
+let letterPickSeq  = [];   // 'V' or 'C' for each of 8 slots
 
-// ═══════════════════════════════════════════════════════════════
-// UTILS
-// ═══════════════════════════════════════════════════════════════
-function genCode() {
-  let c='';
-  for(let i=0;i<4;i++) c+=CODE_CHARS[Math.floor(Math.random()*CODE_CHARS.length)];
-  return c;
-}
+/* ═══════════════════════════════════════════════════
+   UTILS
+   ═══════════════════════════════════════════════════ */
+function genCode(){ let c=''; for(let i=0;i<4;i++) c+=CODE_CHARS[Math.floor(Math.random()*CODE_CHARS.length)]; return c; }
 function shuffle(a){ const b=[...a]; for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];} return b; }
-function avColor(i){ return 'av'+(i%6); }
-function getInitial(n){ return (n||'?')[0].toUpperCase(); }
-function showToast(msg, dur=2800){
-  let t=document.querySelector('.toast'); if(t) t.remove();
-  t=document.createElement('div'); t.className='toast'; t.textContent=msg;
-  document.body.appendChild(t);
-  setTimeout(()=>t.remove(), dur);
-}
-function showScreen(id){
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-}
+function avC(i){ return 'av'+(i%6); }
+function getInit(n){ return (n||'?')[0].toUpperCase(); }
+function showToast(msg,dur=2800){ let t=document.querySelector('.toast'); if(t)t.remove(); t=document.createElement('div'); t.className='toast'; t.textContent=msg; document.body.appendChild(t); setTimeout(()=>t.remove(),dur); }
+function showScreen(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+function Q(id){ return document.getElementById(id); }
 
-// ═══════════════════════════════════════════════════════════════
-// PEERJS — CONNECTION
-// ═══════════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════
+   PEERJS
+   ═══════════════════════════════════════════════════ */
 function initPeer(id){
   return new Promise((res,rej)=>{
-    const p = id ? new Peer('bkbi-'+id) : new Peer();
-    p.on('open', peerId=>{ myPeerId=peerId; res(p); });
-    p.on('error', e=>{
-      if(e.type==='unavailable-id') rej(new Error('Oda kodu kullanımda.'));
-      else rej(e);
-    });
+    const p=id?new Peer('bkbi2-'+id):new Peer();
+    p.on('open',pid=>{myPeerId=pid;res(p);});
+    p.on('error',e=>rej(e));
   });
 }
-
 function attachConn(conn){
-  connections[conn.peer] = conn;
-  conn.on('data', d=>handleMsg(conn.peer, d));
-  conn.on('close', ()=>handleDisconnect(conn.peer));
-  conn.on('error', ()=>handleDisconnect(conn.peer));
+  connections[conn.peer]=conn;
+  conn.on('data',d=>handleMsg(conn.peer,d));
+  conn.on('close',()=>handleDC(conn.peer));
+  conn.on('error',()=>handleDC(conn.peer));
 }
-
-function broadcast(msg, excludeId=null){
-  for(const [pid,c] of Object.entries(connections)){
-    if(pid!==excludeId) try{ c.send(msg); }catch(e){}
-  }
+function broadcast(msg,excl=null){
+  for(const[pid,c]of Object.entries(connections)){if(pid!==excl)try{c.send(msg);}catch(e){}}
 }
-function sendTo(peerId, msg){ try{ connections[peerId]?.send(msg); }catch(e){} }
+function sendTo(pid,msg){ try{connections[pid]?.send(msg);}catch(e){} }
 
-// ═══════════════════════════════════════════════════════════════
-// CREATE ROOM (HOST)
-// ═══════════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════
+   CREATE / JOIN
+   ═══════════════════════════════════════════════════ */
 async function createRoom(){
-  const name = document.getElementById('inp-name').value.trim();
-  if(!name){ showToast('⚠️ Kullanıcı adın gerekli!'); return; }
-  myName = name;
-  roomCode = genCode();
-  isHost = true;
-  try{
-    peer = await initPeer(roomCode);
-  } catch(e){
-    // If ID taken, try again with new code
-    roomCode = genCode();
-    try{ peer = await initPeer(roomCode); }
-    catch(e2){ showToast('❌ Bağlantı hatası: '+e2.message); return; }
-  }
-  players = [{ id:myPeerId, name:myName, score:0, isHost:true }];
-  peer.on('connection', conn=>{
-    conn.on('open',()=>{
-      attachConn(conn);
-      // send current state
-      conn.send({ type:'welcome', players, settings, roomCode });
-    });
-  });
+  const name=Q('inp-name').value.trim();
+  if(!name){showToast('⚠️ Kullanıcı adın gerekli!');return;}
+  myName=name; roomCode=genCode(); isHost=true;
+  try{ peer=await initPeer(roomCode); }
+  catch(e){ roomCode=genCode(); try{ peer=await initPeer(roomCode); }catch(e2){showToast('❌ Bağlantı hatası');return;} }
+  players=[{id:myPeerId,name:myName,score:0,isHost:true}];
+  peer.on('connection',conn=>{ conn.on('open',()=>{ attachConn(conn); conn.send({type:'welcome',players,settings,roomCode}); }); });
   enterLobby();
 }
-
-// ═══════════════════════════════════════════════════════════════
-// JOIN ROOM (GUEST)
-// ═══════════════════════════════════════════════════════════════
 async function joinRoom(){
-  const name = document.getElementById('inp-name').value.trim();
-  const code = document.getElementById('inp-code').value.trim().toUpperCase();
-  if(!name){ showToast('⚠️ Kullanıcı adın gerekli!'); return; }
-  if(code.length!==4){ showToast('⚠️ 4 karakterli oda kodu gir!'); return; }
-  myName = name;
-  roomCode = code;
-  isHost = false;
-  try{
-    peer = await initPeer(null);
-  } catch(e){ showToast('❌ Bağlantı hatası'); return; }
-
-  const conn = peer.connect('bkbi-'+code, { reliable:true });
-  conn.on('open',()=>{
-    attachConn(conn);
-    conn.send({ type:'hello', name:myName, id:myPeerId });
-  });
-  conn.on('error', ()=>showToast('❌ Odaya bağlanılamadı.'));
-  peer.on('connection', c=>{ c.on('open',()=>attachConn(c)); });
+  const name=Q('inp-name').value.trim();
+  const code=Q('inp-code').value.trim().toUpperCase();
+  if(!name){showToast('⚠️ Kullanıcı adın gerekli!');return;}
+  if(code.length!==4){showToast('⚠️ 4 karakterli kod gir!');return;}
+  myName=name; roomCode=code; isHost=false;
+  try{ peer=await initPeer(null); }catch(e){showToast('❌ Bağlantı hatası');return;}
+  const conn=peer.connect('bkbi2-'+code,{reliable:true});
+  conn.on('open',()=>{ attachConn(conn); conn.send({type:'hello',name:myName,id:myPeerId}); });
+  conn.on('error',()=>showToast('❌ Odaya bağlanılamadı.'));
+  peer.on('connection',c=>{ c.on('open',()=>attachConn(c)); });
 }
 
-// ═══════════════════════════════════════════════════════════════
-// MESSAGE HANDLER
-// ═══════════════════════════════════════════════════════════════
-function handleMsg(fromId, msg){
+/* ═══════════════════════════════════════════════════
+   MESSAGE HANDLER
+   ═══════════════════════════════════════════════════ */
+function handleMsg(fromId,msg){
   switch(msg.type){
     case 'hello':
       if(!isHost) return;
-      // New player joined
-      if(!players.find(p=>p.id===fromId)){
-        players.push({ id:fromId, name:msg.name, score:0, isHost:false });
-      }
-      broadcast({ type:'players_update', players });
-      renderLobby();
-      showToast('👋 '+msg.name+' katıldı!');
+      if(!players.find(p=>p.id===fromId)) players.push({id:fromId,name:msg.name,score:0,isHost:false});
+      broadcast({type:'players_update',players});
+      renderLobby(); showToast('👋 '+msg.name+' katıldı!');
       break;
-
     case 'welcome':
-      // Guest received welcome from host
-      players = msg.players;
-      settings = msg.settings;
-      myPeerId = peer.id;
-      // Add self to players if not there
+      players=msg.players; settings=msg.settings; myPeerId=peer.id;
       if(!players.find(p=>p.id===myPeerId)){
-        players.push({ id:myPeerId, name:myName, score:0, isHost:false });
-        // Tell host
-        const hostConn = Object.values(connections)[0];
-        if(hostConn) hostConn.send({ type:'hello', name:myName, id:myPeerId });
+        players.push({id:myPeerId,name:myName,score:0,isHost:false});
+        Object.values(connections)[0]?.send({type:'hello',name:myName,id:myPeerId});
       }
-      enterLobby();
-      break;
-
-    case 'players_update':
-      players = msg.players;
-      renderLobby();
-      break;
-
-    case 'settings_update':
-      settings = msg.settings;
-      renderSettings();
-      break;
-
-    case 'game_start':
-      settings = msg.settings;
-      players = msg.players;
-      currentRound = 0;
-      players.forEach(p=>p.score=0);
-      showScreen('screen-game');
-      break;
-
-    case 'phase_start':
-      startPhaseClient(msg);
-      break;
-
-    case 'submit_answer':
-      if(!isHost) return;
-      answers[fromId] = msg.answer;
-      answeredCount = Object.keys(answers).length;
-      broadcast({ type:'answer_count', count:answeredCount, total:players.length });
-      updateSubmittedWait();
-      // Check if all answered
-      if(answeredCount >= players.length) endPhase();
-      break;
-
-    case 'answer_count':
-      answeredCount = msg.count;
-      updateSubmittedWait();
-      break;
-
-    case 'phase_end':
-      phaseResult = msg.result;
-      players = msg.players;
-      showResults();
-      break;
-
-    case 'game_over':
-      players = msg.players;
-      showGameOver(msg.winner);
-      break;
-
-    case 'disconnect':
-      handleDisconnect(fromId);
-      break;
+      enterLobby(); break;
+    case 'players_update': players=msg.players; renderLobby(); break;
+    case 'settings_update': settings=msg.settings; renderSettings(); break;
+    case 'game_start': settings=msg.settings; players=msg.players; players.forEach(p=>p.score=0); showScreen('screen-game'); break;
+    case 'phase_begin': beginPhaseClient(msg); break;
+    case 'letter_drawn': onLetterDrawn(msg.letter,msg.idx); break;
+    case 'num_drawn': onNumDrawn(msg.num,msg.idx); break;
+    case 'target_drawn': onTargetDrawn(msg.target); break;
+    case 'submit_count': if(!isHost) return; answers[fromId]={count:msg.count}; checkAllAnswered(); break;
+    case 'submit_word':  if(!isHost) return; answers[fromId]={word:msg.word}; checkAllAnswered(); break;
+    case 'submit_numcount': if(!isHost) return; answers[fromId]={numcount:msg.numcount}; checkAllAnswered(); break;
+    case 'submit_numwork':  if(!isHost) return; answers[fromId]={numwork:msg.numwork}; checkAllAnswered(); break;
+    case 'answer_count': answeredCount=msg.count; updateWaitLabel(); break;
+    case 'phase_end': phaseResult=msg.result; players=msg.players; showPhaseResults(msg); break;
+    case 'game_over': players=msg.players; showGameOver(msg.winner); break;
+    case 'disconnect': handleDC(fromId); break;
   }
 }
-
-function handleDisconnect(pid){
-  const p = players.find(x=>x.id===pid);
-  if(p){ showToast('⚠️ '+p.name+' bağlantısı kesildi'); }
-  players = players.filter(x=>x.id!==pid);
-  delete connections[pid];
-  if(isHost){
-    broadcast({ type:'players_update', players });
-    renderLobby();
-    if(gameState!=='lobby' && Object.keys(connections).length===0){
-      // All left
-      showToast('Tüm oyuncular ayrıldı.');
-      setTimeout(goHome, 2000);
-    }
-  }
+function handleDC(pid){
+  const p=players.find(x=>x.id===pid);
+  if(p) showToast('⚠️ '+p.name+' ayrıldı');
+  players=players.filter(x=>x.id!==pid); delete connections[pid];
+  if(isHost){ broadcast({type:'players_update',players}); renderLobby(); }
 }
 
-// ═══════════════════════════════════════════════════════════════
-// LOBBY
-// ═══════════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════
+   LOBBY
+   ═══════════════════════════════════════════════════ */
 function enterLobby(){
   showScreen('screen-lobby');
-  document.getElementById('lbl-code').textContent = roomCode;
-  renderLobby();
-  renderSettings();
+  Q('lbl-code').textContent=roomCode;
+  renderLobby(); renderSettings();
 }
-
 function renderLobby(){
-  const list = document.getElementById('player-list');
-  list.innerHTML = players.map((p,i)=>`
+  Q('player-list').innerHTML=players.map((p,i)=>`
     <div class="player-slot">
-      <div class="avatar ${avColor(i)}">${getInitial(p.name)}</div>
-      <div class="player-slot-name">${p.name}</div>
+      <div class="p-initial ${avC(i)}">${getInit(p.name)}</div>
+      <div class="p-name">${p.name}</div>
       ${p.isHost?'<span class="badge badge-host">👑 Host</span>':''}
       ${p.id===myPeerId?'<span class="badge badge-you">Sen</span>':''}
-    </div>
-  `).join('');
-
-  const waiting = document.getElementById('lbl-waiting');
-  const startBtn = document.getElementById('btn-start');
+    </div>`).join('');
+  const waiting=Q('lbl-waiting'), startBtn=Q('btn-start');
   if(isHost){
     startBtn.classList.remove('hidden');
-    waiting.textContent = players.length < 2 ? 'En az 2 oyuncu gerekli...' : '';
-    startBtn.disabled = players.length < 2;
+    Q('lobby-hint').textContent=players.length<2?'⚠️ En az 2 oyuncu gerekli':'';
+    startBtn.disabled=players.length<2;
   } else {
     startBtn.classList.add('hidden');
-    waiting.textContent = 'Host oyunu başlatmasını bekliyor...';
+    waiting.textContent='Host oyunu başlatmasını bekliyor...';
   }
-
-  // Settings editable only by host
-  const steppers = document.querySelectorAll('.stepper-btn');
-  steppers.forEach(b=>b.disabled=!isHost);
-  document.getElementById('settings-locked').classList.toggle('hidden', isHost);
+  Q('settings-locked').classList.toggle('hidden',isHost);
+  document.querySelectorAll('.stepper-btn').forEach(b=>b.disabled=!isHost);
 }
-
 function renderSettings(){
-  document.getElementById('val-rounds').textContent = settings.totalRounds;
-  document.getElementById('val-word').textContent = settings.wordTime;
-  document.getElementById('val-num').textContent = settings.numTime;
-  const mins = Math.round(settings.totalRounds*(settings.wordTime+settings.numTime+10)/60);
-  document.getElementById('lbl-duration').textContent = `~${mins} dakika · ${settings.totalRounds} kelime + ${settings.totalRounds} işlem`;
+  Q('sv-rounds').textContent=settings.rounds;
+  Q('sv-gameTime').textContent=settings.gameTime;
+  const mins=Math.round(settings.rounds*(settings.gameTime*2+30)/60);
+  Q('settings-note').textContent=`${settings.rounds} tur · Kelime + İşlem · ~${mins} dakika`;
 }
-
-function changeSetting(key, delta){
+function chgSet(key,delta){
   if(!isHost) return;
-  const limits = { totalRounds:[2,10], wordTime:[15,60], numTime:[20,90] };
-  const [mn,mx] = limits[key];
-  settings[key] = Math.max(mn, Math.min(mx, settings[key]+delta));
+  const lim={rounds:[2,10],gameTime:[20,90]};
+  const [mn,mx]=lim[key];
+  settings[key]=Math.max(mn,Math.min(mx,settings[key]+delta));
   renderSettings();
-  broadcast({ type:'settings_update', settings });
+  broadcast({type:'settings_update',settings});
 }
+function copyCode(){ navigator.clipboard?.writeText(roomCode).then(()=>showToast('📋 Kopyalandı: '+roomCode)); }
 
-function copyCode(){
-  navigator.clipboard?.writeText(roomCode).then(()=>showToast('📋 Oda kodu kopyalandı: '+roomCode));
-}
-
-// ═══════════════════════════════════════════════════════════════
-// HOST: START GAME
-// ═══════════════════════════════════════════════════════════════
-function hostStartGame(){
-  if(!isHost || players.length<2) return;
-  players.forEach(p=>p.score=0);
-  currentRound=0; currentPhase=null;
-  broadcast({ type:'game_start', settings, players });
+/* ═══════════════════════════════════════════════════
+   HOST: START GAME
+   ═══════════════════════════════════════════════════ */
+function hostStart(){
+  if(!isHost||players.length<2) return;
+  players.forEach(p=>p.score=0); curRound=0; curPhase=null;
+  broadcast({type:'game_start',settings,players});
   showScreen('screen-game');
-  setTimeout(()=>hostNextPhase(), 500);
+  setTimeout(()=>hostNextPhase(),600);
 }
-
 function hostNextPhase(){
-  if(currentPhase===null || currentPhase==='number'){
-    currentRound++;
-    if(currentRound > settings.totalRounds){ hostEndGame(); return; }
-    currentPhase = 'word';
-    hostStartWord();
+  if(curPhase===null||curPhase==='num_results'){
+    curRound++;
+    if(curRound>settings.rounds){hostEndGame();return;}
+    curPhase='word_pick';
+    hostBeginWordPick();
   } else {
-    currentPhase = 'number';
-    hostStartNumber();
+    curPhase='num_pick';
+    hostBeginNumPick();
   }
 }
 
-// ═══════════════════════════════════════════════════════════════
-// HOST: WORD PHASE
-// ═══════════════════════════════════════════════════════════════
-function hostStartWord(){
-  const letters = drawLetters();
-  const bestWord = findBestWord(letters);
-  phaseQuestion = { type:'word', letters, bestWord, round:currentRound };
-  answers = {}; answeredCount=0;
-  const msg = { type:'phase_start', ...phaseQuestion, totalRounds:settings.totalRounds, timeLimit:settings.wordTime };
-  broadcast(msg);
-  startPhaseClient(msg);
-  startTimer(settings.wordTime, ()=>{ if(isHost) endPhase(); });
+/* ═══════════════════════════════════════════════════
+   HOST: WORD — PICK LETTERS
+   ═══════════════════════════════════════════════════ */
+function hostBeginWordPick(){
+  const msg={type:'phase_begin',phase:'word_pick',round:curRound,totalRounds:settings.rounds};
+  broadcast(msg); beginPhaseClient(msg);
 }
 
-// ═══════════════════════════════════════════════════════════════
-// HOST: NUMBER PHASE
-// ═══════════════════════════════════════════════════════════════
-function hostStartNumber(){
-  const numbers = generateNumbers();
-  const target = 100+Math.floor(Math.random()*900);
-  const solution = solveNumbers(numbers, target);
-  phaseQuestion = { type:'number', numbers, target, solution, round:currentRound };
-  answers = {}; answeredCount=0;
-  const msg = { type:'phase_start', ...phaseQuestion, totalRounds:settings.totalRounds, timeLimit:settings.numTime };
-  broadcast(msg);
-  startPhaseClient(msg);
-  startTimer(settings.numTime, ()=>{ if(isHost) endPhase(); });
+// Host receives each V/C choice from UI (host is also a player so local)
+// We need to also receive from guests? No — in this design, HOST picks letters
+// But we want all players to be able to press V/C button.
+// Solution: first player who presses sends the choice to host; host draws and broadcasts.
+// For simplicity: HOST controls the picking (like the original TV host)
+// Guests just watch the letters appear.
+
+function hostPickLetter(type){ // 'V' or 'C'
+  if(!isHost||selPickIdx>=8) return;
+  const pool=shuffle(type==='V'?[...VOWEL_POOL]:[...CONS_POOL]);
+  const letter=pool[0];
+  letterPickSeq[selPickIdx]=type;
+  const msg={type:'letter_drawn',letter,idx:selPickIdx};
+  broadcast(msg); onLetterDrawn(letter,selPickIdx);
+  selPickIdx++;
+  if(selPickIdx>=8){
+    // All 8 letters picked — move to gameplay
+    setTimeout(()=>hostBeginWordPlay(),800);
+  }
 }
 
-// ═══════════════════════════════════════════════════════════════
-// HOST: END PHASE
-// ═══════════════════════════════════════════════════════════════
-function endPhase(){
+/* ═══════════════════════════════════════════════════
+   HOST: WORD — GAMEPLAY
+   ═══════════════════════════════════════════════════ */
+function hostBeginWordPlay(){
+  curPhase='word_play';
+  const bestWord=findBestWord(wordLetters);
+  phaseQ={type:'word',letters:[...wordLetters],bestWord,round:curRound};
+  answers={}; answeredCount=0;
+  const msg={type:'phase_begin',phase:'word_play',letters:[...wordLetters],bestWord,round:curRound,totalRounds:settings.rounds,timeLimit:settings.gameTime};
+  broadcast(msg); beginPhaseClient(msg);
+  startTimer(settings.gameTime,()=>{if(isHost) hostBeginWordCount();});
+}
+
+/* ═══════════════════════════════════════════════════
+   HOST: WORD — COUNT SELECTION
+   ═══════════════════════════════════════════════════ */
+function hostBeginWordCount(){
   stopTimer();
-  const result = { type:phaseQuestion.type, question:phaseQuestion, results:{} };
+  curPhase='word_count';
+  answers={}; answeredCount=0;
+  const msg={type:'phase_begin',phase:'word_count',round:curRound,totalRounds:settings.rounds};
+  broadcast(msg); beginPhaseClient(msg);
+  startTimer(5,()=>{ if(isHost) hostBeginWordEntry(); });
+}
 
-  if(phaseQuestion.type==='word'){
-    let maxLen=0;
-    // Validate all answers
-    for(const p of players){
-      const w = answers[p.id]?.word||'';
-      const valid = w ? isValidWord(w, phaseQuestion.letters) : false;
-      const len = valid ? w.length : 0;
-      result.results[p.id] = { word:w, valid, length:len, points:len };
-      if(len>maxLen) maxLen=len;
-      p.score += len;
+/* ═══════════════════════════════════════════════════
+   HOST: WORD — ENTRY
+   ═══════════════════════════════════════════════════ */
+function hostBeginWordEntry(){
+  stopTimer();
+  curPhase='word_entry';
+  const msg={type:'phase_begin',phase:'word_entry',round:curRound,totalRounds:settings.rounds};
+  broadcast(msg); beginPhaseClient(msg);
+  // Only those who selected a count (not 'no answer') enter their word
+  startTimer(15,()=>{ if(isHost) hostEndWordPhase(); });
+}
+
+/* ═══════════════════════════════════════════════════
+   HOST: END WORD PHASE
+   ═══════════════════════════════════════════════════ */
+async function hostEndWordPhase(){
+  stopTimer();
+  curPhase='word_results';
+  const result={type:'word',question:phaseQ,results:{}};
+  let maxLen=0;
+  for(const p of players){
+    const ans=answers[p.id];
+    const countChoice=ans?.count;
+    const word=ans?.word||'';
+    let valid=false, jokerInfo=null, pts=0;
+    if(countChoice==='none'||!word){
+      result.results[p.id]={countChoice:'none',word:'',valid:false,jokerUsed:false,points:0};
+      continue;
     }
-  } else {
-    for(const p of players){
-      const val = answers[p.id]?.value ?? null;
-      const pts = calcNumberScore(val, phaseQuestion.target);
-      result.results[p.id] = { value:val, diff:val!==null?Math.abs(val-phaseQuestion.target):null, points:pts };
-      p.score += pts;
+    // Validate word
+    const {ok,usedJoker,jokerChar}=validateWordWithJoker(word,phaseQ.letters);
+    valid=ok;
+    jokerInfo=usedJoker?jokerChar:null;
+    if(valid){
+      const len=word.length;
+      if(len>maxLen) maxLen=len;
+      pts=0; // set after finding max
+    }
+    result.results[p.id]={countChoice,word,valid,jokerUsed:usedJoker,jokerChar:jokerInfo,length:valid?word.length:0,points:0};
+  }
+  // Award points only to the player(s) with max length
+  for(const p of players){
+    const r=result.results[p.id];
+    if(r&&r.valid&&r.length===maxLen&&maxLen>0){
+      r.points=maxLen;
+      p.score+=maxLen;
     }
   }
+  phaseResult=result;
+  const endMsg={type:'phase_end',result,players};
+  broadcast(endMsg);
+  showPhaseResults(endMsg);
+  setTimeout(()=>{ if(isHost) hostBeginNumPick(); },7000);
+}
 
-  phaseResult = result;
-  const msg = { type:'phase_end', result, players };
-  broadcast(msg);
-  showResults();
-  setTimeout(()=>{ if(isHost) hostNextPhase(); }, 6000);
+/* ═══════════════════════════════════════════════════
+   HOST: NUMBER — PICK
+   ═══════════════════════════════════════════════════ */
+async function hostBeginNumPick(){
+  curPhase='num_pick';
+  const smallNums=shuffle([1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9]);
+  const bigNum=shuffle([...BIG_NUMS])[0];
+  const nums=[bigNum,...smallNums.slice(0,5)]; // 1 big + 5 small
+  phaseQ={type:'number',numbers:nums,target:null,solution:null,round:curRound};
+  const msg={type:'phase_begin',phase:'num_pick',round:curRound,totalRounds:settings.rounds};
+  broadcast(msg); beginPhaseClient(msg);
+  // Animate showing each number with 2s delay
+  for(let i=0;i<nums.length;i++){
+    await delay(200);
+    const drawMsg={type:'num_drawn',num:nums[i],idx:i};
+    broadcast(drawMsg); onNumDrawn(nums[i],i);
+    await delay(1800);
+  }
+  // Then show target
+  const target=100+Math.floor(Math.random()*900);
+  phaseQ.target=target;
+  await delay(400);
+  const tMsg={type:'target_drawn',target};
+  broadcast(tMsg); onTargetDrawn(target);
+  await delay(1000);
+  hostBeginNumPlay();
+}
+function delay(ms){ return new Promise(r=>setTimeout(r,ms)); }
+
+/* ═══════════════════════════════════════════════════
+   HOST: NUMBER — GAMEPLAY
+   ═══════════════════════════════════════════════════ */
+function hostBeginNumPlay(){
+  curPhase='num_play';
+  const solution=solveNumbers(phaseQ.numbers,phaseQ.target);
+  phaseQ.solution=solution;
+  answers={}; answeredCount=0;
+  const msg={type:'phase_begin',phase:'num_play',numbers:phaseQ.numbers,target:phaseQ.target,solution,round:curRound,totalRounds:settings.rounds,timeLimit:settings.gameTime};
+  broadcast(msg); beginPhaseClient(msg);
+  startTimer(settings.gameTime,()=>{ if(isHost) hostBeginNumCount(); });
+}
+
+/* ═══════════════════════════════════════════════════
+   HOST: NUMBER — COUNT SELECTION
+   ═══════════════════════════════════════════════════ */
+function hostBeginNumCount(){
+  stopTimer();
+  curPhase='num_count';
+  answers={}; answeredCount=0;
+  const msg={type:'phase_begin',phase:'num_count',round:curRound,totalRounds:settings.rounds};
+  broadcast(msg); beginPhaseClient(msg);
+  startTimer(5,()=>{ if(isHost) hostBeginNumEntry(); });
+}
+
+/* ═══════════════════════════════════════════════════
+   HOST: NUMBER — ENTRY
+   ═══════════════════════════════════════════════════ */
+function hostBeginNumEntry(){
+  stopTimer();
+  curPhase='num_entry';
+  const msg={type:'phase_begin',phase:'num_entry',round:curRound,totalRounds:settings.rounds};
+  broadcast(msg); beginPhaseClient(msg);
+  startTimer(15,()=>{ if(isHost) hostEndNumPhase(); });
+}
+
+/* ═══════════════════════════════════════════════════
+   HOST: END NUMBER PHASE
+   ═══════════════════════════════════════════════════ */
+function hostEndNumPhase(){
+  stopTimer();
+  curPhase='num_results';
+  const result={type:'number',question:phaseQ,results:{}};
+  for(const p of players){
+    const ans=answers[p.id];
+    const proximity=ans?.numcount;
+    const work=ans?.numwork;
+    if(proximity==='none'||!proximity){
+      result.results[p.id]={proximity:'none',work:null,value:null,valid:false,points:0};
+      continue;
+    }
+    // Validate the work
+    const value=work?.finalValue??null;
+    const valid=validateNumWork(work,phaseQ.numbers);
+    const pts=valid?calcNumScore(proximity,value,phaseQ.target):0;
+    result.results[p.id]={proximity,work,value,valid,points:pts};
+    if(pts>0) p.score+=pts;
+  }
+  phaseResult=result;
+  const endMsg={type:'phase_end',result,players};
+  broadcast(endMsg);
+  showPhaseResults(endMsg);
+  setTimeout(()=>{ if(isHost) hostNextPhase(); },7000);
 }
 
 function hostEndGame(){
   stopTimer();
   const sorted=[...players].sort((a,b)=>b.score-a.score);
   const winner=sorted[0];
-  const msg = { type:'game_over', players, winner };
-  broadcast(msg);
-  showGameOver(winner);
+  const msg={type:'game_over',players,winner};
+  broadcast(msg); showGameOver(winner);
 }
 
-// ═══════════════════════════════════════════════════════════════
-// CLIENT: PHASE START (both host and guests)
-// ═══════════════════════════════════════════════════════════════
-function startPhaseClient(msg){
-  phaseQuestion = msg;
-  currentRound = msg.round;
-  submitted = false;
-  answeredCount = 0;
-  wordSelected = [];
-  numAvail = [];
-  numFirstIdx = null;
-  numSelOp = null;
-  numSteps = [];
-  numCurResult = null;
-  gameState = msg.type;
-
-  // Update header
-  document.getElementById('lbl-round').textContent = `Tur ${msg.round}/${msg.totalRounds}`;
-  const phaseLbl = document.getElementById('lbl-phase');
-  if(msg.type==='word'){
-    phaseLbl.className='phase-label phase-word';
-    phaseLbl.textContent='📝 Bir Kelime';
-  } else {
-    phaseLbl.className='phase-label phase-number';
-    phaseLbl.textContent='🔢 Bir İşlem';
-  }
-
+/* ═══════════════════════════════════════════════════
+   CLIENT: PHASE ROUTER
+   ═══════════════════════════════════════════════════ */
+function beginPhaseClient(msg){
+  curRound=msg.round;
+  submitted=false; answeredCount=0; myCountChoice=null;
+  Q('lbl-round').textContent=`Tur ${msg.round}/${msg.totalRounds}`;
   renderScoreboard();
-
-  if(msg.type==='word') renderWordPhase(msg.letters);
-  else renderNumberPhase(msg.numbers, msg.target);
-
-  if(!isHost) startTimer(msg.timeLimit, ()=>{
-    if(!submitted){ submitAnswer(); }
-  });
+  const ph=Q('lbl-phase');
+  switch(msg.phase){
+    case 'word_pick':
+      ph.className='phase-badge pb-word'; ph.textContent='📝 BİR KELIME';
+      wordLetters=[]; selPickIdx=0; letterPickSeq=[];
+      renderWordPick(); break;
+    case 'word_play':
+      ph.className='phase-badge pb-word'; ph.textContent='📝 BİR KELIME';
+      wordLetters=msg.letters||wordLetters;
+      if(!isHost) startTimer(msg.timeLimit,()=>{ if(!submitted) localSubmitWord(); });
+      renderWordPlay(); break;
+    case 'word_count':
+      ph.className='phase-badge pb-select'; ph.textContent='📊 KAÇA BULDUN?';
+      renderWordCount(); break;
+    case 'word_entry':
+      ph.className='phase-badge pb-word'; ph.textContent='✍️ KELİMENİ YAZ';
+      if(myCountChoice==='none'||myCountChoice===null){ renderSubmittedState('—','Yanıt yok seçildi'); }
+      else { renderWordEntry(); }
+      break;
+    case 'num_pick':
+      ph.className='phase-badge pb-number'; ph.textContent='🔢 BİR İŞLEM';
+      phaseQ=msg; renderNumPick(); break;
+    case 'num_play':
+      ph.className='phase-badge pb-number'; ph.textContent='🔢 BİR İŞLEM';
+      if(msg.numbers) phaseQ=msg;
+      if(!isHost) startTimer(msg.timeLimit,()=>{ if(!submitted) localSubmitNumWork(); });
+      renderNumPlay(); break;
+    case 'num_count':
+      ph.className='phase-badge pb-select'; ph.textContent='📊 NE KADAR YAKLAŞTIN?';
+      renderNumCount(); break;
+    case 'num_entry':
+      ph.className='phase-badge pb-number'; ph.textContent='🔢 İŞLEMİNİ GİR';
+      if(myCountChoice==='none'||myCountChoice===null){ renderSubmittedState('—','Yanıt yok seçildi'); }
+      else { renderNumEntry(); }
+      break;
+  }
 }
 
-// ═══════════════════════════════════════════════════════════════
-// WORD PHASE UI
-// ═══════════════════════════════════════════════════════════════
-function renderWordPhase(letters){
-  wordSelected=[];
-  const card = document.getElementById('question-card');
-  card.innerHTML=`
-    <div style="color:var(--muted);font-size:0.82rem;text-align:center;margin-bottom:4px;font-family:var(--font-mono);">
-      En uzun Türkçe kelimeyi bul — harflere tıkla
+/* ═══════════════════════════════════════════════════
+   RENDER: WORD PICK
+   ═══════════════════════════════════════════════════ */
+function renderWordPick(){
+  const qa=Q('question-area');
+  qa.innerHTML=`
+    <div class="tiles-band">
+      <div class="tiles-row" id="letter-tiles-row">
+        ${[0,1,2,3,4,5,6,7].map(i=>`
+          <div class="trt-tile letter-tile" id="ltile-${i}" style="opacity:0.3;">?</div>
+        `).join('')}
+        <div class="trt-tile letter-tile joker" title="Joker">?</div>
+      </div>
     </div>
-    <div class="letters-row" id="letters-row">
-      ${letters.map((l,i)=>`
-        <div class="letter-tile ${VOWELS.has(l)?'vowel':'consonant'}" id="tile-${i}" onclick="clickLetter('${l}',${i})">
-          ${l}
+    ${isHost ? `
+      <div class="selection-phase">
+        <div class="sel-instruction">Harf ${selPickIdx+1}/8 — Ünlü mü Ünsüz mü?</div>
+        <div class="sel-progress">
+          ${[0,1,2,3,4,5,6,7].map(i=>`<div class="sel-dot ${i<selPickIdx?'done':i===selPickIdx?'current':''}" id="sdot-${i}"></div>`).join('')}
         </div>
-      `).join('')}
+        <div style="display:flex;gap:12px;justify-content:center;">
+          <button class="btn btn-choice vowel-btn" id="btn-vowel" onclick="hostPickLetter('V')">ÜNLÜ</button>
+          <button class="btn btn-choice" id="btn-cons"  onclick="hostPickLetter('C')">ÜNSÜZ</button>
+        </div>
+      </div>
+    ` : `
+      <div class="selection-phase">
+        <div class="sel-instruction">Host harf seçiyor...</div>
+        <div class="sel-progress">
+          ${[0,1,2,3,4,5,6,7].map(i=>`<div class="sel-dot ${i<selPickIdx?'done':i===selPickIdx?'current':''}" id="sdot-${i}"></div>`).join('')}
+        </div>
+      </div>
+    `}
+  `;
+}
+
+function onLetterDrawn(letter,idx){
+  wordLetters[idx]=letter;
+  const tile=Q(`ltile-${idx}`);
+  if(tile){
+    tile.textContent=letter;
+    tile.style.opacity='1';
+    tile.classList.add('reveal');
+    setTimeout(()=>tile.classList.remove('reveal'),500);
+  }
+  // Update dots for guest
+  if(!isHost){
+    const dot=Q(`sdot-${idx}`);
+    if(dot){ dot.classList.remove('current'); dot.classList.add('done'); }
+    const nextDot=Q(`sdot-${idx+1}`);
+    if(nextDot) nextDot.classList.add('current');
+    selPickIdx=idx+1;
+  }
+  // Update host pick UI
+  if(isHost){
+    const instr=document.querySelector('.sel-instruction');
+    if(instr&&idx<7) instr.textContent=`Harf ${idx+2}/8 — Ünlü mü Ünsüz mü?`;
+    else if(instr&&idx===7) instr.textContent='Tüm harfler seçildi!';
+    // Update dots
+    for(let i=0;i<=idx;i++){const d=Q(`sdot-${i}`);if(d){d.classList.remove('current');d.classList.add('done');}}
+    if(idx<7){const d=Q(`sdot-${idx+1}`);if(d)d.classList.add('current');}
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   RENDER: WORD PLAY
+   ═══════════════════════════════════════════════════ */
+function renderWordPlay(){
+  wordSelected=[]; jokerUsed=false; jokerLetter='';
+  const qa=Q('question-area');
+  qa.innerHTML=`
+    <div class="tiles-band">
+      <div class="tiles-row" id="letters-row">
+        ${wordLetters.map((l,i)=>`
+          <div class="trt-tile letter-tile ${VOWELS.has(l)?'vowel-tile':''}" id="wt-${i}" onclick="clickWordLetter('${l}',${i})">${l}</div>
+        `).join('')}
+        <div class="trt-tile letter-tile joker" id="wt-joker" onclick="openJokerPicker()" title="Joker harf">?</div>
+      </div>
     </div>
-    <div class="word-built" id="word-built"></div>
-    <div class="word-actions">
-      <button class="btn btn-ghost btn-sm" onclick="wordUndo()">⌫ Sil</button>
-      <button class="btn btn-ghost btn-sm" onclick="wordClear()">✖ Temizle</button>
-      <button class="btn btn-primary" style="flex:1" id="btn-word-submit" onclick="submitAnswer()" disabled>
-        ✅ Gönder
-      </button>
+    <div class="word-band empty" id="word-built">Harflere tıkla...</div>
+    <div style="display:flex;gap:8px;margin-top:8px;">
+      <button class="btn btn-ghost" style="font-size:0.85rem;" onclick="wordUndo()">⌫ Sil</button>
+      <button class="btn btn-ghost" style="font-size:0.85rem;" onclick="wordClear()">✖ Temizle</button>
+      <button class="btn btn-orange w-full" id="btn-word-sub" onclick="localSubmitWord()" disabled>✅ Gönder</button>
+    </div>
+    <div id="joker-picker" class="hidden" style="margin-top:10px;padding:14px;background:var(--trt-darker);border:2px solid var(--trt-orange);border-radius:8px;">
+      <div style="font-family:var(--font-display);font-size:0.72rem;color:var(--trt-orange);margin-bottom:10px;letter-spacing:2px;">JOKER HARF SEÇ:</div>
+      <input class="input-trt center" id="inp-joker" maxlength="1" placeholder="?" style="margin-bottom:8px;font-size:1.5rem;width:80px;" oninput="this.value=this.value.toUpperCase()"/>
+      <button class="btn btn-orange" onclick="confirmJoker()">Ekle</button>
+      <button class="btn btn-ghost" onclick="Q('joker-picker').classList.add('hidden')" style="margin-left:8px;">İptal</button>
     </div>
   `;
 }
 
-function clickLetter(letter, idx){
+function clickWordLetter(letter,idx){
   if(submitted) return;
-  if(wordSelected.some(s=>s.origIdx===idx)) return;
-  wordSelected.push({ letter, origIdx:idx });
-  document.getElementById('tile-'+idx).classList.add('used','selected-anim');
-  updateWordDisplay();
+  if(wordSelected.some(s=>s.origIdx===idx&&!s.isJoker)) return;
+  wordSelected.push({letter,origIdx:idx,isJoker:false});
+  Q('wt-'+idx)?.classList.add('used');
+  updateWordBuilt();
 }
-
+function openJokerPicker(){
+  if(submitted||jokerUsed) return;
+  Q('joker-picker')?.classList.remove('hidden');
+}
+function confirmJoker(){
+  const ch=Q('inp-joker')?.value.toUpperCase().trim();
+  if(!ch||ch.length!==1){showToast('⚠️ 1 harf gir');return;}
+  jokerLetter=ch; jokerUsed=true;
+  wordSelected.push({letter:ch,origIdx:-1,isJoker:true});
+  Q('wt-joker')?.classList.add('used');
+  Q('wt-joker').textContent=ch;
+  Q('joker-picker')?.classList.add('hidden');
+  updateWordBuilt();
+}
 function wordUndo(){
-  if(!wordSelected.length || submitted) return;
+  if(!wordSelected.length||submitted) return;
   const last=wordSelected.pop();
-  document.getElementById('tile-'+last.origIdx)?.classList.remove('used','selected-anim');
-  updateWordDisplay();
+  if(last.isJoker){ jokerUsed=false; jokerLetter=''; const t=Q('wt-joker'); if(t){t.classList.remove('used');t.textContent='?';} }
+  else Q('wt-'+last.origIdx)?.classList.remove('used');
+  updateWordBuilt();
 }
-
 function wordClear(){
   if(submitted) return;
-  wordSelected.forEach(s=>document.getElementById('tile-'+s.origIdx)?.classList.remove('used','selected-anim'));
-  wordSelected=[];
-  updateWordDisplay();
+  wordSelected.forEach(s=>{ if(s.isJoker){jokerUsed=false;jokerLetter='';const t=Q('wt-joker');if(t){t.classList.remove('used');t.textContent='?';}}else Q('wt-'+s.origIdx)?.classList.remove('used'); });
+  wordSelected=[]; updateWordBuilt();
+}
+function updateWordBuilt(){
+  const w=wordSelected.map(s=>s.letter).join('');
+  const el=Q('word-built');
+  if(!el) return;
+  if(w){ el.textContent=w; el.classList.remove('empty'); }
+  else { el.textContent='Harflere tıkla...'; el.classList.add('empty'); }
+  const btn=Q('btn-word-sub');
+  if(btn){ btn.disabled=!w; if(w) btn.textContent=`✅ Gönder (${w.length} harf)`; }
+}
+function localSubmitWord(){
+  if(submitted) return;
+  submitted=true;
+  const w=wordSelected.map(s=>s.letter).join('');
+  if(isHost){
+    answers[myPeerId]={count:myCountChoice,word:w};
+    checkAllAnswered();
+  } else {
+    Object.values(connections)[0]?.send({type:'submit_word',word:w});
+  }
+  renderSubmittedState(w||'(boş)', jokerUsed?`Joker: ${jokerLetter}`:'');
 }
 
-function updateWordDisplay(){
-  const w = wordSelected.map(s=>s.letter).join('');
-  const el = document.getElementById('word-built');
-  if(el){ el.textContent=w; el.classList.toggle('has-word',w.length>0); }
-  const btn=document.getElementById('btn-word-submit');
-  if(btn) btn.disabled=!w;
-  if(btn&&w) btn.textContent=`✅ Gönder (${w.length} harf)`;
-}
-
-// ═══════════════════════════════════════════════════════════════
-// NUMBER PHASE UI
-// ═══════════════════════════════════════════════════════════════
-function renderNumberPhase(numbers, target){
-  numAvail = numbers.map((v,i)=>({ value:v, id:i }));
-  numFirstIdx=null; numSelOp=null; numSteps=[]; numCurResult=null;
-  const card = document.getElementById('question-card');
-  card.innerHTML = buildNumberHTML(numbers, target);
-}
-
-function buildNumberHTML(numbers, target){
-  return `
-    <div class="target-box">
-      <div class="target-lbl">Hedef Sayı</div>
-      <div class="target-num">${target}</div>
+/* ═══════════════════════════════════════════════════
+   RENDER: WORD COUNT
+   ═══════════════════════════════════════════════════ */
+function renderWordCount(){
+  const qa=Q('question-area');
+  qa.innerHTML=`
+    <div style="padding:20px;text-align:center;">
+      <div class="tiles-band" style="margin-bottom:16px;">
+        <div class="tiles-row">
+          ${wordLetters.map(l=>`<div class="trt-tile letter-tile" style="cursor:default;">${l}</div>`).join('')}
+          <div class="trt-tile letter-tile joker">?</div>
+        </div>
+      </div>
+      <div style="font-family:var(--font-display);font-size:0.8rem;color:rgba(255,255,255,0.7);margin-bottom:14px;letter-spacing:2px;">KAÇA HARFLİ KELİME BULDUN?</div>
+      <div class="wcount-grid">
+        ${[4,5,6,7,8,9].map(n=>`<button class="wcount-btn" onclick="selectWordCount(${n})">${n}</button>`).join('')}
+        <button class="wcount-btn no-answer" onclick="selectWordCount('none')">YANIT YOK</button>
+      </div>
+      <div style="margin-top:14px;">
+        <div class="countdown-bar"><div class="countdown-fill" id="count-bar" style="width:100%"></div></div>
+        <div style="font-family:var(--font-display);font-size:0.72rem;color:rgba(0,229,255,0.5);margin-top:4px;text-align:center;" id="count-lbl">5 saniye</div>
+      </div>
     </div>
-    <div class="number-tiles" id="num-tiles">${renderNumTiles()}</div>
-    <div class="ops-row">
-      ${['+','−','×','÷'].map((op,i)=>`
-        <button class="op-btn" id="op-${i}" onclick="clickOp(${i})">${op}</button>
-      `).join('')}
-      <button class="op-btn util" onclick="numUndo()" title="Geri al">↩</button>
-      <button class="op-btn util" onclick="numReset()" title="Sıfırla">🔄</button>
+  `;
+  // Animate countdown bar
+  let barT=5;
+  const barIntvl=setInterval(()=>{
+    barT--;
+    const pct=(barT/5)*100;
+    const bar=Q('count-bar');
+    if(bar){ bar.style.width=pct+'%'; if(barT<=2) bar.classList.add('urgent'); }
+    const lbl=Q('count-lbl'); if(lbl) lbl.textContent=barT+' saniye';
+    if(barT<=0) clearInterval(barIntvl);
+  },1000);
+}
+
+function selectWordCount(n){
+  myCountChoice=n;
+  // Visual feedback
+  document.querySelectorAll('.wcount-btn').forEach(b=>b.classList.remove('selected'));
+  event.target.classList.add('selected');
+  // Submit immediately
+  if(isHost){
+    answers[myPeerId]={count:n};
+    checkAllAnswered();
+  } else {
+    Object.values(connections)[0]?.send({type:'submit_count',count:n});
+  }
+  setTimeout(()=>{
+    const qa=Q('question-area');
+    if(qa) qa.innerHTML+='<div class="submitted-state" style="padding:10px;"><div class="sub-icon">✅</div><div class="sub-word">'+(n==='none'?'YANIT YOK':n+' harf')+'</div></div>';
+  },300);
+}
+
+/* ═══════════════════════════════════════════════════
+   RENDER: WORD ENTRY
+   ═══════════════════════════════════════════════════ */
+function renderWordEntry(){
+  wordSelected=[]; jokerUsed=false; jokerLetter='';
+  const qa=Q('question-area');
+  qa.innerHTML=`
+    <div style="padding:16px;">
+      <div style="font-family:var(--font-display);font-size:0.72rem;color:rgba(255,255,255,0.6);text-align:center;margin-bottom:12px;letter-spacing:2px;">
+        BULDUN: <span style="color:var(--trt-orange);">${myCountChoice} harf</span> · 15 saniyede gir
+      </div>
+      <div class="tiles-band" style="margin-bottom:12px;">
+        <div class="tiles-row" id="letters-row-e">
+          ${wordLetters.map((l,i)=>`
+            <div class="trt-tile letter-tile ${VOWELS.has(l)?'':'cons-tile'}" id="ewt-${i}" onclick="clickEntryLetter('${l}',${i})">${l}</div>
+          `).join('')}
+          <div class="trt-tile letter-tile joker" id="ewt-joker" onclick="openEntryJokerPicker()">?</div>
+        </div>
+      </div>
+      <div class="word-band empty" id="entry-word-built">Harflere tıkla...</div>
+      <div style="display:flex;gap:8px;margin-top:8px;">
+        <button class="btn btn-ghost" style="font-size:0.85rem;" onclick="entryUndo()">⌫</button>
+        <button class="btn btn-ghost" style="font-size:0.85rem;" onclick="entryClear()">✖</button>
+        <button class="btn btn-orange w-full" id="btn-entry-sub" onclick="localSubmitWordEntry()" disabled>✅ Gönder</button>
+      </div>
+      <div id="entry-joker-picker" class="hidden" style="margin-top:10px;padding:14px;background:var(--trt-darker);border:2px solid var(--trt-orange);border-radius:8px;">
+        <div style="font-family:var(--font-display);font-size:0.72rem;color:var(--trt-orange);margin-bottom:8px;">JOKER HARF:</div>
+        <input class="input-trt center" id="inp-entry-joker" maxlength="1" placeholder="?" style="width:80px;font-size:1.5rem;margin-bottom:8px;" oninput="this.value=this.value.toUpperCase()"/>
+        <button class="btn btn-orange" onclick="confirmEntryJoker()">Ekle</button>
+        <button class="btn btn-ghost" onclick="Q('entry-joker-picker').classList.add('hidden')" style="margin-left:8px;">İptal</button>
+      </div>
+    </div>
+  `;
+  // Re-use wordSelected for entry phase
+  wordSelected=[]; jokerUsed=false;
+}
+
+function clickEntryLetter(l,idx){
+  if(submitted) return;
+  if(wordSelected.some(s=>s.origIdx===idx&&!s.isJoker)) return;
+  wordSelected.push({letter:l,origIdx:idx,isJoker:false});
+  Q('ewt-'+idx)?.classList.add('used');
+  updateEntryBuilt();
+}
+function openEntryJokerPicker(){ if(submitted||jokerUsed) return; Q('entry-joker-picker')?.classList.remove('hidden'); }
+function confirmEntryJoker(){
+  const ch=Q('inp-entry-joker')?.value.toUpperCase().trim();
+  if(!ch||ch.length!==1){showToast('⚠️ 1 harf gir');return;}
+  jokerLetter=ch; jokerUsed=true;
+  wordSelected.push({letter:ch,origIdx:-1,isJoker:true});
+  const t=Q('ewt-joker'); if(t){t.classList.add('used');t.textContent=ch;}
+  Q('entry-joker-picker')?.classList.add('hidden');
+  updateEntryBuilt();
+}
+function entryUndo(){
+  if(!wordSelected.length||submitted) return;
+  const last=wordSelected.pop();
+  if(last.isJoker){jokerUsed=false;jokerLetter='';const t=Q('ewt-joker');if(t){t.classList.remove('used');t.textContent='?';}}
+  else Q('ewt-'+last.origIdx)?.classList.remove('used');
+  updateEntryBuilt();
+}
+function entryClear(){
+  if(submitted) return;
+  wordSelected.forEach(s=>{if(s.isJoker){jokerUsed=false;jokerLetter='';const t=Q('ewt-joker');if(t){t.classList.remove('used');t.textContent='?';}}else Q('ewt-'+s.origIdx)?.classList.remove('used');});
+  wordSelected=[]; updateEntryBuilt();
+}
+function updateEntryBuilt(){
+  const w=wordSelected.map(s=>s.letter).join('');
+  const el=Q('entry-word-built');
+  if(!el) return;
+  if(w){ el.textContent=w; el.classList.remove('empty'); }
+  else { el.textContent='Harflere tıkla...'; el.classList.add('empty'); }
+  const btn=Q('btn-entry-sub'); if(btn) btn.disabled=!w;
+}
+function localSubmitWordEntry(){
+  if(submitted) return; submitted=true;
+  const w=wordSelected.map(s=>s.letter).join('');
+  if(isHost){ answers[myPeerId]={count:myCountChoice,word:w}; checkAllAnswered(); }
+  else { Object.values(connections)[0]?.send({type:'submit_word',word:w}); }
+  renderSubmittedState(w||'(boş)',jokerUsed?`Joker: ${jokerLetter}`:'');
+}
+
+/* ═══════════════════════════════════════════════════
+   RENDER: NUM PICK
+   ═══════════════════════════════════════════════════ */
+function renderNumPick(){
+  const qa=Q('question-area');
+  qa.innerHTML=`
+    <div class="target-band">
+      <div style="text-align:center;">
+        <div class="target-lbl">SAYILAR</div>
+        <div class="tiles-row" id="num-tiles-row" style="gap:8px;justify-content:center;">
+          ${[0,1,2,3,4,5].map(i=>`<div class="trt-tile num-tile" id="nt-${i}" style="opacity:0.2;">?</div>`).join('')}
+        </div>
+      </div>
+    </div>
+    <div class="target-band" id="target-band-holder" style="margin-top:8px;">
+      <div style="text-align:center;flex:1;">
+        <div class="target-lbl">HEDEF</div>
+        <div class="target-big" id="target-display">—</div>
+      </div>
+    </div>
+  `;
+  // Reset num state
+  numAvail=[]; numFirstIdx=null; numSelOp=null; numSteps=[]; numCurResult=null;
+}
+
+function onNumDrawn(num,idx){
+  if(!phaseQ) phaseQ={type:'number',numbers:[],target:null};
+  if(!phaseQ.numbers) phaseQ.numbers=[];
+  phaseQ.numbers[idx]=num;
+  const tile=Q(`nt-${idx}`);
+  if(tile){
+    tile.textContent=num;
+    tile.style.opacity='1';
+    tile.classList.toggle('big',[25,50,75,100].includes(num));
+    tile.classList.add('scroll-anim');
+    setTimeout(()=>tile.classList.remove('scroll-anim'),2200);
+  }
+}
+function onTargetDrawn(target){
+  if(phaseQ) phaseQ.target=target;
+  const td=Q('target-display');
+  if(td){ td.textContent=target; td.style.animation='none'; td.offsetHeight; td.style.animation='tileReveal 0.6s ease'; }
+}
+
+/* ═══════════════════════════════════════════════════
+   RENDER: NUM PLAY
+   ═══════════════════════════════════════════════════ */
+function renderNumPlay(){
+  numAvail=(phaseQ.numbers||[]).map((v,i)=>({value:v,id:i}));
+  numFirstIdx=null; numSelOp=null; numSteps=[]; numCurResult=null;
+  const qa=Q('question-area');
+  qa.innerHTML=`
+    <div class="target-band">
+      <div style="text-align:center;flex:1;">
+        <div class="target-lbl">SAYILAR</div>
+        <div class="tiles-row" id="num-play-tiles">${renderNumTiles()}</div>
+      </div>
+      <div style="width:2px;background:rgba(0,229,255,0.15);align-self:stretch;"></div>
+      <div style="text-align:center;">
+        <div class="target-lbl">HEDEF</div>
+        <div class="target-big">${phaseQ.target}</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:10px 0;" id="ops-row">
+      ${['+','−','×','÷'].map((op,i)=>`<button class="op-btn" id="opb-${i}" onclick="clickOp(${i})">${op}</button>`).join('')}
+      <button class="op-btn util" onclick="numUndo()">↩</button>
+      <button class="op-btn util" onclick="numReset()">🔄</button>
     </div>
     <div class="steps-log" id="steps-log"></div>
     <div class="calc-strip">
-      <span class="calc-expr" id="calc-expr">sayılara tıkla...</span>
+      <span class="calc-expr" id="calc-expr">İşlem yap...</span>
       <span class="calc-result-val far" id="calc-result">—</span>
     </div>
-    <div class="manual-row hidden" id="manual-row">
-      <input class="input" type="number" id="inp-manual" placeholder="Sonucu yaz" style="font-family:var(--font-mono);text-align:center;font-size:1.2rem;"/>
+    <div style="display:flex;gap:8px;margin-top:8px;align-items:center;">
+      <button class="btn btn-ghost btn-sm" style="font-size:0.78rem;" onclick="toggleManualNum()">⌨ Elle gir</button>
+      <button class="btn btn-orange w-full" id="btn-num-sub" onclick="localSubmitNumWork()">✅ Gönder</button>
     </div>
-    <div style="display:flex;gap:8px;margin-top:10px;">
-      <button class="btn btn-ghost btn-sm" onclick="toggleManual()">⌨ Elle giriş</button>
-      <button class="btn btn-primary" style="flex:1" id="btn-num-submit" onclick="submitAnswer()">
-        ✅ Gönder
-      </button>
+    <div id="manual-num-row" class="hidden" style="margin-top:8px;">
+      <input class="input-trt center" type="number" id="inp-manual-num" placeholder="Sonucu yaz" />
     </div>
   `;
 }
-
 function renderNumTiles(){
   return numAvail.map((n,i)=>`
-    <div class="num-tile ${BIG_NUMBERS.includes(n.value)?'big':'small'} ${numFirstIdx===i?'active-sel':''}"
-      id="ntile-${n.id}" onclick="clickNum(${i})">
-      ${n.value}
-    </div>
-  `).join('');
+    <div class="trt-tile num-tile ${[25,50,75,100].includes(n.value)?'big':''} ${numFirstIdx===i?'active-sel':''}"
+      id="npt-${n.id}" onclick="clickNum(${i})">${n.value}</div>`).join('');
 }
-
-function refreshNumTiles(){
-  const c=document.getElementById('num-tiles');
-  if(c) c.innerHTML=renderNumTiles();
-}
+function refreshNumTiles(){ const c=Q('num-play-tiles'); if(c) c.innerHTML=renderNumTiles(); }
 
 function clickNum(idx){
-  if(submitted||numAvail[idx]===undefined) return;
-  if(numFirstIdx===null){
-    numFirstIdx=idx;
-    refreshNumTiles();
-  } else if(numFirstIdx===idx){
-    numFirstIdx=null;
-    refreshNumTiles();
-  } else if(numSelOp!==null){
+  if(submitted||!numAvail[idx]) return;
+  if(numFirstIdx===null){ numFirstIdx=idx; refreshNumTiles(); }
+  else if(numFirstIdx===idx){ numFirstIdx=null; refreshNumTiles(); }
+  else if(numSelOp!==null){
     const ops=['+','−','×','÷'];
-    const a=numAvail[numFirstIdx].value;
-    const b=numAvail[idx].value;
+    const a=numAvail[numFirstIdx].value, b=numAvail[idx].value;
     const opSym=ops[numSelOp];
     let result=null, desc='';
     if(opSym==='+'){result=a+b;desc=`${a} + ${b} = ${result}`;}
@@ -1344,59 +1698,34 @@ function clickNum(idx){
     else if(opSym==='×'){result=a*b;desc=`${a} × ${b} = ${result}`;}
     else if(opSym==='÷'){
       if(b!==0&&a%b===0){result=a/b;desc=`${a} ÷ ${b} = ${result}`;}
-      else{showToast('⚠️ Tam bölünme gerekli'); return;}
+      else{showToast('⚠️ Tam bölünme gerekli');return;}
     }
-    if(result===null||result<=0){showToast('⚠️ Geçersiz işlem'); return;}
+    if(!result||result<=0){showToast('⚠️ Geçersiz işlem');return;}
     numSteps.push(desc);
     numAvail=numAvail.filter((_,i)=>i!==numFirstIdx&&i!==idx);
     numAvail.push({value:result,id:Date.now()});
-    numCurResult=result;
-    numFirstIdx=null; numSelOp=null;
-    refreshNumTiles();
-    updateOps();
-    updateCalcStrip(result);
-    updateSteps();
+    numCurResult=result; numFirstIdx=null; numSelOp=null;
+    refreshNumTiles(); updateOps(); updateCalc(result); updateSteps();
   }
 }
-
-function clickOp(i){
-  if(submitted) return;
-  numSelOp = numSelOp===i ? null : i;
-  updateOps();
-}
-
-function updateOps(){
-  [0,1,2,3].forEach(i=>{
-    const b=document.getElementById('op-'+i);
-    if(b) b.classList.toggle('sel', numSelOp===i);
-  });
-}
-
-function updateCalcStrip(result){
-  const el=document.getElementById('calc-result');
-  if(!el) return;
+function clickOp(i){ if(submitted)return; numSelOp=numSelOp===i?null:i; updateOps(); }
+function updateOps(){ [0,1,2,3].forEach(i=>{const b=Q('opb-'+i);if(b)b.classList.toggle('sel',numSelOp===i);}); }
+function updateCalc(result){
+  const el=Q('calc-result'); if(!el)return;
   el.textContent=result;
-  const diff=Math.abs(result-phaseQuestion.target);
-  el.className='calc-result-val '+(diff===0?'exact':diff<=15?'close':'far');
+  const d=Math.abs(result-(phaseQ?.target||0));
+  el.className='calc-result-val '+(d===0?'exact':d<=25?'close':'far');
 }
-
-function updateSteps(){
-  const el=document.getElementById('steps-log');
-  if(el) el.innerHTML=numSteps.map(s=>`<div>• ${s}</div>`).join('');
-}
-
+function updateSteps(){ const el=Q('steps-log'); if(el) el.innerHTML=numSteps.map(s=>`<div>• ${s}</div>`).join(''); }
 function numUndo(){
-  if(!numSteps.length||submitted) return;
+  if(!numSteps.length||submitted)return;
   const prev=numSteps.slice(0,-1);
-  numAvail=phaseQuestion.numbers.map((v,i)=>({value:v,id:i}));
+  numAvail=(phaseQ.numbers||[]).map((v,i)=>({value:v,id:i}));
   numCurResult=null;
-  const opMap={'+':'+','−':'-','×':'*','÷':'/'};
-  // Re-apply prev steps
   for(const step of prev){
     const m=step.match(/(\d+) ([+\-×÷]) (\d+) = (\d+)/);
     if(!m) continue;
-    const [,as,op,bs,rs]=[...m];
-    const a=+as,b=+bs,r=+rs;
+    const a=+m[1],b=+m[3],r=+m[4];
     const ai=numAvail.findIndex(x=>x.value===a);
     const bi=numAvail.findIndex((x,i)=>x.value===b&&i!==ai);
     if(ai===-1||bi===-1) continue;
@@ -1406,324 +1735,457 @@ function numUndo(){
   }
   numSteps=prev; numFirstIdx=null; numSelOp=null;
   refreshNumTiles(); updateOps(); updateSteps();
-  if(numCurResult!==null) updateCalcStrip(numCurResult);
-  else { const el=document.getElementById('calc-result'); if(el){el.textContent='—';el.className='calc-result-val far';} }
+  if(numCurResult!==null) updateCalc(numCurResult);
+  else { const el=Q('calc-result');if(el){el.textContent='—';el.className='calc-result-val far';} }
 }
-
 function numReset(){
-  if(submitted) return;
-  numAvail=phaseQuestion.numbers.map((v,i)=>({value:v,id:i}));
+  if(submitted)return;
+  numAvail=(phaseQ.numbers||[]).map((v,i)=>({value:v,id:i}));
   numFirstIdx=null; numSelOp=null; numSteps=[]; numCurResult=null;
   refreshNumTiles(); updateOps(); updateSteps();
-  const el=document.getElementById('calc-result'); if(el){el.textContent='—';el.className='calc-result-val far';}
+  const el=Q('calc-result');if(el){el.textContent='—';el.className='calc-result-val far';}
+}
+function toggleManualNum(){ Q('manual-num-row')?.classList.toggle('hidden'); }
+function localSubmitNumWork(){
+  if(submitted)return; submitted=true;
+  const manual=Q('inp-manual-num');
+  const manRow=Q('manual-num-row');
+  const val=manRow&&!manRow.classList.contains('hidden')&&manual?.value?parseInt(manual.value):numCurResult;
+  const work={steps:[...numSteps],finalValue:val};
+  if(isHost){ answers[myPeerId]={numcount:myCountChoice,numwork:work}; checkAllAnswered(); }
+  else { Object.values(connections)[0]?.send({type:'submit_numwork',numwork:work}); }
+  renderSubmittedState(val!==null?String(val):'(boş)','');
 }
 
-function toggleManual(){
-  const row=document.getElementById('manual-row');
-  if(row) row.classList.toggle('hidden');
+/* ═══════════════════════════════════════════════════
+   RENDER: NUM COUNT
+   ═══════════════════════════════════════════════════ */
+function renderNumCount(){
+  const qa=Q('question-area');
+  qa.innerHTML=`
+    <div style="padding:20px;text-align:center;">
+      <div class="target-band" style="margin-bottom:16px;">
+        <div style="text-align:center;flex:1;">
+          <div class="target-lbl">HEDEF</div>
+          <div class="target-big">${phaseQ?.target||'—'}</div>
+        </div>
+      </div>
+      <div style="font-family:var(--font-display);font-size:0.78rem;color:rgba(255,255,255,0.7);margin-bottom:14px;letter-spacing:2px;">SONUCA NE KADAR YAKLAŞTIN?</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">
+        <button class="wcount-btn no-answer" onclick="selectNumCount('none')" style="width:auto;padding:12px 16px;font-size:0.75rem;">SONUÇ YOK</button>
+        <button class="wcount-btn" onclick="selectNumCount('exact')" style="width:auto;padding:12px 14px;font-size:0.75rem;border-color:var(--trt-green);color:var(--trt-green);">TAM</button>
+        ${[1,2,3,4,5,6,7].map(n=>`<button class="wcount-btn" onclick="selectNumCount(${n})" title="${n} yaklaşık">${n}</button>`).join('')}
+      </div>
+      <div style="margin-top:10px;font-family:var(--font-display);font-size:0.65rem;color:rgba(0,229,255,0.35);">TAM = tam sonuç · 1-7 = hedefe yaklaşık fark</div>
+      <div style="margin-top:14px;">
+        <div class="countdown-bar"><div class="countdown-fill" id="ncount-bar" style="width:100%"></div></div>
+        <div style="font-family:var(--font-display);font-size:0.72rem;color:rgba(0,229,255,0.5);margin-top:4px;text-align:center;" id="ncount-lbl">5 saniye</div>
+      </div>
+    </div>
+  `;
+  let barT=5;
+  const bi=setInterval(()=>{ barT--; const b=Q('ncount-bar'); if(b){b.style.width=(barT/5*100)+'%';if(barT<=2)b.classList.add('urgent');} const l=Q('ncount-lbl');if(l)l.textContent=barT+' saniye'; if(barT<=0)clearInterval(bi); },1000);
+}
+function selectNumCount(n){
+  myCountChoice=n;
+  document.querySelectorAll('.wcount-btn').forEach(b=>b.classList.remove('selected'));
+  event.target.classList.add('selected');
+  if(isHost){ answers[myPeerId]={numcount:n}; checkAllAnswered(); }
+  else { Object.values(connections)[0]?.send({type:'submit_numcount',numcount:n}); }
+  setTimeout(()=>{
+    const qa=Q('question-area');
+    if(qa) qa.innerHTML+='<div class="submitted-state" style="padding:10px;"><div class="sub-icon">✅</div><div class="sub-word">'+(n==='none'?'SONUÇ YOK':n==='exact'?'TAM SONUÇ':n+' YAKLAŞIK')+'</div></div>';
+  },300);
 }
 
-// ═══════════════════════════════════════════════════════════════
-// SUBMIT ANSWER
-// ═══════════════════════════════════════════════════════════════
-function submitAnswer(){
-  if(submitted) return;
-  submitted=true;
-  let answer;
-  if(phaseQuestion.type==='word'){
-    const w=wordSelected.map(s=>s.letter).join('');
-    answer={ word:w };
-  } else {
-    const manual=document.getElementById('inp-manual');
-    const val = manual&&!document.getElementById('manual-row').classList.contains('hidden')&&manual.value
-      ? parseInt(manual.value) : numCurResult;
-    answer={ value: val };
+/* ═══════════════════════════════════════════════════
+   RENDER: NUM ENTRY
+   ═══════════════════════════════════════════════════ */
+function renderNumEntry(){
+  numAvail=(phaseQ.numbers||[]).map((v,i)=>({value:v,id:i}));
+  numFirstIdx=null; numSelOp=null; numSteps=[]; numCurResult=null;
+  const qa=Q('question-area');
+  qa.innerHTML=`
+    <div style="padding:16px;">
+      <div style="font-family:var(--font-display);font-size:0.72rem;color:rgba(255,255,255,0.6);text-align:center;margin-bottom:10px;letter-spacing:2px;">
+        SEÇTİN: <span style="color:var(--trt-orange);">${myCountChoice==='exact'?'TAM SONUÇ':myCountChoice+' YAKLAŞIK'}</span> · 15 saniyede gir
+      </div>
+      <div class="target-band" style="margin-bottom:10px;">
+        <div style="text-align:center;flex:1;">
+          <div class="tiles-row" id="num-entry-tiles">${renderNumTiles()}</div>
+        </div>
+        <div style="text-align:center;padding-left:16px;">
+          <div class="target-lbl">HEDEF</div>
+          <div class="target-big">${phaseQ.target}</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:8px;" id="ops-row-e">
+        ${['+','−','×','÷'].map((op,i)=>`<button class="op-btn" id="eopb-${i}" onclick="clickOpE(${i})">${op}</button>`).join('')}
+        <button class="op-btn util" onclick="numUndoE()">↩</button>
+        <button class="op-btn util" onclick="numResetE()">🔄</button>
+      </div>
+      <div class="steps-log" id="steps-log-e"></div>
+      <div class="calc-strip">
+        <span class="calc-expr" id="calc-expr-e">İşlem yap...</span>
+        <span class="calc-result-val far" id="calc-result-e">—</span>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px;">
+        <button class="btn btn-ghost btn-sm" onclick="toggleManualE()">⌨ Elle</button>
+        <button class="btn btn-orange w-full" id="btn-nentry-sub" onclick="localSubmitNumEntry()">✅ Gönder</button>
+      </div>
+      <div id="manual-e-row" class="hidden" style="margin-top:8px;">
+        <input class="input-trt center" type="number" id="inp-manual-e" placeholder="Sonucu yaz" />
+      </div>
+    </div>
+  `;
+  // Re-wire for entry phase (same logic, different IDs)
+  document.getElementById('num-entry-tiles').addEventListener('click',e=>{
+    const tile=e.target.closest('.num-tile');
+    if(!tile) return;
+    const id=parseInt(tile.id.replace('nept-',''));
+    const idx=numAvail.findIndex(x=>x.id===id);
+    if(idx!==-1) clickNumE(idx);
+  });
+  // Re-render tiles with entry IDs
+  Q('num-entry-tiles').innerHTML=numAvail.map((n,i)=>`
+    <div class="trt-tile num-tile ${[25,50,75,100].includes(n.value)?'big':''} ${numFirstIdx===i?'active-sel':''}"
+      id="nept-${n.id}" onclick="clickNumE(${i})">${n.value}</div>`).join('');
+}
+function clickNumE(idx){
+  if(submitted||!numAvail[idx]) return;
+  if(numFirstIdx===null){ numFirstIdx=idx; refreshNumTilesE(); }
+  else if(numFirstIdx===idx){ numFirstIdx=null; refreshNumTilesE(); }
+  else if(numSelOp!==null){
+    const ops=['+','−','×','÷'];
+    const a=numAvail[numFirstIdx].value, b=numAvail[idx].value;
+    const opSym=ops[numSelOp];
+    let result=null, desc='';
+    if(opSym==='+'){result=a+b;desc=`${a} + ${b} = ${result}`;}
+    else if(opSym==='−'){result=a-b;desc=`${a} − ${b} = ${result}`;}
+    else if(opSym==='×'){result=a*b;desc=`${a} × ${b} = ${result}`;}
+    else if(opSym==='÷'){if(b!==0&&a%b===0){result=a/b;desc=`${a} ÷ ${b} = ${result}`;}else{showToast('⚠️ Tam bölünme gerekli');return;}}
+    if(!result||result<=0){showToast('⚠️ Geçersiz');return;}
+    numSteps.push(desc);
+    numAvail=numAvail.filter((_,i)=>i!==numFirstIdx&&i!==idx);
+    numAvail.push({value:result,id:Date.now()});
+    numCurResult=result; numFirstIdx=null; numSelOp=null;
+    refreshNumTilesE(); updateOpsE(); updateCalcE(result); updateStepsE();
   }
-
-  if(isHost){
-    answers[myPeerId]=answer;
-    answeredCount=Object.keys(answers).length;
-    broadcast({ type:'answer_count', count:answeredCount, total:players.length });
-    if(answeredCount>=players.length) endPhase();
-  } else {
-    const hostConn=Object.values(connections)[0];
-    if(hostConn) hostConn.send({ type:'submit_answer', answer });
-  }
-
-  showSubmittedState(answer);
+}
+function refreshNumTilesE(){
+  const c=Q('num-entry-tiles');
+  if(c) c.innerHTML=numAvail.map((n,i)=>`<div class="trt-tile num-tile ${[25,50,75,100].includes(n.value)?'big':''} ${numFirstIdx===i?'active-sel':''}" id="nept-${n.id}" onclick="clickNumE(${i})">${n.value}</div>`).join('');
+}
+function clickOpE(i){ if(submitted)return; numSelOp=numSelOp===i?null:i; updateOpsE(); }
+function updateOpsE(){ [0,1,2,3].forEach(i=>{const b=Q('eopb-'+i);if(b)b.classList.toggle('sel',numSelOp===i);}); }
+function updateCalcE(r){ const el=Q('calc-result-e');if(!el)return; el.textContent=r; const d=Math.abs(r-(phaseQ?.target||0)); el.className='calc-result-val '+(d===0?'exact':d<=25?'close':'far'); }
+function updateStepsE(){ const el=Q('steps-log-e');if(el) el.innerHTML=numSteps.map(s=>`<div>• ${s}</div>`).join(''); }
+function numUndoE(){
+  if(!numSteps.length||submitted)return;
+  const prev=numSteps.slice(0,-1);
+  numAvail=(phaseQ.numbers||[]).map((v,i)=>({value:v,id:i})); numCurResult=null;
+  for(const step of prev){const m=step.match(/(\d+) ([+\-×÷]) (\d+) = (\d+)/);if(!m)continue;const a=+m[1],b=+m[3],r=+m[4];const ai=numAvail.findIndex(x=>x.value===a);const bi=numAvail.findIndex((x,i)=>x.value===b&&i!==ai);if(ai===-1||bi===-1)continue;numAvail=numAvail.filter((_,i)=>i!==ai&&i!==bi);numAvail.push({value:r,id:Date.now()+Math.random()});numCurResult=r;}
+  numSteps=prev; numFirstIdx=null; numSelOp=null;
+  refreshNumTilesE(); updateOpsE(); updateStepsE();
+  if(numCurResult!==null) updateCalcE(numCurResult); else {const el=Q('calc-result-e');if(el){el.textContent='—';el.className='calc-result-val far';}}
+}
+function numResetE(){
+  if(submitted)return;
+  numAvail=(phaseQ.numbers||[]).map((v,i)=>({value:v,id:i})); numFirstIdx=null; numSelOp=null; numSteps=[]; numCurResult=null;
+  refreshNumTilesE(); updateOpsE(); updateStepsE();
+  const el=Q('calc-result-e');if(el){el.textContent='—';el.className='calc-result-val far';}
+}
+function toggleManualE(){ Q('manual-e-row')?.classList.toggle('hidden'); }
+function localSubmitNumEntry(){
+  if(submitted)return; submitted=true;
+  const manual=Q('inp-manual-e');
+  const manRow=Q('manual-e-row');
+  const val=manRow&&!manRow.classList.contains('hidden')&&manual?.value?parseInt(manual.value):numCurResult;
+  const work={steps:[...numSteps],finalValue:val};
+  if(isHost){ answers[myPeerId]={numcount:myCountChoice,numwork:work}; checkAllAnswered(); }
+  else { Object.values(connections)[0]?.send({type:'submit_numwork',numwork:work}); }
+  renderSubmittedState(val!==null?String(val):'(boş)','');
 }
 
-function showSubmittedState(answer){
-  const disp = phaseQuestion.type==='word'
-    ? `"${answer.word||'(boş)'}"` 
-    : `${answer.value??'(boş)'}`;
-  document.getElementById('question-card').innerHTML=`
+/* ═══════════════════════════════════════════════════
+   SUBMITTED STATE
+   ═══════════════════════════════════════════════════ */
+function renderSubmittedState(main,sub){
+  Q('question-area').innerHTML=`
     <div class="submitted-state">
-      <div class="submitted-icon">✅</div>
-      <div class="submitted-word">${disp}</div>
-      <div class="submitted-wait pulse" id="wait-lbl">Diğer oyuncular bekleniyor... (${answeredCount}/${players.length})</div>
+      <div class="sub-icon">✅</div>
+      <div class="sub-word">${main}</div>
+      ${sub?`<div style="font-family:var(--font-display);font-size:0.72rem;color:var(--trt-orange);">${sub}</div>`:''}
+      <div class="sub-wait pulse" id="wait-lbl">Diğer oyuncular bekleniyor... (${answeredCount}/${players.length})</div>
     </div>
   `;
 }
+function updateWaitLabel(){ const el=Q('wait-lbl'); if(el) el.textContent=`Diğer oyuncular bekleniyor... (${answeredCount}/${players.length})`; }
 
-function updateSubmittedWait(){
-  const el=document.getElementById('wait-lbl');
-  if(el) el.textContent=`Diğer oyuncular bekleniyor... (${answeredCount}/${players.length})`;
+/* ═══════════════════════════════════════════════════
+   CHECK ALL ANSWERED (HOST only)
+   ═══════════════════════════════════════════════════ */
+function checkAllAnswered(){
+  answeredCount=Object.keys(answers).length;
+  broadcast({type:'answer_count',count:answeredCount,total:players.length});
+  updateWaitLabel();
+  if(answeredCount>=players.length){
+    if(curPhase==='word_count') hostBeginWordEntry();
+    else if(curPhase==='word_entry'||curPhase==='word_play') hostEndWordPhase();
+    else if(curPhase==='num_count') hostBeginNumEntry();
+    else if(curPhase==='num_entry'||curPhase==='num_play') hostEndNumPhase();
+  }
 }
 
-// ═══════════════════════════════════════════════════════════════
-// SHOW RESULTS
-// ═══════════════════════════════════════════════════════════════
-function showResults(){
+/* ═══════════════════════════════════════════════════
+   SHOW RESULTS
+   ═══════════════════════════════════════════════════ */
+function showPhaseResults(msg){
   stopTimer();
-  const phaseLbl=document.getElementById('lbl-phase');
-  phaseLbl.className='phase-label phase-results';
-  phaseLbl.textContent='📊 Sonuçlar';
-  gameState='results';
+  const result=msg.result;
+  const ph=Q('lbl-phase');
+  ph.className='phase-badge pb-result'; ph.textContent='📊 SONUÇLAR';
   renderScoreboard();
 
   const sorted=[...players].sort((a,b)=>{
-    const pa=phaseResult.results[a.id]?.points??0;
-    const pb=phaseResult.results[b.id]?.points??0;
+    const pa=result.results[a.id]?.points??0;
+    const pb=result.results[b.id]?.points??0;
     return pb-pa;
   });
   const medals=['🥇','🥈','🥉'];
 
-  const card=document.getElementById('question-card');
-  let html=`<div class="results-wrap">`;
+  let html='<div style="padding:4px;">';
   sorted.forEach((p,i)=>{
-    const r=phaseResult.results[p.id];
+    const r=result.results[p.id];
     const pts=r?.points??0;
     const isMe=p.id===myPeerId;
-    const ptsClass=pts>=7?'pts-hi':pts>=3?'pts-mid':'pts-lo';
-    let answerText='cevap vermedi';
-    if(phaseResult.type==='word'){
-      if(r?.word) answerText=r.valid?`"${r.word}" ✓ — ${r.length} harf`:`"${r.word}" ✗ geçersiz`;
+    const pc=pts>=6?'pts-hi':pts>=3?'pts-mid':'pts-lo';
+    let ansText='—';
+    if(result.type==='word'){
+      if(r?.countChoice==='none') ansText='YANIT YOK';
+      else if(r?.word) ansText=r.valid
+        ?`${r.word}${r.jokerUsed?` (Joker: ${r.jokerChar})`:''}  ✓ — ${r.length} harf`
+        :`${r.word} ✗ geçersiz`;
     } else {
-      if(r?.value!==null&&r?.value!==undefined)
-        answerText=`${r.value} ${r.diff===0?'🎯':`(${r.diff} fark)`}`;
+      if(r?.proximity==='none') ansText='SONUÇ YOK';
+      else if(r?.value!==null&&r?.value!==undefined){
+        const d=Math.abs(r.value-(phaseQ?.target||0));
+        ansText=`${r.value} ${d===0?'🎯':`(${d} fark)`} ${r.valid?'✓':'✗ kuraldışı'}`;
+      }
     }
     html+=`
       <div class="result-row ${isMe?'me':''}">
         <div class="result-rank">${medals[i]||`${i+1}.`}</div>
-        <div class="avatar ${avColor(players.indexOf(p))}">${getInitial(p.name)}</div>
+        <div class="p-initial ${avC(players.indexOf(p))}" style="width:32px;height:32px;border-radius:8px;font-size:0.85rem;flex-shrink:0;">${getInit(p.name)}</div>
         <div class="result-info">
-          <div class="result-name">${p.name}${isMe?' <span style="color:var(--blue);font-size:0.72rem;">(sen)</span>':''}</div>
-          <div class="result-answer">${answerText}</div>
+          <div class="result-name">${p.name}${isMe?' <span style="color:var(--trt-cyan);font-size:0.7rem;">(sen)</span>':''}</div>
+          <div class="result-answer">${ansText}</div>
         </div>
-        <div class="result-pts ${ptsClass}">+${pts}</div>
+        <div class="result-pts ${pc}">+${pts}</div>
       </div>`;
   });
-  html+=`</div>`;
+  html+='</div>';
 
   // Computer hint
-  if(phaseResult.type==='word'&&phaseResult.question?.bestWord){
-    html+=`<div class="computer-best">💡 En uzun kelime: <strong>${phaseResult.question.bestWord}</strong> (${phaseResult.question.bestWord.length} harf)</div>`;
+  if(result.type==='word'&&result.question?.bestWord){
+    html+=`<div class="computer-hint">💡 En uzun kelime: <strong>${result.question.bestWord}</strong> (${result.question.bestWord.length} harf)</div>`;
   }
-  if(phaseResult.type==='number'&&phaseResult.question?.solution){
-    const sol=phaseResult.question.solution;
-    html+=`<div class="computer-best">💡 Bilgisayar: <strong>${sol.value}</strong>${sol.steps?.length?'<br>'+sol.steps.slice(0,3).map(s=>`• ${s}`).join('<br>'):''}
-    </div>`;
+  if(result.type==='number'&&result.question?.solution){
+    const sol=result.question.solution;
+    html+=`<div class="computer-hint">💡 Bilgisayar: <strong>${sol.value}</strong> ${sol.value===phaseQ?.target?'🎯':''}<br>${sol.steps?.slice(0,4).map(s=>`• ${s}`).join('<br>')||''}</div>`;
   }
-
-  html+=`<div class="next-hint pulse" id="next-hint">
-    ${currentRound<settings.totalRounds||currentPhase==='word'?'Sonraki tur 6 saniye içinde...':'Oyun bitiyor...'}
+  html+=`<div style="text-align:center;margin-top:10px;font-family:var(--font-display);font-size:0.7rem;color:rgba(0,229,255,0.35);" class="pulse">
+    ${curRound<settings.rounds||result.type==='word'?'Devam ediyor...':'Oyun bitiyor...'}
   </div>`;
 
-  card.innerHTML=html;
+  Q('question-area').innerHTML=html;
 }
 
-// ═══════════════════════════════════════════════════════════════
-// SCOREBOARD
-// ═══════════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════
+   SCOREBOARD
+   ═══════════════════════════════════════════════════ */
 function renderScoreboard(){
-  const strip=document.getElementById('scoreboard');
+  const strip=Q('scoreboard');
+  if(!strip) return;
   const sorted=[...players].sort((a,b)=>b.score-a.score);
   strip.innerHTML=sorted.map((p,i)=>`
-    <div class="score-chip ${p.id===myPeerId?'me':''} ${i===0?'leading':''}">
-      <div class="avatar ${avColor(players.indexOf(p))}" style="width:24px;height:24px;border-radius:7px;font-size:0.72rem;">${getInitial(p.name)}</div>
-      <span class="score-chip-name">${p.name}</span>
-      <span class="score-chip-pts">${p.score}</span>
-    </div>
-  `).join('');
+    <div class="sc-chip ${p.id===myPeerId?'me':''} ${i===0?'lead':''}">
+      <div class="p-initial ${avC(players.indexOf(p))}" style="width:24px;height:24px;border-radius:6px;font-size:0.72rem;">${getInit(p.name)}</div>
+      <span class="sc-name">${p.name}</span>
+      <span class="sc-pts">${p.score}</span>
+    </div>`).join('');
 }
 
-// ═══════════════════════════════════════════════════════════════
-// GAME OVER
-// ═══════════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════
+   GAME OVER
+   ═══════════════════════════════════════════════════ */
 function showGameOver(winner){
   stopTimer();
   showScreen('screen-gameover');
-  document.getElementById('go-winner-name').textContent=winner.name;
-  document.getElementById('go-winner-score').textContent=winner.id===myPeerId?'🎉 Tebrikler, kazandın!':winner.score+' puan';
-  document.querySelector('.winner-trophy').textContent=winner.id===myPeerId?'🏆':'🎮';
-
+  Q('go-trophy').textContent=winner.id===myPeerId?'🏆':'🎮';
+  Q('go-wname').textContent=winner.name;
+  Q('go-wsub').textContent=winner.id===myPeerId?'🎉 Tebrikler, kazandın!':winner.score+' puan';
   const sorted=[...players].sort((a,b)=>b.score-a.score);
   const medals=['🥇','🥈','🥉'];
-  const list=document.getElementById('go-final-list');
-  list.innerHTML='<div class="card-title" style="margin-bottom:12px;">🏅 Final Sıralaması</div>'+
-    sorted.map((p,i)=>`
-      <div class="final-row">
-        <div class="final-rank">${medals[i]||`${i+1}.`}</div>
-        <div class="avatar ${avColor(players.indexOf(p))}">${getInitial(p.name)}</div>
-        <div class="final-name">${p.name}${p.id===myPeerId?' <span style="color:var(--blue);font-size:0.75rem;">(sen)</span>':''}</div>
-        <div class="final-pts">${p.score}</div>
-      </div>
-    `).join('');
+  Q('go-list').innerHTML=sorted.map((p,i)=>`
+    <div class="final-row">
+      <div class="final-rank">${medals[i]||`${i+1}.`}</div>
+      <div class="p-initial ${avC(players.indexOf(p))}" style="width:34px;height:34px;border-radius:8px;font-size:0.88rem;">${getInit(p.name)}</div>
+      <div class="final-name">${p.name}${p.id===myPeerId?' <span style="color:var(--trt-cyan);font-size:0.72rem;">(sen)</span>':''}</div>
+      <div class="final-pts">${p.score}</div>
+    </div>`).join('');
 }
-
 function goHome(){
-  if(peer) try{ peer.destroy(); }catch(e){}
-  peer=null; connections={}; players=[]; isHost=false;
-  gameState='lobby';
+  if(peer) try{peer.destroy();}catch(e){}
+  peer=null; connections={}; players=[]; isHost=false; gameState='lobby';
   showScreen('screen-home');
 }
 
-// ═══════════════════════════════════════════════════════════════
-// TIMER
-// ═══════════════════════════════════════════════════════════════
-const CIRC=2*Math.PI*27;
-function startTimer(duration, onExpire){
-  stopTimer();
-  timeLeft=duration;
-  updateTimer(duration, duration);
-  timerInterval=setInterval(()=>{
-    timeLeft--;
-    updateTimer(timeLeft, duration);
-    if(timeLeft<=0){ stopTimer(); onExpire?.(); }
-  }, 1000);
+/* ═══════════════════════════════════════════════════
+   TIMER
+   ═══════════════════════════════════════════════════ */
+const CIRC=2*Math.PI*30;
+function startTimer(duration,onExpire){
+  stopTimer(); timeLeft=duration; updateTimer(duration,duration);
+  timerIntvl=setInterval(()=>{ timeLeft--; updateTimer(timeLeft,duration); if(timeLeft<=0){stopTimer();onExpire?.();} },1000);
 }
-function stopTimer(){ clearInterval(timerInterval); timerInterval=null; }
-function updateTimer(t, total){
+function stopTimer(){ clearInterval(timerIntvl); timerIntvl=null; }
+function updateTimer(t,total){
   const pct=t/total;
   const offset=CIRC*(1-pct);
-  const color=pct>0.5?'#06d6a0':pct>0.25?'#ffd166':'#e63946';
-  const ring=document.getElementById('timer-ring');
-  const num=document.getElementById('timer-num');
-  if(ring){ ring.style.strokeDashoffset=offset; ring.style.stroke=color; }
-  if(num){ num.textContent=t; num.style.color=color; }
+  const color=pct>0.5?'#00e5ff':pct>0.25?'#ffdd00':'#ff3333';
+  const ring=Q('timer-ring'), num=Q('timer-num');
+  if(ring){ring.style.strokeDashoffset=offset;ring.style.stroke=color;}
+  if(num){num.textContent=t;num.style.color=color;}
 }
 
-// ═══════════════════════════════════════════════════════════════
-// WORD LOGIC
-// ═══════════════════════════════════════════════════════════════
-function drawLetters(count=9){
-  const vowelPool=LETTER_POOL.filter(l=>VOWELS.has(l));
-  const consPool=LETTER_POOL.filter(l=>!VOWELS.has(l));
-  const vCount=3+Math.floor(Math.random()*3); // 3,4,5
-  const cCount=count-vCount;
-  const res=[];
-  const sv=shuffle(vowelPool), sc=shuffle(consPool);
-  for(let i=0;i<vCount;i++) res.push(sv[i%sv.length]);
-  for(let i=0;i<cCount;i++) res.push(sc[i%sc.length]);
-  return shuffle(res);
+/* ═══════════════════════════════════════════════════
+   WORD LOGIC
+   ═══════════════════════════════════════════════════ */
+function pickOneLetter(type){
+  const pool=shuffle(type==='V'?[...VOWEL_POOL]:[...CONS_POOL]);
+  return pool[0];
 }
-
-function isValidWord(word, letters){
+function isValidWord(word,letters){
   if(!word) return false;
   const upper=word.toUpperCase();
   const avail=[...letters];
-  for(const ch of upper){
-    const idx=avail.indexOf(ch);
-    if(idx===-1) return false;
-    avail.splice(idx,1);
-  }
+  for(const ch of upper){ const idx=avail.indexOf(ch); if(idx===-1) return false; avail.splice(idx,1); }
   return WORD_LIST.has(word.toLowerCase());
 }
-
+function validateWordWithJoker(word,letters){
+  // Try without joker first
+  if(isValidWord(word,letters)) return {ok:true,usedJoker:false,jokerChar:null};
+  // Try with each possible joker substitution
+  const upper=word.toUpperCase();
+  const avail=[...letters];
+  let jokerNeeded=null;
+  for(const ch of upper){
+    const idx=avail.indexOf(ch);
+    if(idx===-1){
+      if(jokerNeeded!==null) return {ok:false,usedJoker:false,jokerChar:null}; // need 2+ jokers
+      jokerNeeded=ch;
+    } else avail.splice(idx,1);
+  }
+  if(jokerNeeded) return {ok:WORD_LIST.has(word.toLowerCase()),usedJoker:true,jokerChar:jokerNeeded};
+  return {ok:WORD_LIST.has(word.toLowerCase()),usedJoker:false,jokerChar:null};
+}
 function findBestWord(letters){
   let best='';
   for(const w of WORD_LIST){
-    if(isValidWord(w,letters)&&w.length>best.length) best=w;
+    if(w.length<=best.length) continue;
+    const {ok}=validateWordWithJoker(w,letters);
+    if(ok) best=w;
   }
   return best;
 }
-
-// ═══════════════════════════════════════════════════════════════
-// NUMBER LOGIC
-// ═══════════════════════════════════════════════════════════════
-function generateNumbers(){
-  const bigShuf=shuffle([...BIG_NUMBERS]);
-  const smallPool=shuffle([1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10]);
-  const bigCount=Math.floor(Math.random()*3);
-  const res=[];
-  for(let i=0;i<bigCount;i++) res.push(bigShuf[i]);
-  for(let i=0;i<6-bigCount;i++) res.push(smallPool[i]);
-  return res;
+// TDK API check (fire-and-forget, only for final validation)
+async function checkTDK(word){
+  try{
+    const r=await fetch(`https://sozluk.gov.tr/gts?ara=${encodeURIComponent(word)}`);
+    const d=await r.json();
+    return Array.isArray(d)&&d.length>0;
+  }catch{return null;}
 }
 
-function solveNumbers(numbers, target){
-  let best=null, bestDiff=Infinity;
-  function bt(nums, steps){
-    for(const n of nums){
-      const d=Math.abs(n.value-target);
-      if(d<bestDiff){ bestDiff=d; best={value:n.value,steps:[...steps,...n.steps]}; }
-    }
+/* ═══════════════════════════════════════════════════
+   NUMBER LOGIC
+   ═══════════════════════════════════════════════════ */
+function solveNumbers(numbers,target){
+  let best=null,bestDiff=Infinity;
+  function bt(nums,steps){
+    for(const n of nums){const d=Math.abs(n.value-target);if(d<bestDiff){bestDiff=d;best={value:n.value,steps:[...steps,...n.steps]};}}
     if(bestDiff===0) return;
-    for(let i=0;i<nums.length;i++){
-      for(let j=0;j<nums.length;j++){
-        if(i===j) continue;
-        const a=nums[i],b=nums[j];
-        const rest=nums.filter((_,k)=>k!==i&&k!==j);
-        const ops=[
-          {value:a.value+b.value,desc:`${a.value} + ${b.value} = ${a.value+b.value}`},
-          {value:a.value-b.value,desc:`${a.value} − ${b.value} = ${a.value-b.value}`},
-          {value:a.value*b.value,desc:`${a.value} × ${b.value} = ${a.value*b.value}`},
-        ];
-        if(b.value!==0&&a.value%b.value===0)
-          ops.push({value:a.value/b.value,desc:`${a.value} ÷ ${b.value} = ${a.value/b.value}`});
-        for(const op of ops){
-          if(op.value<=0) continue;
-          bt([...rest,{value:op.value,steps:[...a.steps,...b.steps,op.desc]}], steps);
-          if(bestDiff===0) return;
-        }
-      }
-    }
+    for(let i=0;i<nums.length;i++){for(let j=0;j<nums.length;j++){
+      if(i===j) continue;
+      const a=nums[i],b=nums[j],rest=nums.filter((_,k)=>k!==i&&k!==j);
+      const ops=[{value:a.value+b.value,desc:`${a.value} + ${b.value} = ${a.value+b.value}`},{value:a.value-b.value,desc:`${a.value} − ${b.value} = ${a.value-b.value}`},{value:a.value*b.value,desc:`${a.value} × ${b.value} = ${a.value*b.value}`}];
+      if(b.value!==0&&a.value%b.value===0) ops.push({value:a.value/b.value,desc:`${a.value} ÷ ${b.value} = ${a.value/b.value}`});
+      for(const op of ops){if(op.value<=0)continue;bt([...rest,{value:op.value,steps:[...a.steps,...b.steps,op.desc]}],steps);if(bestDiff===0)return;}
+    }}
   }
   bt(numbers.map(n=>({value:n,steps:[]})),[]);
   return best;
 }
-
-function calcNumberScore(val, target, max=10){
-  if(val===null||val===undefined||isNaN(val)) return 0;
-  const d=Math.abs(val-target);
-  if(d===0) return max;
-  if(d<=5) return Math.round(max*0.7);
-  if(d<=10) return Math.round(max*0.5);
-  if(d<=25) return Math.round(max*0.3);
-  return 0;
+function validateNumWork(work,originalNums){
+  if(!work||!work.steps||work.steps.length===0) return work?.finalValue!==null;
+  // Re-run the steps and verify each
+  let avail=[...originalNums];
+  let lastResult=null;
+  for(const step of work.steps){
+    const m=step.match(/^(\d+) [+\-×÷] (\d+) = (\d+)$/);
+    if(!m) return false;
+    const a=+m[1],b=+m[2],r=+m[3];
+    const ai=avail.indexOf(a); if(ai===-1) return false; avail.splice(ai,1);
+    const bi=avail.indexOf(b); if(bi===-1) return false; avail.splice(bi,1);
+    // Verify arithmetic
+    const stepMatch=step.match(/(\d+) ([+\-×÷]) (\d+) = (\d+)/);
+    if(stepMatch){
+      const [,sa,op,sb,sr]=[...stepMatch];
+      let calc;
+      if(op==='+') calc=+sa+ +sb;
+      else if(op==='-'||op==='−') calc=+sa- +sb;
+      else if(op==='×') calc=+sa* +sb;
+      else if(op==='÷') calc=+sa/ +sb;
+      if(Math.round(calc)!==+sr) return false;
+    }
+    avail.push(r); lastResult=r;
+  }
+  return work.finalValue===lastResult||work.finalValue===null;
+}
+function calcNumScore(proximity,value,target){
+  // proximity: 'exact'|1|2|3|4|5|6|7
+  // Tam=8, 1 yaklaşık=7, 2=6, ... 7=1
+  if(proximity==='exact') return 8;
+  const p=parseInt(proximity);
+  if(isNaN(p)) return 0;
+  return Math.max(0,8-p);
 }
 
-// ═══════════════════════════════════════════════════════════════
-// KEYBOARD SHORTCUTS
-// ═══════════════════════════════════════════════════════════════
-document.addEventListener('keydown', e=>{
+/* ═══════════════════════════════════════════════════
+   KEYBOARD
+   ═══════════════════════════════════════════════════ */
+document.addEventListener('keydown',e=>{
   if(e.key==='Enter'){
-    const home=document.getElementById('screen-home');
-    if(home.classList.contains('active')) createRoom();
+    if(Q('screen-home').classList.contains('active')){
+      const code=Q('inp-code').value.trim();
+      if(code) joinRoom(); else createRoom();
+    }
   }
-  if(e.key==='Backspace'&&gameState==='word'&&!submitted){
-    e.preventDefault(); wordUndo();
+  if(e.key==='Backspace'){
+    if(curPhase==='word_play'&&!submitted){e.preventDefault();wordUndo();}
+    if(curPhase==='word_entry'&&!submitted){e.preventDefault();entryUndo();}
   }
-  if(e.key==='Escape'&&gameState==='word'&&!submitted) wordClear();
+  if(e.key==='Escape'){
+    if(curPhase==='word_play'&&!submitted) wordClear();
+    if(curPhase==='word_entry'&&!submitted) entryClear();
+  }
 });
+Q('inp-code').addEventListener('keydown',e=>{if(e.key==='Enter') joinRoom();});
+Q('inp-name').addEventListener('keydown',e=>{if(e.key==='Enter'){const c=Q('inp-code').value.trim();if(c)joinRoom();else createRoom();}});
 
-document.getElementById('inp-code').addEventListener('keydown', e=>{
-  if(e.key==='Enter') joinRoom();
-});
-document.getElementById('inp-name').addEventListener('keydown', e=>{
-  if(e.key==='Enter'){
-    const code=document.getElementById('inp-code').value.trim();
-    if(code) joinRoom(); else createRoom();
-  }
-});
-
-// URL param — otomatik oda kodu doldur
-(()=>{
-  const u=new URLSearchParams(location.search);
-  const c=u.get('join')||u.get('code');
-  if(c){ document.getElementById('inp-code').value=c.toUpperCase(); }
-})();
+// URL param
+(()=>{ const u=new URLSearchParams(location.search); const c=u.get('join')||u.get('code'); if(c) Q('inp-code').value=c.toUpperCase(); })();
 </script>
 </body>
 </html>
